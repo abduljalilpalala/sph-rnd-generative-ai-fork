@@ -1,0 +1,17 @@
+{
+  "name": "rnd-root",
+  "version": "1.0.0",
+  "description": "Root configuration for CI/CD scripts and workflows (Claude QA Review, linting, etc.)",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "echo 'No start script at root — see rnd-backend instead'",
+    "test": "echo 'No tests at root — CI handled in workflows'"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.24.0",
+    "@octokit/rest": "^20.0.0",
+    "googleapis": "^140.0.0"
+  },
+  "devDependencies": {}
+}
