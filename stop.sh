@@ -64,7 +64,7 @@ echo ""
 
 # Step 3: Stop Docker (Database)
 echo -e "${YELLOW}[3/3]${NC} ${GREEN}Stopping PostgreSQL database...${NC}"
-cd rnd-backend
+cd test-projects/test-backend
 docker compose down
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✓ Database stopped successfully${NC}"

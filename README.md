@@ -6,8 +6,8 @@ Full-stack application with NestJS backend, Next.js frontend, and PostgreSQL dat
 
 ```
 rnd/
-├── rnd-backend/          # NestJS + Prisma backend
-├── rnd-frontend/         # Next.js + RTK Query frontend
+├── test-projects/test-backend/          # NestJS + Prisma backend
+├── test-projects/test-frontend/         # Next.js + RTK Query frontend
 ├── boot.sh              # Script to start all services
 ├── stop.sh               # Script to stop all services
 └── README.md             # This file
@@ -29,7 +29,7 @@ rnd/
 1. **Make scripts executable** (first time only, Git Bash required)
    ```bash
    chmod +x boot.sh stop.sh
-   chmod +x rnd-backend/scripts/*.sh
+   chmod +x test-projects/test-backend/scripts/*.sh
    ```
 
 2. **Start all services**
@@ -93,8 +93,8 @@ tail -f frontend.log
 
 ## 📚 Documentation
 
-- **Backend**: See [rnd-backend/README.md](rnd-backend/README.md) and [rnd-backend/CLAUDE-BE.md](rnd-backend/CLAUDE-BE.md)
-- **Frontend**: See [rnd-frontend/README.md](rnd-frontend/README.md) and [rnd-frontend/CLAUDE-FE.md](rnd-frontend/CLAUDE-FE.md)
+- **Backend**: See [test-projects/test-backend/README.md](test-projects/test-backend/README.md) and [test-projects/test-backend/CLAUDE-BE.md](test-projects/test-backend/CLAUDE-BE.md)
+- **Frontend**: See [test-projects/test-frontend/README.md](test-projects/test-frontend/README.md) and [test-projects/test-frontend/CLAUDE-FE.md](test-projects/test-frontend/CLAUDE-FE.md)
 
 ## 🛠 Manual Setup (Alternative)
 
@@ -104,7 +104,7 @@ If you prefer to run services manually:
 
 ```bash
 # Use Git Bash on Windows
-cd rnd-backend
+cd test-projects/test-backend
 docker compose up -d
 yarn install
 yarn prisma migrate reset
@@ -114,7 +114,7 @@ yarn start:dev
 ### Frontend
 
 ```bash
-cd rnd-frontend
+cd test-projects/test-frontend
 yarn install
 yarn dev
 ```

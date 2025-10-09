@@ -8,7 +8,7 @@ Next.js 15 frontend application with TypeScript, Tailwind CSS, and Redux Toolkit
 
 ## Development Commands
 
-All commands should be run from the `rnd-frontend/` directory:
+All commands should be run from the `test-projects/test-frontend/` directory:
 
 ```bash
 # Install dependencies
@@ -36,7 +36,7 @@ yarn format
 ## Folder Structure
 
 ```
-rnd-frontend/
+test-projects/test-frontend/
 ├── app/                           # Next.js App Router pages (high-level only)
 │   ├── layout.tsx                 # Root layout with StoreProvider
 │   ├── page.tsx                   # Home page
@@ -284,7 +284,7 @@ This frontend expects the backend to run on `http://localhost:3000` with the fol
 - `PATCH /user/:id` - Update user (body: `{ email?, name? }`)
 - `DELETE /user/:id` - Delete user
 
-See [../rnd-backend/CLAUDE-BE.md](../rnd-backend/CLAUDE-BE.md) for backend details.
+See [../test-projects/test-backend/CLAUDE-BE.md](../test-projects/test-backend/CLAUDE-BE.md) for backend details.
 
 ## Best Practices
 

@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-NestJS + Prisma backend application with PostgreSQL database, containerized with Docker. The project is located in the `rnd-backend/` subdirectory.
+NestJS + Prisma backend application with PostgreSQL database, containerized with Docker. The project is located in the `test-projects/test-backend/` subdirectory.
 
 ## Development Commands
 
-All commands should be run from the `rnd-backend/` directory:
+All commands should be run from the `test-projects/test-backend/` directory:
 
 ```bash
 # Start PostgreSQL database
@@ -44,7 +44,7 @@ yarn test:debug           # Run tests with debugger
 ## Folder Structure
 
 ```
-rnd-backend/
+test-projects/test-backend/
 ├── src/
 │   ├── main.ts                    # Application entry point
 │   ├── app.module.ts              # Root module

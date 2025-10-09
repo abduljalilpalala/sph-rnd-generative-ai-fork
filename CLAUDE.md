@@ -8,8 +8,8 @@ This is a monorepo containing both frontend and backend applications:
 
 ```
 rnd/
-├── rnd-backend/          # NestJS + Prisma backend
-├── rnd-frontend/         # Next.js + RTK Query frontend
+├── test-projects/test-backend/          # NestJS + Prisma backend
+├── test-projects/test-frontend/         # Next.js + RTK Query frontend
 ├── CLAUDE-BE.md          # Backend-specific guidance
 ├── CLAUDE-FE.md          # Frontend-specific guidance
 └── CLAUDE.md             # This file (routing guidance)
@@ -19,15 +19,15 @@ rnd/
 
 **IMPORTANT**: When working on this project, you must use the appropriate context file based on the work location:
 
-### Working on Backend (`rnd-backend/`)
+### Working on Backend (`test-projects/test-backend/`)
 - **Use**: [CLAUDE-BE.md](CLAUDE-BE.md) for all backend-related work
 - **Applies to**: NestJS, Prisma, PostgreSQL, database migrations, API endpoints
-- **File patterns**: `rnd-backend/**/*`, `*.prisma`, backend configurations
+- **File patterns**: `test-projects/test-backend/**/*`, `*.prisma`, backend configurations
 
-### Working on Frontend (`rnd-frontend/`)
+### Working on Frontend (`test-projects/test-frontend/`)
 - **Use**: [CLAUDE-FE.md](CLAUDE-FE.md) for all frontend-related work
 - **Applies to**: Next.js, React, TypeScript, RTK Query, Tailwind CSS, UI components
-- **File patterns**: `rnd-frontend/**/*`, frontend configurations
+- **File patterns**: `test-projects/test-frontend/**/*`, frontend configurations
 
 ### General Workflow
 1. **Identify the workspace**: Check which directory you're working in
@@ -39,8 +39,8 @@ rnd/
 
 | Task | Context File | Location |
 |------|--------------|----------|
-| API endpoints, database schemas | [CLAUDE-BE.md](CLAUDE-BE.md) | `rnd-backend/` |
-| UI components, pages, hooks | [CLAUDE-FE.md](CLAUDE-FE.md) | `rnd-frontend/` |
+| API endpoints, database schemas | [CLAUDE-BE.md](CLAUDE-BE.md) | `test-projects/test-backend/` |
+| UI components, pages, hooks | [CLAUDE-FE.md](CLAUDE-FE.md) | `test-projects/test-frontend/` |
 | Full-stack features | Both files | Both directories |
 | Scripts, CI/CD, root configs | This file | Root directory |
 
@@ -54,13 +54,13 @@ rnd/
 
 ### Backend Development
 ```bash
-cd rnd-backend
+cd test-projects/test-backend
 # See CLAUDE-BE.md for commands
 ```
 
 ### Frontend Development
 ```bash
-cd rnd-frontend
+cd test-projects/test-frontend
 # See CLAUDE-FE.md for commands
 ```
 

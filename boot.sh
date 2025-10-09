@@ -14,7 +14,7 @@ echo ""
 
 # Step 1: Start Docker (Database)
 echo -e "${YELLOW}[1/4]${NC} ${GREEN}Starting PostgreSQL database...${NC}"
-cd rnd-backend
+cd test-projects/test-backend
 docker compose up -d
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✓ Database started successfully${NC}"
@@ -60,7 +60,7 @@ echo ""
 
 # Step 3: Start Frontend
 echo -e "${YELLOW}[4/4]${NC} ${GREEN}Starting Next.js frontend server...${NC}"
-cd ../rnd-frontend
+cd ../test-frontend
 
 # Check if node_modules exists
 if [ ! -d "node_modules" ]; then

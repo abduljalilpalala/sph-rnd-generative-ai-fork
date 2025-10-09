@@ -6,7 +6,7 @@ Next.js 15 frontend application with TypeScript, Tailwind CSS, and Redux Toolkit
 
 - [Node.js](https://nodejs.org/) (>= 20)
 - [Yarn](https://yarnpkg.com/)
-- Running backend server (see [../rnd-backend/README.md](../rnd-backend/README.md))
+- Running backend server (see [../test-projects/test-backend/README.md](../test-projects/test-backend/README.md))
 
 ## 🛠 Setup & Run
 
@@ -71,7 +71,7 @@ This frontend requires the backend server to be running. Follow these steps:
 
 1. Navigate to the backend directory and start the services:
    ```sh
-   cd ../rnd-backend
+   cd ../test-projects/test-backend
    docker compose up -d
    yarn install
    yarn prisma migrate reset
@@ -82,7 +82,7 @@ This frontend requires the backend server to be running. Follow these steps:
 
 3. Return to the frontend directory and start the app:
    ```sh
-   cd ../rnd-frontend
+   cd ../test-projects/test-frontend
    yarn dev
    ```
 
