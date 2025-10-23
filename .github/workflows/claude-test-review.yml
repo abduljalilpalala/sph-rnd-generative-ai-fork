@@ -151,13 +151,21 @@ jobs:
               - Simulate how the frontend and backend would behave for each case.
               - Identify where runtime errors, flow breaks, or logical inconsistencies may occur.
               - Use simple, user-oriented reasoning — what would a tester, QA, or PM notice?
-            3. Delete the TODO list comment.
-            4. Produce the results in this format:
-              - Submit a PR review comment in this current.
-              - Send request to change status if there is Fail or Critical Issues.
-              - Send approval if no Fail or Critical Issues.
-              - The comment body should contain only two sections (## 📄 Claude Summary and ## ✅ Passed Test Cases)
-            5. Submit inline comments to each failed cases only. Strictly follow [Inline Comment Format].
+            3. Submit a review:
+              - If there are any ❌ Failed or Critical issues, call:
+                mcp__github__create_and_submit_pull_request_review with:
+                  {
+                    "event": "REQUEST_CHANGES",
+                    "body": "<Review comment body should contain only two sections (## 📄 Claude Summary and ## ✅ Passed Test Cases)>"
+                  }
+              - Otherwise, call:
+                mcp__github__create_and_submit_pull_request_review with:
+                  {
+                    "event": "APPROVE",
+                    "body": "<Review comment body should contain only two sections (## 📄 Claude Summary and ## ✅ Passed Test Cases)>"
+                  }
+            4. Submit inline comments to each failed cases only. Strictly follow [Inline Comment Format].
+            5. Delete the TODO list comment.
 
             [Comment body format]:
               ## 📄 Claude Summary
