@@ -51,7 +51,7 @@ jobs:
             echo "number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
           fi
 
-      - name: Run Claude Code Review (Standardized)
+      - name: Run Claude Code Review (TODO + Final)
         id: claude-review
         uses: anthropics/claude-code-action@v1
         env:
@@ -61,39 +61,68 @@ jobs:
           additional_permissions: |
             actions: read
           prompt: |
-            Review PR #${{ steps.pr-number.outputs.number }} thoroughly.
-
-            🧭 **Objective:**
-            Conduct a standardized, structured, and consistent review following our internal CLAUDE.md guidelines and linting rules.
-
-            📘 **Format your final review in this exact structure:**
+            Review PR #${{ steps.pr-number.outputs.number }} thoroughly and follow this exact 3-step process.
 
             ---
+            ### 🧩 Step 1 — Initial TODO List
+            Post an initial checklist comment (`TODO:`) that outlines the main review tasks:
+            - Code quality checks
+            - Bug detection
+            - Security review
+            - Performance considerations
+            - Test coverage
+            - CLAUDE.md adherence
+            - Final summary
+
+            Use:
+            ```
+            gh pr comment --body "<your TODO list here>"
+            ```
+
+            ---
+            ### ⚙️ Step 2 — Iterative Review
+            Use `gh pr diff` or `gh pr view` to perform analysis.
+            As you progress, **update your TODO list comment** using:
+            ```
+            gh pr comment --edit-last
+            ```
+            Replace completed items with findings (e.g. ✅ Done, ⚠️ Issue found, etc.).
+
+            ---
+            ### 🧾 Step 3 — Final Structured Summary
+            Once all checks are done, **replace the TODO list comment** with the final structured review below, using:
+            ```
+            gh pr comment --edit-last
+            ```
+
+            Format your **final output** exactly like this:
+
             ## 🧩 Overview
-            - Briefly summarize what this PR changes or introduces.
+            - Brief summary of what this PR does
 
             ## 💪 Strengths
-            - Highlight well-implemented parts, readability, clean structure, or good practices observed.
+            - Highlight good code patterns or architecture decisions
 
             ## ⚠️ Issues
-            - List problems, bugs, potential regressions, or inconsistencies.
-            - Align findings with our current linter configuration (don’t flag style/lint issues already covered by tools).
+            - List found bugs, risks, or inconsistencies
+            - Skip purely stylistic issues covered by our linter
 
             ## 💡 Recommendations
-            - Provide clear, actionable improvement steps.
-            - Include inline code suggestions **where possible** (triple backticks).
-            - Prioritize improvements based on impact: Critical → Important → Nice-to-have.
+            - Provide concrete improvement ideas or code snippets:
+              ```ts
+              // Example code suggestion
+              if (!user?.id) throw new Error("User not found");
+              ```
 
             ## 🧾 Verdict
-            - Conclude with overall quality rating (✅ Approved / 🛠️ Needs Revision).
-            - Summarize confidence level, test coverage impression, and maintainability.
+            - ✅ Approved / 🛠️ Needs Revision
+            - Confidence level, maintainability, and test coverage impression
 
             ---
-            📏 **Important Notes:**
-            - Maintain the exact section order and headings above.
-            - Keep your tone constructive and professional.
-            - Avoid redundancy between runs; only post new or updated findings based on changes.
-            - Respect and align with our current project linters (ESLint, PHP-CS-Fixer, etc.).
-            - Suggest code improvements inline where appropriate to reduce iteration cycles.
+            **Guidelines:**
+            - Maintain identical section titles & order across all PRs.
+            - Only include new or changed findings in subsequent runs.
+            - Respect linter configurations (ESLint, PHP-CS-Fixer, etc.).
+            - Use concise and professional tone throughout.
 
           claude_args: '--allowed-tools "Bash(gh issue view:*),Bash(gh issue comment:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*)"'
