@@ -154,18 +154,10 @@ jobs:
                - Identify runtime errors, flow breaks, or logic inconsistencies.
                - Use plain reasoning — what would a QA or PM notice?
             3. Submit a review:
-               - If there are any ❌ Failed or Critical issues, call:
-                 mcp__github__create_and_submit_pull_request_review with:
-                   {
-                     "event": "REQUEST_CHANGES",
-                     "body": "<final_body>"
-                   }
-               - Otherwise, call:
-                 mcp__github__create_and_submit_pull_request_review with:
-                   {
-                     "event": "APPROVE",
-                     "body": "<final_body>"
-                   }
+              - If any ❌ Failed or Critical issues exist, **submit a PR review requesting changes** using the tool `mcp__github__create_and_submit_pull_request_review`.
+               Use event: `REQUEST_CHANGES`, and the review body should exactly match the format described below.
+             - If no ❌ Failed or Critical issues exist, **submit a PR review approving the changes** using the same tool.
+               Use event: `APPROVE`, and the review body should exactly match the format described below.
             4. Submit inline comments for failed cases only.
             5. Delete the TODO list comment.
 
