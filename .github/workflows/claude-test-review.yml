@@ -203,6 +203,12 @@ jobs:
                Use event: `APPROVE`, review body is "​✅ LGTM!"
             7. Delete the track_progress PR comment created in step#1.
 
+            ---
+
+            Important:
+            - it should not repeat inline commenting the same unresolve comments
+            - it should fire an event "Resolve Conversation" to the previous comment were analyzed fixed already
+
           claude_args: |
             --allowedTools "mcp__github__get_pull_request,
                             mcp__github__get_pull_request_files,
