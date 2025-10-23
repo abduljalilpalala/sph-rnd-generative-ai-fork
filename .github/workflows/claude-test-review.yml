@@ -156,9 +156,19 @@ jobs:
               **Suggestion:**
               <Plain English suggestion — e.g., “Restore correct function name in controller to fix flow”.>
               ```suggestion
-                // if possible place your code suggestion here
+                // When proposing a code change, ensure the ```suggestion``` block fully replaces the old lines, including deletions. Do not append new lines below existing ones.
+                // If unsure, include the entire function body (or at least the full affected lines) so that GitHub’s “Commit suggestion” produces valid and working code.
               ```
             [/Inline Comment Format]
+
+            [ISSUE TYPE legend]
+              - [FE] - if code suggestion is frontend related
+              - [BE] - if code suggestion is backend related
+            [/ISSUE TYPE legend]
+
+            [Expected Result legend]
+              - Avoid using engineering or technical language. Transform to simple terms that a manager can easily understand.
+            [/Expected Result legend]
              
             [COMMENT BODY RULES]
               The test cases used here are combined test cases from the previous claude review result and the current one.
@@ -173,7 +183,7 @@ jobs:
       
               2. `## 📄 Detailed test case result.
                   <details>
-                  <summary> <strong>[Case ID]</strong> (verdict): [Expected Result] </summary>
+                  <summary> <strong>[Case ID]</strong> (verdict): [ISSUE TYPE][Expected Result] </summary>
                     
                   > _**Behavior Tested:**_  
                   > <Describe intended user/system behavior in plain English.>
