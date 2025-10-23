@@ -1,0 +1,214 @@
+name: Claude Sheet Review
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  id-token: write
+  actions: read
+
+jobs:
+  claude-sheet-review:
+    if: false
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'issue_comment' && format('refs/pull/{0}/head', github.event.issue.number) || github.event.pull_request.head.ref }}
+          fetch-depth: 1
+
+      - name: Set PR number
+        id: pr-number
+        run: echo "number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: debug directory contents
+        run: |
+          pwd
+          ls -R .github
+      
+      - name: Update comment with running notice
+        if: github.event_name == 'issue_comment'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const comment_id = context.payload.comment.id;
+            const run_id = process.env.GITHUB_RUN_ID;
+            const run_url = `https://github.com/${owner}/${repo}/actions/runs/${run_id}`;
+            const currentBody = context.payload.comment.body || "";
+            const usageHint = "📘 Workflow documentation: [readme](https://github.com/framgia/sph-hris/blob/develop/.github/docs/claude-sheet-review.md)";
+            const appendText = `\n\n<hr/>\n\n${usageHint}\n\n### Claude Action Status: ⏳ Running\n[View action detail here](${run_url})`;
+            const updatedBody = currentBody + appendText;
+
+            await github.rest.issues.updateComment({
+              owner,
+              repo,
+              comment_id,
+              body: updatedBody,
+            });
+
+      - name: Fetch previous comment test cases
+        id: previous-test-case
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node .github/scripts/getPreviousCases.mjs > previous.md
+          echo "previous_context<<EOF" >> $GITHUB_OUTPUT
+          cat previous.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Fetch QA test cases
+        id: qa-sheet
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          MAX_INPUT_CHARS: ${{ secrets.MAX_INPUT_CHARS }}
+          MAX_OUTPUT_CHARS: ${{ secrets.MAX_OUTPUT_CHARS }}
+        run: |
+          node .github/scripts/claudeSheetReview.mjs > qa.md
+          echo "qa_context<<EOF" >> $GITHUB_OUTPUT
+          cat qa.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Run Claude Sheet Review
+        id: claude-review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            You are reviewing this pull request as a **Behavioral QA Reviewer and Engineering Manager**.  
+            Your goal is to evaluate **whether the system will behave correctly for users and business workflows**, 
+            not whether the code uses the right types or syntax.
+
+            ---
+            ### 🎯 Your task
+            Review this pull request based on **functional and behavioral correctness**:
+            - Does the change cause user-facing errors, crashes, or incorrect outputs?
+            - Do the new or modified functions still align with the intended flow (controllers, services, DTOs)?
+            - Does renaming, refactoring, or moving code break any other function that calls it?
+            - Do expected validations, responses, and edge-case behaviors still occur as intended?
+
+            ---
+            ### 🚫 Avoid
+            - Do **not** comment on TypeScript types, DTOs, or code patterns (e.g., "use async/await", "missing return type").
+            - Do **not** focus on code style, formatting, or static correctness.
+            - Do **not** mention "TypeScript", "DTO", or "any type" — that is too technical.
+
+            ---
+            ### ✅ Focus instead on
+            - The *real-world effect* of this change (what would actually happen if this code ran?)
+            - Whether **users, data, or dependent systems** experience incorrect or missing behavior.
+            - Whether **renamed or deleted functions** (e.g., service calls in controllers) cause broken flows or errors.
+            - Whether **expected validation rules** still trigger.
+            - Whether **logical flow** between controller → service → repository still makes sense.
+
+            ---
+            CONTEXT:
+            PR #: ${{ steps.pr-number.outputs.number }}
+            Diff URL: https://github.com/${{ github.repository }}/pull/${{ steps.pr-number.outputs.number }}.diff
+            Repository: ${{ github.repository }}
+            Assignee/Creator: @${{ steps.pr-meta.outputs.assignee }}
+
+            Changed files:
+            ${{ steps.qa-sheet.outputs.files_summary }}
+
+            ---
+            ## 🧪 Previous Test Cases (from last PR comment)
+            ${{ steps.previous-test-case.outputs.previous_context }}
+
+            ---
+            ## 🧾 Current QA Test Cases (from spreadsheet)
+            ${{ steps.qa-sheet.outputs.qa_context }}
+
+            ---
+            [Verdict] legend:
+            - ✅ PASS — requirement met  
+            - ❌ FAIL — requirement not met or broken  
+            - ⚠️ CANNOT VERIFY — not enough context or unrelated change
+
+            [Case ID] legend:
+            - <Case-n> n is from spreadsheet test case id. For example value Case-1
+            - <New-n> n is incremental number if new case found. For example value New-1
+
+            ---
+            ### 🧩 What to Do
+            1. Combine all test cases (previous + current) and filter duplicates. (Retain previous test case ids)
+            2. Simulate how the backend would behave for each case.
+            3. Identify where runtime errors, flow breaks, or logic inconsistencies will occur.
+            4. Use simple, user-oriented reasoning — what would a tester, QA, or PM notice?
+            5. Combine all test cases (from step#1-4), remove duplicates, and analyze.
+            6. Produce the results in this format:
+              - Submit a PR review comment in this current.
+              - Send request to change status if there is Fail or Critical Issues.
+              - Send approval if if no Fail or Critical Issues.
+              - The comment body should contain only two sections (## Claude Summary and ## Claude Detailed Analysis)
+
+            Comment body format:
+              ## Claude Summary
+  
+              | **Metric** | **Count** |
+              |:----------------------|:------:|
+              | 📋 **Test Cases** | **n** |
+              | ✅ Passed Test Cases | n |
+              | ❌ Failed Test Cases | n |
+              | ⚠️ Unverified Test Cases | n |
+  
+              ---
+              
+              ## Claude Detailed Analysis
+  
+              <details>
+              <summary><strong>[Case ID]</strong> (Verdict): "<Expected Result>"</summary>
+  
+              > _**Behavior Tested:**_  
+              > <Describe intended user/system behavior in plain English>
+              >
+              > _**Observed Effect (from code):**_  
+              > <Describe what will actually happen — e.g., “controller will call a missing function, causing runtime error”>
+              >
+              > _**Impact:**_  
+              > <Explain what a user, client, or integration would see>
+              >
+              > _**Suggestion:**_  
+              > <Plain English suggestion — e.g., “Restore correct function name in controller to fix flow”>
+
+              <hr/>
+  
+              </details>
+
+          claude_args: |
+            --allowedTools "mcp__github__get_pull_request,
+                            mcp__github__get_pull_request_files,
+                            mcp__github__get_pull_request_diff,
+                            mcp__github__create_pending_pull_request_review,
+                            mcp__github__add_comment_to_pending_review,
+                            mcp__github__submit_pending_pull_request_review,
+                            mcp__github_inline_comment__create_inline_comment,
+                            mcp__github__create_and_submit_pull_request_review,
+                            mcp__github__add_issue_comment,
+                            mcp__github__create_issue_comment"
+
+      - name: Update status feedback
+        if: success()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          MAX_INPUT_CHARS: ${{ secrets.MAX_INPUT_CHARS }}
+          MAX_OUTPUT_CHARS: ${{ secrets.MAX_OUTPUT_CHARS }}
+        run: node .github/scripts/postAction.mjs
