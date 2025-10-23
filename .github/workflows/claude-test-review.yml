@@ -151,14 +151,14 @@ jobs:
               2.1. Simulate how the frontend and backend would behave for each case.
               2.2. Identify where runtime errors, flow breaks, or logical inconsistencies may occur.
               2.3. Use simple, user-oriented reasoning — what would a tester, QA, or PM notice?
-            3. Replace the TODO list with Claude Summary. Strictly follow [Comment body format].
+            3. Delete the TODO list and entire body content. Strictly put the [Comment body format].
             4. Submit a review:
               4.1. If there are Fail or Critical Issues, submit "Request changes".
                   4.1.1. Submit inline comments to each failed cases. Strictly follow [Inline Comment Format].
               4.2. Else, submit "Approve" if there are no Fail or Critical Issues.
 
             [Comment body format]:
-              ## Claude Summary
+              ## 📄 Claude Summary
 
               | **Metric** | **Count** |
               |:----------------------|:------:|
@@ -168,9 +168,27 @@ jobs:
               | ⚠️ Unverified Test Cases | n |
 
               // display each cases here
-              | **Test Case ID** | **Expected Result** | **Status** | **Reason** |
-              |:-----------|:--------------------|:------------|:-------------|
-              | <Test Case ID> | <Expected Result> | <Verdict> | <Minified reason, up to 2 sentences.> |
+              | **Test Case ID** | **Expected Result** | **Status** |
+              |:------------------|:------------------------------|:------------|
+              | <Test Case ID> | <Expected Result> | <Verdict> |
+              
+              ## ✅ Passed Test Cases
+              <details>
+              <summary> show image/videos </summary>
+              
+              <strong>[Case ID]</strong> (✅ PASS): "<Expected Result>"
+                
+              _**Behavior Tested:**_  
+              <Describe intended user/system behavior in plain English.>
+              
+              _**Observed Effect (from code):**_  
+              <Describe what will actually happen — e.g., “controller will call a missing function, causing runtime error”>
+              
+              _**Impact:**_  
+              <Explain what a user, client, or integration would see>
+              
+              ---
+              </details>
 
           claude_args: |
             --allowedTools "mcp__github__get_pull_request,
