@@ -148,14 +148,14 @@ jobs:
             ### 🧩 What to Do
             1. Post TODO list: gather test cases, run Claude's own tests, and post the test case results. 
             2. Run Claude's own tests:
-              3.1. Simulate how the frontend and backend would behave for each case.
-              3.2. Identify where runtime errors, flow breaks, or logical inconsistencies may occur.
-              3.3. Use simple, user-oriented reasoning — what would a tester, QA, or PM notice?
+              2.1. Simulate how the frontend and backend would behave for each case.
+              2.2. Identify where runtime errors, flow breaks, or logical inconsistencies may occur.
+              2.3. Use simple, user-oriented reasoning — what would a tester, QA, or PM notice?
+            3. Replace the TODO list with Claude Summary. Strictly follow [Comment body format].
             4. Submit a review:
-              6.1. If there are Fail or Critical Issues, submit "Request changes".
-              6.2. Else, submit "Approve" if there are no Fail or Critical Issues.
-            5. Replace the TODO list with Claude Summary. Strictly follow [Comment body format].
-            6. Submit inline comments to each failed cases.
+              4.1. If there are Fail or Critical Issues, submit "Request changes".
+                  4.1.1. Submit inline comments to each failed cases. Strictly follow [Inline Comment Format].
+              4.2. Else, submit "Approve" if there are no Fail or Critical Issues.
 
             [Comment body format]:
               ## Claude Summary
