@@ -152,10 +152,13 @@ jobs:
               2.2. Identify where runtime errors, flow breaks, or logical inconsistencies may occur.
               2.3. Use simple, user-oriented reasoning — what would a tester, QA, or PM notice?
             3. Delete the TODO list and entire body content. Strictly put the [Comment body format].
+              3.1. Add "Claude Summary" section.
+              3.2. Add "Passed Test Cases" section if there are passed test cases.
+              3.3. Don’t add any other sections or content besides what’s requested above.
             4. Submit a review:
-              4.1. If there are Fail or Critical Issues, submit review "Request changes".
-                  4.1.1. Submit inline comments to each failed cases. Strictly follow [Inline Comment Format].
-              4.2. Else, submit review "Approve" if there are no Fail or Critical Issues.
+              4.1. Send request to change status if there is Fail or Critical Issues.
+                  4.1.1. And submit inline comments to each failed cases. Strictly follow [Inline Comment Format].
+              4.2. Send approval if if no Fail or Critical Issues.
 
             [Comment body format]:
               ## 📄 Claude Summary
