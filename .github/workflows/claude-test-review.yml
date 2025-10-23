@@ -189,18 +189,21 @@ jobs:
             ---
             
             ### 🧩 What to Do (run in order asynchronous)
-            1. Post TODO list: gather test cases, run Claude's own tests, and post the results. 
-            2. Run behavioral checks:
+            1. Post TODO list: gather test cases, run Claude's own tests, and post the results.
+            2. Recheck previous Claude review unresolved comments
+              - Mark them as “resolved” if current PR changes has fixed it.
+            3. Run behavioral checks:
                - Simulate how the frontend and backend would behave for each case.
                - Identify runtime errors, flow breaks, or logic inconsistencies.
                - Use plain reasoning — what would a QA or PM notice?
-            3. Submit a new review:
+            4. Combine all test cases (from steps #2–3), and remove duplicates.
+            5. From the combined test cases, submit a new review:
               - If any ❌ Failed or Critical issues exist, **submit a PR review requesting changes** using the tool `mcp__github__create_and_submit_pull_request_review`.
                Use event: `REQUEST_CHANGES`, and the review body should contain "❌ Claude has requested some changes based on its behavioral analysis. \nCheck the inline comments for specific findings."
              - If no ❌ Failed or Critical issues exist, **submit a PR review approving the changes** using the same tool.
                Use event: `APPROVE`, and the review body should contain "✅ Claude Test Review passed. \nNo issues detected in the current changes. Ready for merge."
-            4. After submitting review, submit inline comments for failed cases only.
-            5. Delete the track_progress PR comment created in step#1.
+            6. After submitting review, submit inline comments for failed cases only.
+            7. Delete the track_progress PR comment created in step#1.
 
           claude_args: |
             --allowedTools "mcp__github__get_pull_request,
