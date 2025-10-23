@@ -58,42 +58,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          track_progress: true
           additional_permissions: |
             actions: read
           prompt: |
-            Review PR #${{ steps.pr-number.outputs.number }} thoroughly and follow this exact 3-step process.
-
-            ---
-            ### 🧩 Step 1 — Initial TODO List
-            Post an initial checklist comment (`TODO:`) that outlines the main review tasks:
-            - Code quality checks
-            - Bug detection
-            - Security review
-            - Performance considerations
-            - Test coverage
-            - CLAUDE.md adherence
-            - Final summary
-
-            Use:
-            ```
-            gh pr comment --body "<your TODO list here>"
-            ```
-
-            ---
-            ### ⚙️ Step 2 — Iterative Review
-            Use `gh pr diff` or `gh pr view` to perform analysis.
-            As you progress, **update your TODO list comment** using:
-            ```
-            gh pr comment --edit-last
-            ```
-            Replace completed items with findings (e.g. ✅ Done, ⚠️ Issue found, etc.).
-
-            ---
-            ### 🧾 Step 3 — Final Structured Summary
-            Once all checks are done, **replace the TODO list comment** with the final structured review below, using:
-            ```
-            gh pr comment --edit-last
-            ```
+            Review PR #${{ steps.pr-number.outputs.number }} thoroughly.
 
             Format your **final output** exactly like this:
 
@@ -120,6 +89,7 @@ jobs:
 
             ---
             **Guidelines:**
+            - CLAUDE.md adherence is mandatory.
             - Maintain identical section titles & order across all PRs.
             - Only include new or changed findings in subsequent runs.
             - Respect linter configurations (ESLint, PHP-CS-Fixer, etc.).
