@@ -172,14 +172,17 @@ jobs:
                   <details>
                   <summary> <strong>[Case ID]</strong> (verdict): [Expected Result] </summary>
                     
-                  _**Behavior Tested:**_  
-                  <Describe intended user/system behavior in plain English.>
-      
-                  _**Observed Effect (from code):**_  
-                  <Describe what will actually happen — e.g., “controller will call a missing function, causing runtime error”.>
-      
-                  _**Impact:**_  
-                  <Explain what a user, client, or integration would see.>
+                  > _**Behavior Tested:**_  
+                  > <Describe intended user/system behavior in plain English.>
+                  >     
+                  > _**Observed Effect (from code):**_  
+                  > <Describe what will actually happen — e.g., “controller will call a missing function, causing runtime error”.>
+                  >
+                  > _**Impact:**_  
+                  > <Explain what a user, client, or integration would see.>
+                  >
+                  > _**Suggestion:**_
+                  > <Plain English suggestion — e.g., “Restore correct function name in controller to fix flow”.>
       
                   ---
                   </details>
