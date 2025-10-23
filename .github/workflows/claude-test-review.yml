@@ -68,6 +68,7 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          track_progress: true
           prompt: |
             You are reviewing this pull request as a **Behavioral QA Reviewer and Engineering Manager**.  
             Your goal is to evaluate **whether the system will behave correctly for users and business workflows**, 
