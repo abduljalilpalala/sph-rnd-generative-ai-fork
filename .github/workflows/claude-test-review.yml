@@ -16,7 +16,7 @@ jobs:
     if: |
       github.event.issue.pull_request &&
       contains(github.event.comment.body, '@claude-test-review')
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, claude-code-review]
 
     steps:
       - name: Add 👀 reaction to comment
@@ -147,20 +147,6 @@ jobs:
               ```
 
             ---
-            ### 🧩 What to Do (run in order asynchronous)
-            1. Post TODO list: gather test cases, run Claude's own tests, and post the results. 
-            2. Run behavioral checks:
-               - Simulate how the frontend and backend would behave for each case.
-               - Identify runtime errors, flow breaks, or logic inconsistencies.
-               - Use plain reasoning — what would a QA or PM notice?
-            3. Submit a new review:
-              - If any ❌ Failed or Critical issues exist, **submit a PR review requesting changes** using the tool `mcp__github__create_and_submit_pull_request_review`.
-               Use event: `REQUEST_CHANGES`, and the review body should exactly match the format described below.
-             - If no ❌ Failed or Critical issues exist, **submit a PR review approving the changes** using the same tool.
-               Use event: `APPROVE`, and the review body should exactly match the format described below.
-            4. After submitting review, submit inline comments for failed cases only.
-
-            ---
 
             ### ⚠️ STRICT FORMAT RULES
             The final PR comment **must contain only these two sections** and nothing else:
@@ -199,6 +185,21 @@ jobs:
             - Any extra horizontal lines or emojis not defined below
 
             If you must show explanations, place them **inside** the two allowed sections.
+
+            ---
+            
+            ### 🧩 What to Do (run in order asynchronous)
+            1. Post TODO list: gather test cases, run Claude's own tests, and post the results. 
+            2. Run behavioral checks:
+               - Simulate how the frontend and backend would behave for each case.
+               - Identify runtime errors, flow breaks, or logic inconsistencies.
+               - Use plain reasoning — what would a QA or PM notice?
+            3. Submit a new review:
+              - If any ❌ Failed or Critical issues exist, **submit a PR review requesting changes** using the tool `mcp__github__create_and_submit_pull_request_review`.
+               Use event: `REQUEST_CHANGES`, and the review body should exactly match the format described below.
+             - If no ❌ Failed or Critical issues exist, **submit a PR review approving the changes** using the same tool.
+               Use event: `APPROVE`, and the review body should exactly match the format described below.
+            4. After submitting review, submit inline comments for failed cases only.
 
           claude_args: |
             --allowedTools "mcp__github__get_pull_request,
