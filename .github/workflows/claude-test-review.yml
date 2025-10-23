@@ -162,10 +162,9 @@ jobs:
                 |:------------------|:------------------------------|:------------|
                 | <Test Case ID> | <Expected Result> | <Verdict> |
             2. `## ✅ Passed Test Cases` *(only if there are passed cases)*
+                
                 <details>
-                <summary> show image/videos </summary>
-    
-                <strong>[Case ID]</strong> (✅ PASS): "<Expected Result>"
+                <summary> <strong>[Case ID]</strong> (✅ PASS): [Expected Result] </summary>
                   
                 _**Behavior Tested:**_  
                 <Describe intended user/system behavior in plain English.>
@@ -191,7 +190,10 @@ jobs:
             ### 🧩 What to Do (run in order asynchronous)
             1. Post TODO list: gather test cases, run Claude's own tests, and post the results.
             2. Recheck previous Claude review unresolved comments
-              - Mark them as “resolved” if current PR changes has fixed it.
+              - Fetch all previous PR comments and reviews.
+              - If an identical or similar comment already exists for the same file/line, skip it.
+              - If the issue appears resolved in the latest commit, do not re-comment.
+              - If all prior issues are fixed, clearly indicate APPROVED in the summary.
             3. Run behavioral checks:
                - Simulate how the frontend and backend would behave for each case.
                - Identify runtime errors, flow breaks, or logic inconsistencies.
@@ -202,7 +204,7 @@ jobs:
                Use event: `REQUEST_CHANGES`, and the review body should contain "❌ Claude has requested some changes based on its behavioral analysis. \nCheck the inline comments for specific findings."
              - If no ❌ Failed or Critical issues exist, **submit a PR review approving the changes** using the same tool.
                Use event: `APPROVE`, and the review body should contain "✅ Claude Test Review passed. \nNo issues detected in the current changes. Ready for merge."
-            6. After submitting review, submit inline comments for failed cases only.
+            6. After submitting review, submit inline comments for "❌ Fail" only. Exclude the "✅ PASS" cases.
             7. Delete the track_progress PR comment created in step#1.
 
           claude_args: |
