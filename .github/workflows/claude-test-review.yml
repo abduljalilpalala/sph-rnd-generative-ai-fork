@@ -131,16 +131,16 @@ jobs:
             [Inline Comment Format]:
               <strong>[Case ID]</strong> (Verdict): "<Expected Result>"
 
-              _**Behavior Tested:**_  
+              **Behavior Tested:**
               <Describe intended user/system behavior in plain English.>
 
-              _**Observed Effect (from code):**_  
+              **Observed Effect (from code):**
               <Describe what will actually happen — e.g., “controller will call a missing function, causing runtime error”.>
 
-              _**Impact:**_  
+              **Impact:**
               <Explain what a user, client, or integration would see.>
 
-              _**Suggestion:**_  
+              **Suggestion:**
               <Plain English suggestion — e.g., “Restore correct function name in controller to fix flow”.>
               ```suggestion
                 // if possible place your code suggestion here
@@ -149,7 +149,7 @@ jobs:
             ---
 
             ### ⚠️ STRICT FORMAT RULES
-            The final PR comment **must contain only these three sections** and nothing else:
+            The final PR comment **must contain only these two sections** and nothing else:
             1. `## 📄 Claude Summary`
                 | **Metric** | **Count** |
                 |:----------------------|:------:|
@@ -158,16 +158,9 @@ jobs:
                 | ❌ Failed Test Cases | n |
                 | ⚠️ Unverified Test Cases | n |
     
-            2. `## ❌ Failed Test Cases / ⚠️ Unverified Test Cases
-                // Display "none" if no fail test cases or unverified test cases.
-                | **Test Case ID** | **Expected Result** | **Status** |
-                |:------------------|:------------------------------|:----------|
-                | <Test Case ID> | <Expected Result> | <Verdict> |
-
-            3. `## ✅ Passed Test Cases
-                // Display "none" if no passed test cases.
+            2. `## 📄 Detailed test case result.
                 <details>
-                <summary> <strong>[Case ID]</strong> (✅ PASS): [Expected Result] </summary>
+                <summary> <strong>[Case ID]</strong> (verdict): [Expected Result] </summary>
                   
                 _**Behavior Tested:**_  
                 <Describe intended user/system behavior in plain English.>
@@ -195,17 +188,19 @@ jobs:
             2. Recheck previous Claude review unresolved comments
               - Fetch all previous PR comments and reviews.
               - If an identical or similar comment already exists for the same file/line, skip it.
-              - If the issue appears resolved in the latest commit, do not re-comment.
-              - If all prior issues are fixed, clearly indicate APPROVED in the summary and use event `Resolve Conversation`.
+              - If the issue appears resolved in the latest commit, run the event `Resolve Conversation` and do not re-comment.
+              - If all prior issues are fixed, clearly indicate APPROVED in the summary.
             3. Run behavioral checks:
                - Simulate how the frontend and backend would behave for each case.
                - Identify runtime errors, flow breaks, or logic inconsistencies.
                - Use plain reasoning — what would a QA or PM notice?
-            4. Combine all test cases (from steps #2–3), and remove duplicates.
-            5. From the combined test cases, submit inline comments for "❌ Fail" only. Exclude the "✅ PASS" cases.
+            4. Combine all test cases (from steps 2–3), and remove duplicates.
+            5. From the combined test cases, submit inline comments for "❌ Fail" only. 
+               - Exclude the "✅ PASS" cases.
+               - Exclude lines that are not part of the PR's changes.
             6. After submitting inline comments, submit a new review:
               - If any ❌ Failed or Critical issues exist, **submit a PR review requesting changes** using the tool `mcp__github__create_and_submit_pull_request_review`.
-               Use event: `REQUEST_CHANGES`, and the review body should contain "Claude has requested some changes based on its behavioral analysis. \nCheck the inline comments for specific findings."
+               Use event: `REQUEST_CHANGES`, and the review body should contain "Requesting for code changes."
              - If no ❌ Failed or Critical issues exist, **submit a PR review approving the changes** using the same tool.
                Use event: `APPROVE`, and the review body should contain "Claude Test Review passed. \nNo issues detected in the current changes. Ready for merge."
             7. Delete the track_progress PR comment created in step#1.
