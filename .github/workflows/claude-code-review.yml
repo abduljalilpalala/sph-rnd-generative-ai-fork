@@ -1,4 +1,4 @@
-name: Claude Code Review (v3)
+name: Claude Code Review (v2)
 
 on:
   issue_comment:
@@ -42,17 +42,13 @@ jobs:
           ref: ${{ github.event_name == 'issue_comment' && format('refs/pull/{0}/head', github.event.issue.number) || github.event.pull_request.head.ref }}
           fetch-depth: 1
 
-      - name: Set PR info
-        id: pr-info
+      - name: Set PR number
+        id: pr-number
         run: |
           if [ "${{ github.event_name }}" == "issue_comment" ]; then
-            echo "pr_number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
-            echo "commentor=${{ github.actor }}" >> $GITHUB_OUTPUT
-            echo "pr_owner=$(gh pr view ${{ github.event.issue.number }} --json author --jq '.author.login')" >> $GITHUB_OUTPUT
+            echo "number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
           else
-            echo "pr_number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
-            echo "commentor=${{ github.actor }}" >> $GITHUB_OUTPUT
-            echo "pr_owner=${{ github.event.pull_request.user.login }}" >> $GITHUB_OUTPUT
+            echo "number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
           fi
 
       - name: Run Claude Code Review (TODO + Final)
@@ -66,18 +62,9 @@ jobs:
           additional_permissions: |
             actions: read
           prompt: |
-            Review PR #${{ steps.pr-info.outputs.pr_number }} thoroughly.
+            Review PR #${{ steps.pr-number.outputs.number }} thoroughly.
 
-            ---
-            ## 👋 Greeting
-            {% raw %}
-            {% if github.actor != steps.pr-info.outputs.pr_owner %}
-            Hey @${{ steps.pr-info.outputs.commentor }}, Claude finished reviewing @${{ steps.pr-info.outputs.pr_owner }}’s PR — [View job](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            {% else %}
-            Hey @${{ steps.pr-info.outputs.pr_owner }}, Claude finished reviewing your PR — [View job](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            {% endif %}
-            {% endraw %}
-            ---
+            Format your **final output** exactly like this:
 
             ## 🧩 Overview
             - Brief summary of what this PR does
