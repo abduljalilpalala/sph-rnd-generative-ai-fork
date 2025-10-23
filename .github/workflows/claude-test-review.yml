@@ -16,7 +16,7 @@ jobs:
     if: |
       github.event.issue.pull_request &&
       contains(github.event.comment.body, '@claude-test-review')
-    runs-on: [self-hosted, claude-code-review]
+    runs-on: ubuntu-latest
 
     steps:
       - name: Add 👀 reaction to comment
@@ -196,9 +196,9 @@ jobs:
                - Use plain reasoning — what would a QA or PM notice?
             3. Submit a new review:
               - If any ❌ Failed or Critical issues exist, **submit a PR review requesting changes** using the tool `mcp__github__create_and_submit_pull_request_review`.
-               Use event: `REQUEST_CHANGES`, and the review body should exactly match the format described below.
+               Use event: `REQUEST_CHANGES`, and the review body should be emppty.
              - If no ❌ Failed or Critical issues exist, **submit a PR review approving the changes** using the same tool.
-               Use event: `APPROVE`, and the review body should exactly match the format described below.
+               Use event: `APPROVE`, and the review body should be empty
             4. After submitting review, submit inline comments for failed cases only.
 
           claude_args: |
