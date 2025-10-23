@@ -125,17 +125,17 @@ jobs:
 
             ---
             ### 🧩 What to Do
-            1. Combine all test cases (previous + current) and filter duplicates. (Retain previous test case ids)
-            2. Run your own checking:
-               2.1. Simulate how the backend would behave for each case.
-               2.2. Identify where runtime errors, flow breaks, or logic inconsistencies will occur.
-               2.3. Use simple, user-oriented reasoning — what would a tester, QA, or PM notice?
-            3. Combine all test cases (from step#1-2), remove duplicates, and analyze.
-            4. Produce the results in this format:
-               4.1. If there is Fail or Critical Issues, send request to change status 
-                    4.1.1. The comment body should contain only two sections (## Claude Summary and ## Claude Detailed Analysis)
-               4.2. Else, send submit if no Fail or Critical Issues.
-                    4.2.1. The comment body should contain only two sections (## Claude Summary and ## Claude Detailed Analysis)
+            1. Post TODO list: gather test cases, run Claude's own tests, and post the test case results. 
+            2. Gather and review all test cases (previous + current) and filter out duplicates. (Retain previous test case IDs)
+            3. Run Claude's own tests:
+              3.1. Simulate how the frontend and backend would behave for each case.
+              3.2. Identify where runtime errors, flow breaks, or logical inconsistencies may occur.
+              3.3. Use simple, user-oriented reasoning — what would a tester, QA, or PM notice?
+            4. Combine all test cases (from steps #2–3), remove duplicates, and analyze.
+            5. Replace the TODO list with the body format provided below. The comment body should contain only two sections (## Claude Summary and ## Claude Detailed Analysis)
+            6. Submit a review:
+              6.1. If there are Fail or Critical Issues, request changes.
+              6.2. Else, submit if there are no Fail or Critical Issues.
 
             Comment body format:
               ## Claude Summary
