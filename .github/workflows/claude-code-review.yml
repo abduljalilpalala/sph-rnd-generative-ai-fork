@@ -1,4 +1,4 @@
-name: Claude Code Review
+name: Claude Code Review (v2)
 
 on:
   issue_comment:
@@ -51,20 +51,7 @@ jobs:
             echo "number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
           fi
 
-      - name: Load linter config
-        id: linter-config
-        run: |
-          # Extract linter rules and output as escaped JSON for Claude's context
-          if [ -f ".eslintrc.json" ] || [ -f ".eslintrc.js" ] || [ -f "eslint.config.js" ]; then
-            LINTER_INFO=$(cat .eslintrc.* 2>/dev/null | head -50)
-            echo "config<<EOF" >> $GITHUB_OUTPUT
-            echo "$LINTER_INFO" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
-          else
-            echo "config=No linter config found" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Run Claude Code Review
+      - name: Run Claude Code Review (Standardized)
         id: claude-review
         uses: anthropics/claude-code-action@v1
         env:
@@ -74,88 +61,39 @@ jobs:
           additional_permissions: |
             actions: read
           prompt: |
-            Review PR #${{ steps.pr-number.outputs.number }} and provide a comprehensive code review.
+            Review PR #${{ steps.pr-number.outputs.number }} thoroughly.
 
-            IMPORTANT: Follow this EXACT structure for your review output:
+            🧭 **Objective:**
+            Conduct a standardized, structured, and consistent review following our internal CLAUDE.md guidelines and linting rules.
 
-            ## 📋 Overview
-            Brief summary of what this PR does and files changed.
-
-            ## ✅ Strengths
-            List positive aspects (good practices, design patterns, test coverage, etc).
-
-            ## ⚠️ Issues Found
-            Categorize issues by severity:
-            ### Critical
-            - Issue 1 with file:line reference and code suggestion
-
-            ### High
-            - Issue 1 with file:line reference and code suggestion
-
-            ### Medium
-            - Issue 1 with file:line reference and code suggestion
-
-            ### Low
-            - Issue 1 with file:line reference and code suggestion
-
-            ## 💡 Recommendations
-            Actionable suggestions to improve the code (include code snippets where helpful).
-
-            ## 🎯 Verdict
-            Overall assessment: [APPROVE | APPROVE_WITH_NOTES | REQUEST_CHANGES]
-            Summary: One sentence conclusion.
+            📘 **Format your final review in this exact structure:**
 
             ---
+            ## 🧩 Overview
+            - Briefly summarize what this PR changes or introduces.
 
-            LINTER CONTEXT (respect these rules - do not suggest conflicting changes):
-            ${{ steps.linter-config.outputs.config }}
+            ## 💪 Strengths
+            - Highlight well-implemented parts, readability, clean structure, or good practices observed.
 
-            REVIEW GUIDELINES:
-            1. Only flag issues that are ACTUALLY present in the diff
-            2. Respect the project's linter configuration - do not suggest changes that conflict with it
-            3. Focus on: code quality, security, performance, testing, maintainability
-            4. Provide specific file:line references and code snippets for each issue
-            5. Include concrete code suggestions for issues whenever possible
-            6. Be constructive and professional
+            ## ⚠️ Issues
+            - List problems, bugs, potential regressions, or inconsistencies.
+            - Align findings with our current linter configuration (don’t flag style/lint issues already covered by tools).
 
-            Commands available:
-            - Use `gh pr diff` to view the complete diff
-            - Use `gh pr view` to see PR metadata
-            - Use `gh pr comment` to post or edit comments
+            ## 💡 Recommendations
+            - Provide clear, actionable improvement steps.
+            - Include inline code suggestions **where possible** (triple backticks).
+            - Prioritize improvements based on impact: Critical → Important → Nice-to-have.
+
+            ## 🧾 Verdict
+            - Conclude with overall quality rating (✅ Approved / 🛠️ Needs Revision).
+            - Summarize confidence level, test coverage impression, and maintainability.
+
+            ---
+            📏 **Important Notes:**
+            - Maintain the exact section order and headings above.
+            - Keep your tone constructive and professional.
+            - Avoid redundancy between runs; only post new or updated findings based on changes.
+            - Respect and align with our current project linters (ESLint, PHP-CS-Fixer, etc.).
+            - Suggest code improvements inline where appropriate to reduce iteration cycles.
 
           claude_args: '--allowed-tools "Bash(gh issue view:*),Bash(gh issue comment:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*)"'
-
-      - name: Add success reaction
-        if: success()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const event = context.payload;
-            const commentId = event.comment?.id || null;
-            const issueNumber = event.issue?.number || event.pull_request?.number;
-
-            if (commentId) {
-              await github.rest.reactions.createForIssueComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: commentId,
-                content: '+1'
-              });
-            }
-
-      - name: Add error reaction on failure
-        if: failure()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const event = context.payload;
-            const commentId = event.comment?.id || null;
-
-            if (commentId) {
-              await github.rest.reactions.createForIssueComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: commentId,
-                content: 'confused'
-              });
-            }
