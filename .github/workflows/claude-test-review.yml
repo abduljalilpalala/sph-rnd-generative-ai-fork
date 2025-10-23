@@ -160,9 +160,9 @@ jobs:
     
             2. `## ❌ Failed Test Cases / ⚠️ Unverified Test Cases
                 // Display "none" if no fail test cases or unverified test cases.
-                | **Test Case ID** | **Expected Result** |
-                |:------------------|:------------------------------|
-                | <Test Case ID> | <Expected Result> |
+                | **Test Case ID** | **Expected Result** | **Status** |
+                |:------------------|:------------------------------|:----------|
+                | <Test Case ID> | <Expected Result> | <Verdict> |
 
             3. `## ✅ Passed Test Cases
                 // Display "none" if no passed test cases.
@@ -182,7 +182,7 @@ jobs:
                 </details>
 
             Do **not** include any of the following:
-            - “Critical Issues Found”, “Impact Assessment”, “Recommendation”, “Job Run”, or “Branch” text
+            - “Critical Issues“, “Critical Issues Found”, “Impact Assessment”, “Recommendation”, “Job Run”, or “Branch” text
             - Any text before or after the two sections
             - Any extra horizontal lines or emojis not defined below
 
@@ -202,12 +202,12 @@ jobs:
                - Identify runtime errors, flow breaks, or logic inconsistencies.
                - Use plain reasoning — what would a QA or PM notice?
             4. Combine all test cases (from steps #2–3), and remove duplicates.
-            5. From the combined test cases, submit a new review:
+            5. From the combined test cases, submit inline comments for "❌ Fail" only. Exclude the "✅ PASS" cases.
+            6. After submitting inline comments, submit a new review:
               - If any ❌ Failed or Critical issues exist, **submit a PR review requesting changes** using the tool `mcp__github__create_and_submit_pull_request_review`.
                Use event: `REQUEST_CHANGES`, and the review body should contain "Claude has requested some changes based on its behavioral analysis. \nCheck the inline comments for specific findings."
              - If no ❌ Failed or Critical issues exist, **submit a PR review approving the changes** using the same tool.
                Use event: `APPROVE`, and the review body should contain "Claude Test Review passed. \nNo issues detected in the current changes. Ready for merge."
-            6. After submitting review, submit inline comments for "❌ Fail" only. Exclude the "✅ PASS" cases.
             7. Delete the track_progress PR comment created in step#1.
 
           claude_args: |
@@ -220,4 +220,6 @@ jobs:
                             mcp__github_inline_comment__create_inline_comment,
                             mcp__github__create_and_submit_pull_request_review,
                             mcp__github__add_issue_comment,
+                            mcp__github__get_pull_request_comments,
+                            mcp__github__get_pull_request_reviews,
                             mcp__github__create_issue_comment"
