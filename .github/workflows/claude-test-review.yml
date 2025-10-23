@@ -107,14 +107,6 @@ jobs:
             ${{ steps.qa-sheet.outputs.files_summary }}
 
             ---
-            ## 🧪 Previous Test Cases (from last PR comment)
-            ${{ steps.previous-test-case.outputs.previous_context }}
-
-            ---
-            ## 🧾 Current QA Test Cases (from spreadsheet)
-            ${{ steps.inline-testcases.outputs.cases }}
-
-            ---
             [Verdict] legend:
             - ✅ PASS — requirement met  
             - ❌ FAIL — requirement not met or broken  
@@ -124,39 +116,11 @@ jobs:
             - <Case-n> n is from spreadsheet test case id. For example value Case-1
             - <New-n> n is incremental number if new case found. For example value New-1
 
-            ---
-            ### 🧩 What to Do
-            1. Post TODO list: gather test cases, run Claude's own tests, and post the test case results. 
-            2. Gather and review all test cases (previous + current) and filter out duplicates. (Retain previous test case IDs)
-            3. Run Claude's own tests:
-              3.1. Simulate how the frontend and backend would behave for each case.
-              3.2. Identify where runtime errors, flow breaks, or logical inconsistencies may occur.
-              3.3. Use simple, user-oriented reasoning — what would a tester, QA, or PM notice?
-            4. Combine all test cases (from steps #2–3), remove duplicates, and analyze.
-            5. Replace the TODO list with the body format provided below. The comment body should contain only two sections (## Claude Summary and ## Claude Detailed Analysis)
-            6. Submit a review:
-              6.1. If there are Fail or Critical Issues, request changes.
-              6.2. Else, submit if there are no Fail or Critical Issues.
-
-            Comment body format:
-              ## Claude Summary
-  
-              | **Metric** | **Count** |
-              |:----------------------|:------:|
-              | 📋 **Test Cases** | **n** |
-              | ✅ Passed Test Cases | n |
-              | ❌ Failed Test Cases | n |
-              | ⚠️ Unverified Test Cases | n |
-
-              ---
-              
-              ## Claude Detailed Analysis
-  
-              <details>
-              <summary><strong>[Case ID]</strong> (Verdict): "<Expected Result>"</summary>
+            [Inline Comment Format]:
+              <strong>[Case ID]</strong> (Verdict): "<Expected Result>"
   
               > _**Behavior Tested:**_  
-              > <Describe intended user/system behavior in plain English>
+              > <Describe intended user/system behavior in plain English.>
               >
               > _**Observed Effect (from code):**_  
               > <Describe what will actually happen — e.g., “controller will call a missing function, causing runtime error”>
@@ -167,9 +131,33 @@ jobs:
               > _**Suggestion:**_  
               > <Plain English suggestion — e.g., “Restore correct function name in controller to fix flow”>
 
-              <hr/>
-  
-              </details>
+            ---
+            ### 🧩 What to Do
+            1. Post TODO list: gather test cases, run Claude's own tests, and post the test case results. 
+            2. Run Claude's own tests:
+              3.1. Simulate how the frontend and backend would behave for each case.
+              3.2. Identify where runtime errors, flow breaks, or logical inconsistencies may occur.
+              3.3. Use simple, user-oriented reasoning — what would a tester, QA, or PM notice?
+            3. Replace the TODO list with Claude Summary. Strictly follow [Comment body format].
+            4. Submit inline comments to each failed cases.
+            5. Submit a review:
+              6.1. If there are Fail or Critical Issues, submit "Request changes".
+              6.2. Else, submit "Approve" if there are no Fail or Critical Issues.
+
+            [Comment body format]:
+              ## Claude Summary
+
+              | **Metric** | **Count** |
+              |:----------------------|:------:|
+              | 📋 **Test Cases** | **n** |
+              | ✅ Passed Test Cases | n |
+              | ❌ Failed Test Cases | n |
+              | ⚠️ Unverified Test Cases | n |
+
+              // display each cases here
+              | **TC ID** | **Expected Result** | **Status** | **Reason** |
+              |:-----------|:--------------------|:------------|:-------------|
+              | <Test Case ID> | <Expected Result> | <Verdict> | <Minified reason, up to 2 sentences.> |
 
           claude_args: |
             --allowedTools "mcp__github__get_pull_request,
