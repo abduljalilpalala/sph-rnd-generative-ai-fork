@@ -212,10 +212,3 @@ jobs:
                             mcp__github__create_and_submit_pull_request_review,
                             mcp__github__add_issue_comment,
                             mcp__github__create_issue_comment"
-
-      - name: Update status feedback
-        if: success()
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
-        run: node .github/scripts/postAction.mjs
