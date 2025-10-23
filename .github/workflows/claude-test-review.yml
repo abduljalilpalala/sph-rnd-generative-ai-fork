@@ -200,9 +200,9 @@ jobs:
                - Exclude lines that are not part of the PR's changes.
             6. After submitting inline comments, submit a new review:
               - If any ❌ Failed or Critical issues exist, **submit a PR review requesting changes** using the tool `mcp__github__create_and_submit_pull_request_review`.
-               Use event: `REQUEST_CHANGES`, and the review body should contain "Requesting for code changes."
+               Use event: `REQUEST_CHANGES`, and the review body should contain "🚫 Changes required."
              - If no ❌ Failed or Critical issues exist, **submit a PR review approving the changes** using the same tool.
-               Use event: `APPROVE`, and the review body should contain "Claude Test Review passed. \nNo issues detected in the current changes. Ready for merge."
+               Use event: `APPROVE`, and the review body should contain "​✅ LGTM!"
             7. Delete the track_progress PR comment created in step#1.
 
           claude_args: |
