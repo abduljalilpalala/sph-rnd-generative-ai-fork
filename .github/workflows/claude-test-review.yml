@@ -200,7 +200,7 @@ jobs:
              - If no ❌ Failed or Critical issues exist, **submit a PR review approving the changes** using the same tool.
                Use event: `APPROVE`, and the review body should exactly match the format described below.
             4. After submitting review, submit inline comments for failed cases only.
-            5. Delete the comment in step#1.
+            5. Delete the comment created in step#1.
 
           claude_args: |
             --allowedTools "mcp__github__get_pull_request,
