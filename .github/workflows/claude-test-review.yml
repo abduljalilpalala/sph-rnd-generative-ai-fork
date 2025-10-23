@@ -119,18 +119,20 @@ jobs:
             [Inline Comment Format]:
               <strong>[Case ID]</strong> (Verdict): "<Expected Result>"
   
-              > _**Behavior Tested:**_  
-              > <Describe intended user/system behavior in plain English.>
-              >
-              > _**Observed Effect (from code):**_  
-              > <Describe what will actually happen — e.g., “controller will call a missing function, causing runtime error”>
-              >
-              > _**Impact:**_  
-              > <Explain what a user, client, or integration would see>
-              >
-              > _**Suggestion:**_  
-              > <Plain English suggestion — e.g., “Restore correct function name in controller to fix flow”>
-
+              _**Behavior Tested:**_  
+              <Describe intended user/system behavior in plain English.>
+              
+              _**Observed Effect (from code):**_  
+              <Describe what will actually happen — e.g., “controller will call a missing function, causing runtime error”>
+              
+              _**Impact:**_  
+              <Explain what a user, client, or integration would see>
+              
+              _**Suggestion:**_  
+              <Plain English suggestion — e.g., “Restore correct function name in controller to fix flow”>
+              ```suggestion
+                // if possible place your code suggestion here
+              ```
             ---
             ### 🧩 What to Do
             1. Post TODO list: gather test cases, run Claude's own tests, and post the test case results. 
@@ -138,11 +140,11 @@ jobs:
               3.1. Simulate how the frontend and backend would behave for each case.
               3.2. Identify where runtime errors, flow breaks, or logical inconsistencies may occur.
               3.3. Use simple, user-oriented reasoning — what would a tester, QA, or PM notice?
-            3. Replace the TODO list with Claude Summary. Strictly follow [Comment body format].
-            4. Submit inline comments to each failed cases.
-            5. Submit a review:
+            4. Submit a review:
               6.1. If there are Fail or Critical Issues, submit "Request changes".
               6.2. Else, submit "Approve" if there are no Fail or Critical Issues.
+            5. Replace the TODO list with Claude Summary. Strictly follow [Comment body format].
+            6. Submit inline comments to each failed cases.
 
             [Comment body format]:
               ## Claude Summary
@@ -155,7 +157,7 @@ jobs:
               | ⚠️ Unverified Test Cases | n |
 
               // display each cases here
-              | **TC ID** | **Expected Result** | **Status** | **Reason** |
+              | **Test Case ID** | **Expected Result** | **Status** | **Reason** |
               |:-----------|:--------------------|:------------|:-------------|
               | <Test Case ID> | <Expected Result> | <Verdict> | <Minified reason, up to 2 sentences.> |
 
