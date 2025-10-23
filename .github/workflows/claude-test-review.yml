@@ -195,14 +195,12 @@ jobs:
                - Identify runtime errors, flow breaks, or logic inconsistencies.
                - Use plain reasoning — what would a QA or PM notice?
             4. Combine all test cases (from steps 2–3), and remove duplicates.
-            5. From the combined test cases, submit inline comments for "❌ Fail" only. 
-               - Exclude the "✅ PASS" cases.
-               - Exclude lines that are not part of the PR's changes.
+            5. From the combined test cases, submit inline comments for "❌ Fail" only. Exclude the "✅ PASS" cases and the lines that are not part of the PR's changes.
             6. After submitting inline comments, submit a new review:
               - If any ❌ Failed or Critical issues exist, **submit a PR review requesting changes** using the tool `mcp__github__create_and_submit_pull_request_review`.
-               Use event: `REQUEST_CHANGES`, and the review body should contain "🚫 Changes required."
+               Use event: `REQUEST_CHANGES`, review body is "🚫 Changes required."
              - If no ❌ Failed or Critical issues exist, **submit a PR review approving the changes** using the same tool.
-               Use event: `APPROVE`, and the review body should contain "​✅ LGTM!"
+               Use event: `APPROVE`, review body is "​✅ LGTM!"
             7. Delete the track_progress PR comment created in step#1.
 
           claude_args: |
