@@ -196,9 +196,9 @@ jobs:
                - Use plain reasoning — what would a QA or PM notice?
             3. Submit a new review:
               - If any ❌ Failed or Critical issues exist, **submit a PR review requesting changes** using the tool `mcp__github__create_and_submit_pull_request_review`.
-               Use event: `REQUEST_CHANGES`, and the review body should be emppty.
+               Use event: `REQUEST_CHANGES` without comment.
              - If no ❌ Failed or Critical issues exist, **submit a PR review approving the changes** using the same tool.
-               Use event: `APPROVE`, and the review body should be empty
+               Use event: `APPROVE` without comment.
             4. After submitting review, submit inline comments for failed cases only.
 
           claude_args: |
