@@ -148,17 +148,16 @@ jobs:
             ### 🧩 What to Do
             1. Post TODO list: gather test cases, run Claude's own tests, and post the test case results. 
             2. Run Claude's own tests:
-              2.1. Simulate how the frontend and backend would behave for each case.
-              2.2. Identify where runtime errors, flow breaks, or logical inconsistencies may occur.
-              2.3. Use simple, user-oriented reasoning — what would a tester, QA, or PM notice?
-            3. Delete the TODO list and entire body content. Strictly put the [Comment body format].
-              3.1. Add "Claude Summary" section.
-              3.2. Add "Passed Test Cases" section if there are passed test cases.
-              3.3. Don’t add any other sections or content besides what’s requested above.
-            4. Submit a review:
-              4.1. Send request to change status if there is Fail or Critical Issues.
-                  4.1.1. And submit inline comments to each failed cases. Strictly follow [Inline Comment Format].
-              4.2. Send approval if if no Fail or Critical Issues.
+              - Simulate how the frontend and backend would behave for each case.
+              - Identify where runtime errors, flow breaks, or logical inconsistencies may occur.
+              - Use simple, user-oriented reasoning — what would a tester, QA, or PM notice?
+            3. Delete the TODO list comment.
+            4. Produce the results in this format:
+              - Submit a PR review comment in this current.
+              - Send request to change status if there is Fail or Critical Issues.
+              - Send approval if no Fail or Critical Issues.
+              - The comment body should contain only two sections (## 📄 Claude Summary and ## ✅ Passed Test Cases)
+            5. Submit inline comments to each failed cases only. Strictly follow [Inline Comment Format].
 
             [Comment body format]:
               ## 📄 Claude Summary
@@ -174,7 +173,8 @@ jobs:
               | **Test Case ID** | **Expected Result** | **Status** |
               |:------------------|:------------------------------|:------------|
               | <Test Case ID> | <Expected Result> | <Verdict> |
-              
+
+              // only show if there are passed test cases
               ## ✅ Passed Test Cases
               <details>
               <summary> show image/videos </summary>
