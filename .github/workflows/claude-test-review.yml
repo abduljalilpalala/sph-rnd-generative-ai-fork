@@ -81,54 +81,65 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: true
           prompt: |
+
+            🧩 What to Do (run in order asynchronous)
+              1. Post TODO list: gather test cases, run Claude's own tests, and post the results.
+              2. Recheck previous Claude review unresolved comments. Strictly follow [Previous Claude Review Rules]. 
+              3. Run behavioral checks. Strictly follow [Behavioral Check Guidelines]
+              4. Combine all test cases (from steps 2–3), and remove duplicates.
+              5. From the combined test cases, submit inline comments. Strictly follow [Inline Comment Rules]
+              6. After submitting inline comments, submit a new review. Strictly follow [Submit Review Rules]
+            
+            ---
+
             SYSTEM INSTRUCTION (do not output):
-            Your final review comment must contain **only** the Markdown structure described in [Comment Body Format].
-            Do not include any introduction, explanation, job references, or additional sections.
 
-            ---
+            [Behavioral Check Guidelines]
+              You are reviewing this pull request as a **Behavioral QA Reviewer and Engineering Manager**.  
+              Your goal is to evaluate **whether the system will behave correctly for users and business workflows**, 
+              not whether the code uses the right types or syntax.
 
-            You are reviewing this pull request as a **Behavioral QA Reviewer and Engineering Manager**.  
-            Your goal is to evaluate **whether the system will behave correctly for users and business workflows**, 
-            not whether the code uses the right types or syntax.
+              ### 🎯 Review this pull request based on **functional and behavioral correctness**:
+              - Does the change cause user-facing errors, crashes, or incorrect outputs?
+              - Do the new or modified functions still align with the intended flow (controllers, services, DTOs)?
+              - Does renaming, refactoring, or moving code break any other function that calls it?
+              - Do expected validations, responses, and edge-case behaviors still occur as intended?
 
-            ---
-            ### 🎯 Your task
-            Review this pull request based on **functional and behavioral correctness**:
-            - Does the change cause user-facing errors, crashes, or incorrect outputs?
-            - Do the new or modified functions still align with the intended flow (controllers, services, DTOs)?
-            - Does renaming, refactoring, or moving code break any other function that calls it?
-            - Do expected validations, responses, and edge-case behaviors still occur as intended?
+              ### 🚫 Avoid
+              - Do **not** comment on TypeScript types, DTOs, or code patterns.
+              - Do **not** focus on code style, formatting, or static correctness.
+              - Do **not** add extra sections like “Critical Issues”, “Impact Assessment”, or “Recommendation”.
 
-            ---
-            ### 🚫 Avoid
-            - Do **not** comment on TypeScript types, DTOs, or code patterns.
-            - Do **not** focus on code style, formatting, or static correctness.
-            - Do **not** add extra sections like “Critical Issues”, “Impact Assessment”, or “Recommendation”.
+              ### ✅ Focus instead on
+              - The *real-world effect* of this change (what would actually happen if this code ran?)
+              - Whether **users, data, or dependent systems** experience incorrect or missing behavior.
+              - Whether **renamed or deleted functions** cause broken flows or errors.
+              - Whether **expected validation rules** still trigger.
 
-            ---
-            ### ✅ Focus instead on
-            - The *real-world effect* of this change (what would actually happen if this code ran?)
-            - Whether **users, data, or dependent systems** experience incorrect or missing behavior.
-            - Whether **renamed or deleted functions** cause broken flows or errors.
-            - Whether **expected validation rules** still trigger.
+              ### General
+              - Simulate how the frontend and backend would behave for each case.
+              - Identify runtime errors, flow breaks, or logic inconsistencies.
+              - Use plain reasoning — what would a QA or PM notice?
+            [/Behavioral Check Guidelines]
 
-            ---
-            CONTEXT:
-            PR #: ${{ steps.pr-number.outputs.number }}
-            Diff URL: https://github.com/${{ github.repository }}/pull/${{ steps.pr-number.outputs.number }}.diff
-            Repository: ${{ github.repository }}
-            Assignee/Creator: @${{ steps.pr-meta.outputs.assignee }}
+            [Git Config]
+              CONTEXT:
+              PR #: ${{ steps.pr-number.outputs.number }}
+              Diff URL: https://github.com/${{ github.repository }}/pull/${{ steps.pr-number.outputs.number }}.diff
+              Repository: ${{ github.repository }}
+              Assignee/Creator: @${{ steps.pr-meta.outputs.assignee }}
 
-            Changed files:
-            ${{ steps.qa-sheet.outputs.files_summary }}
+              Changed files:
+              ${{ steps.qa-sheet.outputs.files_summary }}
+            [/Git Config]
 
-            ---
-            [Verdict] legend:
-            - ✅ PASS — requirement met  
-            - ❌ FAIL — requirement not met or broken  
-            - ⚠️ CANNOT VERIFY — not enough context or unrelated change
+            [Verdict legend]
+              - ✅ PASS — requirement met  
+              - ❌ FAIL — requirement not met or broken  
+              - ⚠️ CANNOT VERIFY — not enough context or unrelated change
+            [/Verdict legend]
 
-            [Inline Comment Format]:
+            [Inline Comment Format]
               <strong>[Case ID]</strong> (Verdict): "<Expected Result>"
 
               **Behavior Tested:**
@@ -145,69 +156,62 @@ jobs:
               ```suggestion
                 // if possible place your code suggestion here
               ```
+            [/Inline Comment Format]
+             
+            [COMMENT BODY RULES]
+              The final PR comment **must contain only these two sections** and nothing else:
+              1. `## 📄 Claude Summary`
+                  | **Metric** | **Count** |
+                  |:----------------------|:------:|
+                  | 📋 **Test Cases** | **n** |
+                  | ✅ Passed Test Cases | n |
+                  | ❌ Failed Test Cases | n |
+                  | ⚠️ Unverified Test Cases | n |
+      
+              2. `## 📄 Detailed test case result.
+                  <details>
+                  <summary> <strong>[Case ID]</strong> (verdict): [Expected Result] </summary>
+                    
+                  _**Behavior Tested:**_  
+                  <Describe intended user/system behavior in plain English.>
+      
+                  _**Observed Effect (from code):**_  
+                  <Describe what will actually happen — e.g., “controller will call a missing function, causing runtime error”.>
+      
+                  _**Impact:**_  
+                  <Explain what a user, client, or integration would see.>
+      
+                  ---
+                  </details>
 
-            ---
+              Do **not** include any of the following:
+              - “Critical Issues“, “Critical Issues Found”, “Impact Assessment”, “Recommendation”, “Job Run”, or “Branch” text
+              - Any text before or after the two sections
+              - Any extra horizontal lines or emojis not defined below
 
-            ### ⚠️ STRICT FORMAT RULES
-            The final PR comment **must contain only these two sections** and nothing else:
-            1. `## 📄 Claude Summary`
-                | **Metric** | **Count** |
-                |:----------------------|:------:|
-                | 📋 **Test Cases** | **n** |
-                | ✅ Passed Test Cases | n |
-                | ❌ Failed Test Cases | n |
-                | ⚠️ Unverified Test Cases | n |
-    
-            2. `## 📄 Detailed test case result.
-                <details>
-                <summary> <strong>[Case ID]</strong> (verdict): [Expected Result] </summary>
-                  
-                _**Behavior Tested:**_  
-                <Describe intended user/system behavior in plain English.>
-    
-                _**Observed Effect (from code):**_  
-                <Describe what will actually happen — e.g., “controller will call a missing function, causing runtime error”.>
-    
-                _**Impact:**_  
-                <Explain what a user, client, or integration would see.>
-    
-                ---
-                </details>
+              If you must show explanations, place them **inside** the two allowed sections.
+            [/COMMENT BODY RULES]
 
-            Do **not** include any of the following:
-            - “Critical Issues“, “Critical Issues Found”, “Impact Assessment”, “Recommendation”, “Job Run”, or “Branch” text
-            - Any text before or after the two sections
-            - Any extra horizontal lines or emojis not defined below
-
-            If you must show explanations, place them **inside** the two allowed sections.
-
-            ---
+            [Submit Review Rules]
+              - If any ❌ Failed or Critical issues exist, **submit a PR review requesting changes** using the tool `mcp__github__create_and_submit_pull_request_review`.
+                Use event: `REQUEST_CHANGES`, review body is "🚫 Changes required."
+              - If no ❌ Failed or Critical issues exist, **submit a PR review approving the changes** using the same tool.
+                Use event: `APPROVE`, review body is "​✅ LGTM!"
+            [/Submit Review Rules]
             
-            ### 🧩 What to Do (run in order asynchronous)
-            1. Post TODO list: gather test cases, run Claude's own tests, and post the results.
-            2. Recheck previous Claude review unresolved comments
+            [Inline Comment Rules]
+              - Add inline comments only for "❌ Fail" test cases only. 
+              - Exclude the "✅ PASS" test cases cases.
+              - Do not inline comment if there is same existing unresolved inline comment (no duplicate inline comment).
+              - Do not inline comment if lines that are not part of the PR's changes.
+            [/Inline Comment Rules]
+
+            [Previous Claude Review Rules]
               - Fetch all previous PR comments and reviews.
               - If an identical or similar comment already exists for the same file/line, skip it.
-              - If the issue appears resolved in the latest commit, run the event `Resolve Conversation` and do not re-comment.
+              - If the comment appears resolved in the latest commit, fire an event `Resolve Conversation`.
               - If all prior issues are fixed, clearly indicate APPROVED in the summary.
-            3. Run behavioral checks:
-               - Simulate how the frontend and backend would behave for each case.
-               - Identify runtime errors, flow breaks, or logic inconsistencies.
-               - Use plain reasoning — what would a QA or PM notice?
-            4. Combine all test cases (from steps 2–3), and remove duplicates.
-            5. From the combined test cases, submit inline comments for "❌ Fail" only. Exclude the "✅ PASS" cases, existing unresolved comment, and the lines that are not part of the PR's changes.
-            6. After submitting inline comments, submit a new review:
-              - If any ❌ Failed or Critical issues exist, **submit a PR review requesting changes** using the tool `mcp__github__create_and_submit_pull_request_review`.
-               Use event: `REQUEST_CHANGES`, review body is "🚫 Changes required."
-             - If no ❌ Failed or Critical issues exist, **submit a PR review approving the changes** using the same tool.
-               Use event: `APPROVE`, review body is "​✅ LGTM!"
-            7. Delete the track_progress PR comment created in step#1.
-
-            ---
-
-            Important:
-            - it should not repeat inline commenting the same unresolve comments
-            - it should fire an event "Resolve Conversation" to the previous comment were analyzed fixed already
+            [/Previous Claude Review Rules]
 
           claude_args: |
             --allowedTools "mcp__github__get_pull_request,
