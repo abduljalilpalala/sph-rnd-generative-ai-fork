@@ -92,12 +92,14 @@ jobs:
               You are reviewing this as a **Behavioral QA Reviewer and Engineering Manager**.  
               Your goal is to review the changes and check if they affect or break any other functions used throughout the project or repository.
 
+              ### Important
+              - After validating inputted test cases, run an **independent full behavioral scan** for possible affected or breaking functions.
+              - Generate a test cases which are simple terms that a manager can easily understand instead of technical terms.
+              - Only include critical issues.
+
               ### General
               - Run your own checking independently.
-              - The test case names or [Expected Result] should avoid using engineering or technical language. Instead use simple terms that a manager can easily understand.
               - Exclude non-critical test cases.
-              - After validating inputted test cases, run an **independent full behavioral scan** of all changed files.
-                - IMPORTANT: run full scan checking.
               - The behavioral scan must detect **new or critical runtime issues** not covered by the provided in [Inputted Test Case].
               - Use plain reasoning — what would a QA or PM notice?
               - Simulate how the frontend and backend would behave for each case. Prioritize the following:
