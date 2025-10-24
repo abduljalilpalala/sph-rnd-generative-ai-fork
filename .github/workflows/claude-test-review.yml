@@ -57,7 +57,7 @@ jobs:
               1. Post TODO list: gather test cases, run Claude's own tests, and post the results.
               2. Extract the inputted test case in the comment body. Strictly follow [Inputted Test Case Rules].
               3. Recheck previous Claude review unresolved comments. Strictly follow [Previous Claude Review Rules]. 
-              4. Run new behavioral checks. Strictly follow [Behavioral Check Guidelines].
+              4. Run your own behavioral checks. Strictly follow [Behavioral Check Guidelines].
               5. Combine all test cases (from steps 2–4), and remove duplicates. Strictly follow [Combined Test Cases Rules].
               6. Using the combined test cases, submit inline comments. Strictly follow [Inline Comment Rules].
               7. After submitting inline comments, submit a new review. Strictly follow [Submit Review Rules].
@@ -71,11 +71,13 @@ jobs:
               Your goal is to evaluate **whether the system will behave correctly for users and business workflows**, 
               not whether the code uses the right types or syntax.
 
-              ### 🎯 Review this pull request based on **functional and behavioral correctness**:
-              - Does the change cause user-facing errors, crashes, or incorrect outputs?
-              - Do the new or modified functions still align with the intended flow (controllers, services, DTOs)?
-              - Does renaming, refactoring, or moving code break any other function that calls it?
-              - Do expected validations, responses, and edge-case behaviors still occur as intended?
+              ### General
+              - Run your own checking independently. 
+              - Generate test cases that aren’t already listed in the [Inputted Test Case].
+              - Focus to critical issues only.
+              - Simulate how the frontend and backend would behave for each case.
+              - Identify runtime errors, flow breaks, or logic inconsistencies.
+              - Use plain reasoning — what would a QA or PM notice?
 
               ### 🚫 Avoid
               - Do **not** comment on TypeScript types, DTOs, or code patterns.
@@ -83,17 +85,17 @@ jobs:
               - Do **not** focus on non-critical issues like naming conventions.
               - Do **not** add extra sections like “Critical Issues”, “Impact Assessment”, or “Recommendation”.
 
+              ### 🎯 Review this pull request based on **functional and behavioral correctness**:
+              - Does the change cause user-facing errors, crashes, or incorrect outputs?
+              - Do the new or modified functions still align with the intended flow (controllers, services, DTOs)?
+              - Does renaming, refactoring, or moving code break any other function that calls it?
+              - Do expected validations, responses, and edge-case behaviors still occur as intended?
+
               ### ✅ Focus instead on
-              - Critical issues only.
               - The *real-world effect* of this change (what would actually happen if this code ran?)
               - Whether **users, data, or dependent systems** experience incorrect or missing behavior.
               - Whether **renamed or deleted functions** cause broken flows or errors.
               - Whether **expected validation rules** still trigger.
-
-              ### General
-              - Simulate how the frontend and backend would behave for each case.
-              - Identify runtime errors, flow breaks, or logic inconsistencies.
-              - Use plain reasoning — what would a QA or PM notice?
             [/Behavioral Check Guidelines]
 
             [Git Config]
@@ -127,8 +129,9 @@ jobs:
 
               **Suggestion:**
               <Plain English suggestion — e.g., “Restore correct function name in controller to fix flow”.>
+
               ```suggestion
-                // The code suggestion needs to apply to the full diff, not just part of it.
+                // The code suggestion needs to include the full `git diff`, not just part of it.
               ```
             [/Inline Comment Format]
 
