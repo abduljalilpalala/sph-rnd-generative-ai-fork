@@ -63,9 +63,6 @@ import fs from "fs";
 
     // 🔹 Print to console and write to file
     console.log(markdownOutput);
-    fs.writeFileSync("previous.md", markdownOutput, "utf8");
-
-    console.log(`✅ Extracted ${detailsMatches.length} test cases to previous.md`);
   } catch (err) {
     exitWith("❌ Error extracting previous test cases:", err);
   }
