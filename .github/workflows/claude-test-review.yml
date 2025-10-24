@@ -45,15 +45,13 @@ jobs:
       - name: Install dependencies
         run: npm install
       
-      - name: Fetch previous comment test cases
-        id: previous-test-case
+      - name: Fetch previous comment test cases (debug)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.issue.number }}
         run: |
-          node .github/scripts/getPreviousCases.mjs > previous.md
-          echo "previous_context<<EOF" >> $GITHUB_OUTPUT
-          cat previous.md >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "Running getPreviousCases.mjs..."
+          node .github/scripts/getPreviousCases.mjs
 
       - name: Debug event info
         run: |
