@@ -45,13 +45,15 @@ jobs:
       - name: Install dependencies
         run: npm install
       
-      - name: Fetch previous comment test cases (debug)
+      - name: Fetch previous comment test cases
+        id: previous-test-case
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.issue.number }}
         run: |
-          echo "Running getPreviousCases.mjs..."
-          node .github/scripts/getPreviousCases.mjs
+          node .github/scripts/getPreviousCases.mjs > previous.md
+          echo "previous_context<<EOF" >> $GITHUB_OUTPUT
+          cat previous.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Debug event info
         run: |
@@ -71,17 +73,21 @@ jobs:
           prompt: |
 
             🧩 What to Do (run in order asynchronous)
-              1. Post TODO list: gather test cases, run Claude's own tests, and post the results.
-              2. Extract the inputted test case in the comment body. Strictly follow [Inputted Test Case Rules].
-              3. Recheck previous Claude review comments. Strictly follow [Previous Claude Review Rules]. 
-              4. Run your own behavioral checks. Strictly follow [Behavioral Check Guidelines].
-              5. Combine all test cases (from steps 2–4), and remove duplicates. Strictly follow [Combined Test Cases Rules].
-              6. Using the combined test cases, submit inline comments. Strictly follow [Inline Comment Rules].
-              7. After submitting inline comments, submit a new review. Strictly follow [Submit Review Rules].
+            1. Post TODO list: gather test cases, run Claude's own tests, and post the results.
+            2. Extract the inputted test case in the comment body. Strictly follow [Inputted Test Case Rules].
+            3. Recheck Previous Test Cases comments. Strictly follow [Previous Test Cases Rules]. 
+            4. Run your own behavioral checks. Strictly follow [Behavioral Check Guidelines].
+            5. Combine all test cases (from steps 2–4), and remove duplicates. Strictly follow [Combined Test Cases Rules].
+            6. Using the combined test cases, submit inline comments. Strictly follow [Inline Comment Rules].
+            7. After submitting inline comments, submit a new review. Strictly follow [Submit Review Rules].
             
             ---
 
             SYSTEM INSTRUCTION (do not output):
+
+            [Previous Test Cases]
+              ${{ steps.previous-test-case.outputs.previous_context }}
+            [/Previous Test Cases]
 
             [Behavioral Check Guidelines]
               You are reviewing this pull request as a **Behavioral QA Reviewer and Engineering Manager**.  
@@ -146,7 +152,7 @@ jobs:
             [/ISSUE TYPE legend]
              
             [COMMENT BODY RULES]
-              The test cases used here are combined test cases from the previous claude review result and the current one.
+              The test cases used here are combined test cases from the Previous Test Cases result and the current one.
               The final PR comment **must contain only these two sections** and nothing else:
               1. `## 📄 Claude Summary`
                   | **Metric** | **Count** |
@@ -198,13 +204,13 @@ jobs:
               - Do not inline comment if lines that are not part of the PR's changes.
             [/Inline Comment Rules]
 
-            [Previous Claude Review Rules]
-              - Gather and retain all previous claude test cases (both "❌ Fail" and "✅ Pass"). Inlcude these test cases in the summary.
+            [Previous Test Cases Rules]
+              - Read all test cases (both "❌ Fail" and "✅ Pass"). Include these test cases in the summary.
               - Retain exactly the "Test Case ID" and "Expected Result". Do not transform or translate.
               - Rerun again these test cases to verify its working or not broken.
               - It should remain as "❌ Fail" if the code suggestion are not followed.
               - Otherwise, it should indicate as "✅ Pass" or APPROVED in the summary. And it should **RESOLVE CONVERSATION**
-            [/Previous Claude Review Rules]
+            [/Previous Test Cases Rules]
 
             [Inputted Test Case Rules]
               - Find the last comment which contain "@claude-test-review"
@@ -217,9 +223,9 @@ jobs:
             [/Inputted Test Case Rules]
             
             [Combined Test Cases Rules]
-              - Add up the gathered test cases: [Inputted Test Case], [Previous Claude Review], [Behavioral Check]
+              - Add up the gathered test cases: [Inputted Test Case], [Previous Test Cases], [Behavioral Check]
               - Remove similar / duplicate test cases. (start removing starting from the last).
-              - Retain [Previous Claude Review]'s test case ID.
+              - Retain [Previous Test Cases]'s test case ID.
             [/Combined Test Cases Rules]
 
           claude_args: |
