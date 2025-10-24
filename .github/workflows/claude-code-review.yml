@@ -9,13 +9,14 @@ on:
 jobs:
   claude-review:
     if: |
-      (github.event_name == 'issue_comment' && 
+      (github.event_name == 'issue_comment' &&
        github.event.issue.pull_request &&
        contains(github.event.comment.body, '@claude-review')) ||
       (github.event_name == 'pull_request' &&
        github.event.label.name == 'claude-review')
 
     runs-on: [self-hosted, claude-code-review]
+
     permissions:
       contents: read
       pull-requests: write
@@ -111,7 +112,7 @@ jobs:
             echo "⚠️ verdict.txt not found"
           fi
 
-      - name: Add Label - Approved
+      - name: Add Label and Approve - Approved
         if: steps.read-verdict.outputs.verdict == 'approved'
         uses: actions/github-script@v7
         with:
@@ -140,7 +141,58 @@ jobs:
             });
             console.log('✅ Added "Claude Code Approved" label');
 
-            // Create an APPROVE review
+            // Get PR details
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+
+            // Get all reviews on the PR
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+
+            // Find the most recent REQUEST_CHANGES review
+            const requestChangesReview = reviews.reverse().find(review =>
+              review.user.login === 'github-actions[bot]' &&
+              review.state === 'CHANGES_REQUESTED'
+            );
+
+            // Dismiss if found
+            if (requestChangesReview) {
+              await github.rest.pulls.dismissReview({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+                review_id: requestChangesReview.id,
+                message: 'Claude has approved the changes. Previous change requests have been addressed.'
+              });
+              console.log('✅ Dismissed previous REQUEST_CHANGES review');
+            }
+
+            // Get Claude’s approval comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              per_page: 100
+            });
+
+            const claudeComment = comments.reverse().find(comment =>
+              comment.user.login === 'claude[bot]' &&
+              comment.body.includes('## 🧩 Overview')
+            );
+
+            let approvalBody = '✅ **Approved by Claude Code review.**';
+
+            if (claudeComment) {
+              approvalBody = `### ✅ Approved by Claude Code review\n\n![Claude](https://raw.githubusercontent.com/anthropics/anthropic-cookbook/main/misc/anthropic_icon.png)\n\n[📋 **View detailed review →**](${claudeComment.html_url})`;
+            }
+
+            // Create APPROVE review
             await github.rest.pulls.createReview({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -180,14 +232,37 @@ jobs:
             });
             console.log('✅ Added "Claude Requests Changes" label');
 
-            // Get the PR to get the latest commit SHA
+            // Get PR
             const { data: pr } = await github.rest.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: prNumber
             });
 
-            // Get the most recent comment from Claude (claude[bot])
+            // Dismiss any previous APPROVE reviews
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+
+            const approveReview = reviews.reverse().find(review =>
+              review.user.login === 'github-actions[bot]' &&
+              review.state === 'APPROVED'
+            );
+
+            if (approveReview) {
+              await github.rest.pulls.dismissReview({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+                review_id: approveReview.id,
+                message: 'Claude has identified issues that need to be addressed.'
+              });
+              console.log('✅ Dismissed previous APPROVE review');
+            }
+
+            // Get latest Claude comment
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -201,13 +276,13 @@ jobs:
               comment.body.includes('## 🧩 Overview')
             );
 
-            let reviewBody = 'Changes requested by Claude Code review. Please review the detailed feedback in the comments.';
+            let reviewBody = '🤖 **Changes requested by Claude Code review.** Please review the detailed feedback in the comments.';
 
             if (claudeComment) {
-              reviewBody = `Changes requested by Claude Code review.\n\n[📋 View detailed review](${claudeComment.html_url})`;
+              reviewBody = `### 🤖 Changes requested by Claude Code review\n\n![Claude](https://raw.githubusercontent.com/anthropics/anthropic-cookbook/main/misc/anthropic_icon.png)\n\n[📋 **View detailed review →**](${claudeComment.html_url})`;
             }
 
-            // Create a review with REQUEST_CHANGES
+            // Create REQUEST_CHANGES review
             await github.rest.pulls.createReview({
               owner: context.repo.owner,
               repo: context.repo.repo,
