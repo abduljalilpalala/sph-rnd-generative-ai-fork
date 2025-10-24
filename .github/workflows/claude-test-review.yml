@@ -70,11 +70,11 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: true
           prompt: |
-
+            
             🧩 What to Do (run in order asynchronous)
             1. Post TODO list: gather test cases, run Claude's own tests, and post the results.
             2. Extract the inputted test case in the comment body. Strictly follow [Inputted Test Case Rules].
-            3. Recheck Previous Test Cases comments. Strictly follow [Previous Test Cases Rules]. 
+            3. Review and enlist again Previous Test Cases. Strictly follow [Previous Test Cases Rules]. 
             4. Run your own behavioral checks. Strictly follow [Behavioral Check Guidelines].
             5. Combine all test cases (from steps 2–4), and remove duplicates. Strictly follow [Combined Test Cases Rules].
             6. Using the combined test cases, submit inline comments. Strictly follow [Inline Comment Rules].
@@ -84,9 +84,8 @@ jobs:
 
             SYSTEM INSTRUCTION (do not output):
 
-            [Previous Test Cases]
-              ${{ steps.previous-test-case.outputs.previous_context }}
-            [/Previous Test Cases]
+            ## Previous Test Cases
+            ${{ steps.previous-test-case.outputs.previous_context }}
 
             [Behavioral Check Guidelines]
               You are reviewing this as a **Behavioral QA Reviewer and Engineering Manager**.  
@@ -218,11 +217,9 @@ jobs:
             [/Inline Comment Rules]
 
             [Previous Test Cases Rules]
-              - Read all test cases (both "❌ Fail" and "✅ Pass"). Include these test cases in the summary.
               - Retain exactly the "Test Case ID", "Test Case Title" and "Test Case summary description". Do not transform or translate.
-              - Rerun again these test cases to verify its working or not broken.
               - It should remain as "❌ Fail" if the code suggestion are not followed.
-              - Otherwise, it should indicate as "✅ Pass" or APPROVED in the summary. And it should **RESOLVE CONVERSATION**
+              - Otherwise, it should indicate as "✅ Pass" or APPROVED in the summary.
             [/Previous Test Cases Rules]
 
             [Inputted Test Case Rules]
