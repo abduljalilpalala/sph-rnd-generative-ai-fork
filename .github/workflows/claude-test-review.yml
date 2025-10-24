@@ -57,10 +57,10 @@ jobs:
               1. Post TODO list: gather test cases, run Claude's own tests, and post the results.
               2. Extract the inputted test case in the comment body. Strictly follow [Inputted Test Case Rules].
               3. Recheck previous Claude review unresolved comments. Strictly follow [Previous Claude Review Rules]. 
-              4. Run new behavioral checks. Strictly follow [Behavioral Check Guidelines]
-              5. Combine all test cases (from steps 2–4), and remove duplicates.
-              6. From the combined test cases, submit inline comments. Strictly follow [Inline Comment Rules]
-              7. After submitting inline comments, submit a new review. Strictly follow [Submit Review Rules]
+              4. Run new behavioral checks. Strictly follow [Behavioral Check Guidelines].
+              5. Combine all test cases (from steps 2–4), and remove duplicates. Strictly follow [Combined Test Cases Rules].
+              6. Using the combined test cases, submit inline comments. Strictly follow [Inline Comment Rules].
+              7. After submitting inline comments, submit a new review. Strictly follow [Submit Review Rules].
             
             ---
 
@@ -208,6 +208,11 @@ jobs:
               - Should separate test case per newline if no bullets provided
               - Exact line must be retain as [Expected Result]. Do not transform/translate.
             [/Inputted Test Case Rules]
+            
+            [Combined Test Cases Rules]
+              - Add up the gathered test cases: [Inputted Test Case], [Previous Claude Review], [Behavioral Check]
+              - Remove similar / duplicate test cases. (start removing starting from the last).
+            [/Combined Test Cases Rules]
 
           claude_args: |
             --allowedTools "mcp__github__get_pull_request,
