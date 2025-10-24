@@ -57,7 +57,7 @@ jobs:
               1. Post TODO list: gather test cases, run Claude's own tests, and post the results.
               2. Check inputted test case in the comment body. Strictly follow [Inputted Test Case Rules].
               3. Recheck previous Claude review unresolved comments. Strictly follow [Previous Claude Review Rules]. 
-              4. Always rerun the behavioral checks to find any new issues apart from the last claude review. Strictly follow [Behavioral Check Guidelines]
+              4. Run new behavioral checks. Strictly follow [Behavioral Check Guidelines]
               5. Combine all test cases (from steps 2–4), and remove duplicates.
               6. From the combined test cases, submit inline comments. Strictly follow [Inline Comment Rules]
               7. After submitting inline comments, submit a new review. Strictly follow [Submit Review Rules]
