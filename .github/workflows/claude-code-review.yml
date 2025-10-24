@@ -62,22 +62,36 @@ jobs:
           additional_permissions: |
             actions: read
           prompt: |
-            Review PR #${{ steps.pr-number.outputs.number }} thoroughly using GitHub MCP tools.
+            You are reviewing PR #${{ steps.pr-number.outputs.number }} in repository ${{ github.repository }}.
 
-            **IMPORTANT INSTRUCTIONS:**
+            Execute the following steps IN ORDER and report completion of each step:
 
-            1. First, fetch the PR details and diff:
-               - Use mcp__github__get_pull_request to get PR info
-               - Use mcp__github__get_pull_request_diff to see all changes
+            ═══════════════════════════════════════════════════════════
+            STEP 1: FETCH PR INFORMATION
+            ═══════════════════════════════════════════════════════════
+            1a. Call mcp__github__get_pull_request with:
+                - owner: "${{ github.repository_owner }}"
+                - repo: "${{ github.event.repository.name }}"
+                - pull_number: ${{ steps.pr-number.outputs.number }}
 
-            2. Perform your code review following these guidelines:
-               - CLAUDE.md adherence is mandatory
-               - Check for bugs, security issues, and best practices
-               - Respect linter configurations (ESLint, PHP-CS-Fixer, etc.)
-               - Skip purely stylistic issues covered by linters
+            1b. Call mcp__github__get_pull_request_diff to see all changes
 
-            3. Post your review comment using mcp__github__add_issue_comment with this format:
+            ═══════════════════════════════════════════════════════════
+            STEP 2: ANALYZE CODE
+            ═══════════════════════════════════════════════════════════
+            Review the code following these guidelines:
+            - CLAUDE.md adherence is mandatory
+            - Check for bugs, security issues, and best practices
+            - Respect linter configurations (ESLint, PHP-CS-Fixer, etc.)
+            - Skip purely stylistic issues covered by linters
+            - Determine verdict: ✅ Approved OR 🛠️ Needs Revision
 
+            ═══════════════════════════════════════════════════════════
+            STEP 3: POST REVIEW COMMENT
+            ═══════════════════════════════════════════════════════════
+            Call mcp__github__add_issue_comment with this EXACT format:
+
+            ```
             ## 🧩 Overview
             - Brief summary of what this PR does
 
@@ -89,50 +103,68 @@ jobs:
             - Skip purely stylistic issues covered by our linter
 
             ## 💡 Recommendations
-            - Provide concrete improvement ideas or code snippets:
-              ```ts
-              // Example code suggestion
-              if (!user?.id) throw new Error("User not found");
-              ```
+            - Provide concrete improvement ideas or code snippets
 
             ## 🧾 Verdict
-            - ✅ Approved / 🛠️ Needs Revision
+            - [✅ Approved OR 🛠️ Needs Revision]
             - Confidence level, maintainability, and test coverage impression
+            ```
 
-            4. **Based on your verdict, perform the following actions:**
+            ═══════════════════════════════════════════════════════════
+            STEP 4: APPLY LABELS (CRITICAL - MUST EXECUTE)
+            ═══════════════════════════════════════════════════════════
 
-            **IF APPROVED (✅ Approved):**
-            - Use mcp__github__add_labels to add the label "Claude Code Approved" to PR #${{ steps.pr-number.outputs.number }}
-            - Use mcp__github__remove_label to remove "Claude Requests Changes" if it exists (may not exist, that's okay)
+            OPTION A - IF VERDICT IS "✅ Approved":
 
-            **IF NEEDS REVISION (🛠️ Needs Revision):**
-            - Use mcp__github__add_labels to add the label "Claude Requests Changes" to PR #${{ steps.pr-number.outputs.number }}
-            - Use mcp__github__remove_label to remove "Claude Code Approved" if it exists (may not exist, that's okay)
-            - Use mcp__github__create_and_submit_pull_request_review with event="REQUEST_CHANGES" to create an official review request
-            - In the review body, include a summary of the key issues from your ⚠️ Issues section
-            - If there are specific file/line issues, use mcp__github_inline_comment__create_inline_comment to add inline comments on the problematic code
+            4a. Call mcp__github__add_labels with EXACTLY:
+                {
+                  "owner": "${{ github.repository_owner }}",
+                  "repo": "${{ github.event.repository.name }}",
+                  "issue_number": ${{ steps.pr-number.outputs.number }},
+                  "labels": ["Claude Code Approved"]
+                }
 
-            5. **CRITICAL:** Make sure to actually call the MCP tools to add/remove labels and create reviews. Don't just mention doing it - actually execute the tool calls.
+            4b. Call mcp__github__remove_label to remove "Claude Requests Changes"
+                (If this fails with 404, that's okay - label doesn't exist)
 
-            ---
-            **Remember:**
-            - Use MCP tools to interact with GitHub (don't just describe what should happen)
-            - Maintain identical section titles & order across all PRs
-            - Only include new or changed findings in subsequent runs
-            - Use concise and professional tone throughout
+            OPTION B - IF VERDICT IS "🛠️ Needs Revision":
+
+            4a. Call mcp__github__add_labels with EXACTLY:
+                {
+                  "owner": "${{ github.repository_owner }}",
+                  "repo": "${{ github.event.repository.name }}",
+                  "issue_number": ${{ steps.pr-number.outputs.number }},
+                  "labels": ["Claude Requests Changes"]
+                }
+
+            4b. Call mcp__github__remove_label to remove "Claude Code Approved"
+                (If this fails with 404, that's okay - label doesn't exist)
+
+            4c. Call mcp__github__create_and_submit_pull_request_review with:
+                {
+                  "owner": "${{ github.repository_owner }}",
+                  "repo": "${{ github.event.repository.name }}",
+                  "pull_number": ${{ steps.pr-number.outputs.number }},
+                  "event": "REQUEST_CHANGES",
+                  "body": "Changes requested. Please review the detailed feedback in the comments above."
+                }
+
+            ═══════════════════════════════════════════════════════════
+            CRITICAL EXECUTION RULES:
+            ═══════════════════════════════════════════════════════════
+            - You MUST actually call mcp__github__add_labels tool
+            - You MUST use the exact JSON structure shown above
+            - Labels parameter MUST be an array: ["Label Name"]
+            - Do NOT just describe what you would do - EXECUTE the tool calls
+            - Do NOT add inline comments - keep all feedback in the single summary
+            - Report any errors if tool calls fail
 
           claude_args: |
             --allowed-tools "mcp__github__get_pull_request,
                             mcp__github__get_pull_request_files,
                             mcp__github__get_pull_request_diff,
-                            mcp__github__create_pending_pull_request_review,
-                            mcp__github__add_comment_to_pending_review,
-                            mcp__github__submit_pending_pull_request_review,
-                            mcp__github_inline_comment__create_inline_comment,
                             mcp__github__create_and_submit_pull_request_review,
                             mcp__github__add_issue_comment,
-                            mcp__github__get_pull_request_comments,
-                            mcp__github__get_pull_request_reviews,
                             mcp__github__create_issue_comment,
                             mcp__github__add_labels,
                             mcp__github__remove_label"
