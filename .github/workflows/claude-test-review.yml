@@ -84,11 +84,12 @@ jobs:
 
             🧩 What to Do (run in order asynchronous)
               1. Post TODO list: gather test cases, run Claude's own tests, and post the results.
-              2. Recheck previous Claude review unresolved comments. Strictly follow [Previous Claude Review Rules]. 
-              3. Always rerun the behavioral checks to find any new issues apart from the last claude review. Strictly follow [Behavioral Check Guidelines]
-              4. Combine all test cases (from steps 2–3), and remove duplicates.
-              5. From the combined test cases, submit inline comments. Strictly follow [Inline Comment Rules]
-              6. After submitting inline comments, submit a new review. Strictly follow [Submit Review Rules]
+              2. Check inputted test case in the comment body. Strictly follow [Inputted Test Case Rules].
+              3. Recheck previous Claude review unresolved comments. Strictly follow [Previous Claude Review Rules]. 
+              4. Always rerun the behavioral checks to find any new issues apart from the last claude review. Strictly follow [Behavioral Check Guidelines]
+              5. Combine all test cases (from steps 2–4), and remove duplicates.
+              6. From the combined test cases, submit inline comments. Strictly follow [Inline Comment Rules]
+              7. After submitting inline comments, submit a new review. Strictly follow [Submit Review Rules]
             
             ---
 
@@ -228,6 +229,12 @@ jobs:
               - It should remain as "❌ Fail" if the code suggestion are not followed.
               - Otherwise, it should indicate as "✅ Pass" or APPROVED in the summary. And it should **RESOLVE CONVERSATION**
             [/Previous Claude Review Rules]
+
+            [Inputted Test Case Rules]
+              - Extract content after "@claude-test-review"
+              - Should separate test case per bullets
+              - Should separate test case per newline if no bullets provided
+            [/Inputted Test Case Rules]
 
           claude_args: |
             --allowedTools "mcp__github__get_pull_request,
