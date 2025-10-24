@@ -97,6 +97,7 @@ jobs:
             ```
 
             Do NOT include any other text in this file - just the single word.
+            Do NOT commit verdict.txt to the current branch - it should only exist in the action's working directory.
 
       - name: Read Claude's Verdict
         id: read-verdict
