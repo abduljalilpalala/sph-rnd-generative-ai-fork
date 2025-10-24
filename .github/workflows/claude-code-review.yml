@@ -175,6 +175,26 @@ jobs:
               pull_number: prNumber
             });
 
+            // Get the most recent comment from Claude (claude[bot])
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              per_page: 100
+            });
+
+            // Find the most recent comment that contains the review format
+            const claudeComment = comments.reverse().find(comment => 
+              comment.user.login === 'claude[bot]' && 
+              comment.body.includes('## 🧩 Overview')
+            );
+
+            let reviewBody = 'Changes requested by Claude Code review. Please review the detailed feedback in the comments.';
+
+            if (claudeComment) {
+              reviewBody = `Changes requested by Claude Code review.\n\n[📋 View detailed review](${claudeComment.html_url})`;
+            }
+
             // Create a review with REQUEST_CHANGES
             await github.rest.pulls.createReview({
               owner: context.repo.owner,
@@ -182,7 +202,7 @@ jobs:
               pull_number: prNumber,
               commit_id: pr.head.sha,
               event: 'REQUEST_CHANGES',
-              body: 'Changes requested by Claude Code review. Please review the detailed feedback in the comments above.'
+              body: reviewBody
             });
             console.log('✅ Created REQUEST_CHANGES review');
 
