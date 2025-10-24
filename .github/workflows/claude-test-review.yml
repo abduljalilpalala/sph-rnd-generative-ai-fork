@@ -205,7 +205,7 @@ jobs:
 
             [Previous Test Cases Rules]
               - Read all test cases (both "❌ Fail" and "✅ Pass"). Include these test cases in the summary.
-              - Retain exactly the "Test Case ID" and "Expected Result". Do not transform or translate.
+              - Retain exactly the "Test Case ID", "Test Case Title" and "Test Case summary description". Do not transform or translate.
               - Rerun again these test cases to verify its working or not broken.
               - It should remain as "❌ Fail" if the code suggestion are not followed.
               - Otherwise, it should indicate as "✅ Pass" or APPROVED in the summary. And it should **RESOLVE CONVERSATION**
