@@ -55,7 +55,7 @@ jobs:
 
             🧩 What to Do (run in order asynchronous)
               1. Post TODO list: gather test cases, run Claude's own tests, and post the results.
-              2. Check inputted test case in the comment body. Strictly follow [Inputted Test Case Rules].
+              2. Extract the inputted test case in the comment body. Strictly follow [Inputted Test Case Rules].
               3. Recheck previous Claude review unresolved comments. Strictly follow [Previous Claude Review Rules]. 
               4. Run new behavioral checks. Strictly follow [Behavioral Check Guidelines]
               5. Combine all test cases (from steps 2–4), and remove duplicates.
@@ -202,6 +202,7 @@ jobs:
             [/Previous Claude Review Rules]
 
             [Inputted Test Case Rules]
+              - Find the last comment which contain "@claude-test-review"
               - Extract content after "@claude-test-review"
               - Should separate test case per bullets
               - Should separate test case per newline if no bullets provided
