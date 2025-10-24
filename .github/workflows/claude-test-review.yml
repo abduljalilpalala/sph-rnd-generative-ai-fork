@@ -212,6 +212,7 @@ jobs:
             [Combined Test Cases Rules]
               - Add up the gathered test cases: [Inputted Test Case], [Previous Claude Review], [Behavioral Check]
               - Remove similar / duplicate test cases. (start removing starting from the last).
+              - Retain [Previous Claude Review]'s test case ID.
             [/Combined Test Cases Rules]
 
           claude_args: |
