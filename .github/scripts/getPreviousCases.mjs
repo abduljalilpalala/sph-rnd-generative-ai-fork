@@ -6,7 +6,7 @@ import fs from "fs";
   try {
     const { owner, repo, prNumber } = repoInfo;
 
-    // 🔹 Fetch all PR comments (issue comments, not review comments)
+    // 🔹 Fetch all PR comments (issue comments)
     const { data: comments } = await octokit.rest.issues.listComments({
       owner,
       repo,
@@ -19,7 +19,7 @@ import fs from "fs";
       return;
     }
 
-    // 🔹 Filter only comments that contain Claude summary section
+    // 🔹 Filter comments that contain Claude summary
     const claudeComments = comments.filter((c) =>
       c.body?.includes("## 📄 Claude Summary")
     );
@@ -37,32 +37,62 @@ import fs from "fs";
     const body = latest.body || "";
     const marker = "## 📄 Detailed test case result";
 
-    // 🔹 Find starting point of "Detailed test case result"
+    // 🔹 Find start marker
     const startIndex = body.indexOf(marker);
     if (startIndex === -1) {
       console.log("⚠️ Could not find '## 📄 Detailed test case result' section.");
       return;
     }
 
-    // 🔹 Extract everything after that line
+    // 🔹 Extract everything after the marker
     const contentAfter = body.slice(startIndex + marker.length).trim();
 
-    // 🔹 Stop before the next "---" or next section divider (if any)
-    // Match all <details>...</details> blocks
+    // 🔹 Match all <details>...</details> blocks
     const detailsMatches = [...contentAfter.matchAll(/<details>[\s\S]*?<\/details>/g)];
-
     if (!detailsMatches.length) {
       console.log("none");
       return;
     }
 
-    // 🔹 Combine and clean output
-    const markdownOutput = detailsMatches
-      .map((m) => m[0].trim())
-      .join("\n\n");
+    // 🔹 Parse each test case
+    const testCases = detailsMatches.map((m) => {
+      const block = m[0];
 
-    // 🔹 Print to console and write to file
-    console.log(markdownOutput);
+      // Extract Test Case ID, Verdict, and Expected Result
+      const summaryMatch = block.match(
+        /<summary>\s*<strong>\[([^\]]+)\]<\/strong>\s*\(([^)]+)\):\s*(.*?)<\/summary>/is
+      );
+
+      const TEST_CASE_ID = summaryMatch ? summaryMatch[1].trim() : "";
+      const VERDICT = summaryMatch ? summaryMatch[2].trim() : "";
+      const EXPECTED_RESULT = summaryMatch ? summaryMatch[3].trim() : "";
+
+      // Extract all lines inside the <details> block after the summary
+      const contentMatch = block.match(/<\/summary>([\s\S]*?)<\/details>/i);
+      let DETAILS = contentMatch ? contentMatch[1].trim() : "";
+
+      // Clean Markdown symbols
+      DETAILS = DETAILS
+        .replace(/^>+/gm, "") // remove blockquotes
+        .replace(/[_*`]/g, "") // remove markdown emphasis
+        .replace(/-{3,}/g, "") // remove divider lines
+        .replace(/\n{2,}/g, "\n") // normalize multiple newlines
+        .trim();
+
+      return {
+        TEST_CASE_ID,
+        VERDICT,
+        EXPECTED_RESULT,
+        DETAILS,
+      };
+    });
+
+    // 🔹 Output JSON to console
+    const jsonOutput = JSON.stringify(testCases, null, 2);
+    console.log(jsonOutput);
+
+    // 🔹 Optionally write to file (useful for debugging)
+    fs.writeFileSync("previous.json", jsonOutput, "utf8");
   } catch (err) {
     exitWith("❌ Error extracting previous test cases:", err);
   }
