@@ -62,24 +62,20 @@ jobs:
           additional_permissions: |
             actions: read
           prompt: |
-            You are reviewing PR #${{ steps.pr-number.outputs.number }} in repository ${{ github.repository }}.
+            Review PR #${{ steps.pr-number.outputs.number }} in repository ${{ github.repository }}.
 
-            Execute the following steps IN ORDER and report completion of each step:
+            Execute the following steps IN ORDER:
 
             ═══════════════════════════════════════════════════════════
             STEP 1: FETCH PR INFORMATION
             ═══════════════════════════════════════════════════════════
-            1a. Call mcp__github__get_pull_request with:
-                - owner: "${{ github.repository_owner }}"
-                - repo: "${{ github.event.repository.name }}"
-                - pull_number: ${{ steps.pr-number.outputs.number }}
-
-            1b. Call mcp__github__get_pull_request_diff to see all changes
+            1. Use mcp__github__get_pull_request to get PR details
+            2. Use mcp__github__get_pull_request_diff to see all changes
 
             ═══════════════════════════════════════════════════════════
-            STEP 2: ANALYZE CODE
+            STEP 2: PERFORM CODE REVIEW
             ═══════════════════════════════════════════════════════════
-            Review the code following these guidelines:
+            Analyze the code following these guidelines:
             - CLAUDE.md adherence is mandatory
             - Check for bugs, security issues, and best practices
             - Respect linter configurations (ESLint, PHP-CS-Fixer, etc.)
@@ -89,9 +85,8 @@ jobs:
             ═══════════════════════════════════════════════════════════
             STEP 3: POST REVIEW COMMENT
             ═══════════════════════════════════════════════════════════
-            Call mcp__github__add_issue_comment with this EXACT format:
+            Use mcp__github__add_issue_comment to post a comprehensive review with this format:
 
-            ```
             ## 🧩 Overview
             - Brief summary of what this PR does
 
@@ -108,66 +103,48 @@ jobs:
             ## 🧾 Verdict
             - [✅ Approved OR 🛠️ Needs Revision]
             - Confidence level, maintainability, and test coverage impression
-            ```
 
             ═══════════════════════════════════════════════════════════
-            STEP 4: APPLY LABELS (CRITICAL - MUST EXECUTE)
+            STEP 4: APPLY LABELS (MUST EXECUTE)
             ═══════════════════════════════════════════════════════════
 
-            OPTION A - IF VERDICT IS "✅ Approved":
+            IF VERDICT IS "✅ Approved":
+            1. Use mcp__github__add_labels with:
+               - owner: "${{ github.repository_owner }}"
+               - repo: "${{ github.event.repository.name }}"
+               - issue_number: ${{ steps.pr-number.outputs.number }}
+               - labels: ["Claude Code Approved"]
 
-            4a. Call mcp__github__add_labels with EXACTLY:
-                {
-                  "owner": "${{ github.repository_owner }}",
-                  "repo": "${{ github.event.repository.name }}",
-                  "issue_number": ${{ steps.pr-number.outputs.number }},
-                  "labels": ["Claude Code Approved"]
-                }
+            2. Use mcp__github__remove_label to remove "Claude Requests Changes" (ignore if fails)
 
-            4b. Call mcp__github__remove_label to remove "Claude Requests Changes"
-                (If this fails with 404, that's okay - label doesn't exist)
+            IF VERDICT IS "🛠️ Needs Revision":
+            1. Use mcp__github__add_labels with:
+               - owner: "${{ github.repository_owner }}"
+               - repo: "${{ github.event.repository.name }}"
+               - issue_number: ${{ steps.pr-number.outputs.number }}
+               - labels: ["Claude Requests Changes"]
 
-            OPTION B - IF VERDICT IS "🛠️ Needs Revision":
+            2. Use mcp__github__remove_label to remove "Claude Code Approved" (ignore if fails)
 
-            4a. Call mcp__github__add_labels with EXACTLY:
-                {
-                  "owner": "${{ github.repository_owner }}",
-                  "repo": "${{ github.event.repository.name }}",
-                  "issue_number": ${{ steps.pr-number.outputs.number }},
-                  "labels": ["Claude Requests Changes"]
-                }
-
-            4b. Call mcp__github__remove_label to remove "Claude Code Approved"
-                (If this fails with 404, that's okay - label doesn't exist)
-
-            4c. Call mcp__github__create_and_submit_pull_request_review with:
-                {
-                  "owner": "${{ github.repository_owner }}",
-                  "repo": "${{ github.event.repository.name }}",
-                  "pull_number": ${{ steps.pr-number.outputs.number }},
-                  "event": "REQUEST_CHANGES",
-                  "body": "Changes requested. Please review the detailed feedback in the comments above."
-                }
+            3. Use mcp__github__create_and_submit_pull_request_review with:
+               - owner: "${{ github.repository_owner }}"
+               - repo: "${{ github.event.repository.name }}"
+               - pull_number: ${{ steps.pr-number.outputs.number }}
+               - event: "REQUEST_CHANGES"
+               - body: "Changes requested. Please review the detailed feedback in the comments above."
 
             ═══════════════════════════════════════════════════════════
-            CRITICAL EXECUTION RULES:
+            CRITICAL REQUIREMENTS:
             ═══════════════════════════════════════════════════════════
-            - You MUST actually call mcp__github__add_labels tool
-            - You MUST use the exact JSON structure shown above
-            - Labels parameter MUST be an array: ["Label Name"]
-            - Do NOT just describe what you would do - EXECUTE the tool calls
-            - Do NOT add inline comments - keep all feedback in the single summary
-            - Report any errors if tool calls fail
+            - You MUST actually CALL the mcp__github__add_labels tool
+            - Do NOT use bash/gh commands - only use MCP tools
+            - Do NOT add inline comments - keep all feedback in one summary
+            - Report any errors if MCP tools fail
 
+          # CRITICAL: Enable the GitHub MCP server and specify allowed tools
           claude_args: |
-            --allowed-tools "mcp__github__get_pull_request,
-                            mcp__github__get_pull_request_files,
-                            mcp__github__get_pull_request_diff,
-                            mcp__github__create_and_submit_pull_request_review,
-                            mcp__github__add_issue_comment,
-                            mcp__github__create_issue_comment,
-                            mcp__github__add_labels,
-                            mcp__github__remove_label"
+            --mcp-server github
+            --allowed-tools "mcp__github__get_pull_request,mcp__github__get_pull_request_diff,mcp__github__add_issue_comment,mcp__github__create_issue_comment,mcp__github__add_labels,mcp__github__remove_label,mcp__github__create_and_submit_pull_request_review"
 
       - name: Add completion reaction
         if: success() && github.event_name == 'issue_comment'
