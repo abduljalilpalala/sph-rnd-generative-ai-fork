@@ -140,6 +140,17 @@ jobs:
             });
             console.log('✅ Added "Claude Code Approved" label');
 
+            // Create an APPROVE review
+            await github.rest.pulls.createReview({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+              commit_id: pr.head.sha,
+              event: 'APPROVE',
+              body: approvalBody
+            });
+            console.log('✅ Created APPROVE review');
+
       - name: Add Label and Create Review - Needs Revision
         if: steps.read-verdict.outputs.verdict == 'needs_revision'
         uses: actions/github-script@v7
