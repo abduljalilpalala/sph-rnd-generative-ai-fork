@@ -189,7 +189,7 @@ jobs:
             let approvalBody = '✅ **Approved by Claude Code review.**';
 
             if (claudeComment) {
-              approvalBody = `### ✅ Approved by Claude Code review\n\n![Claude](https://raw.githubusercontent.com/anthropics/anthropic-cookbook/main/misc/anthropic_icon.png)\n\n[📋 **View detailed review →**](${claudeComment.html_url})`;
+              approvalBody = `### ✅ Approved by Claude Code review\n\n[📋 **View detailed review →**](${claudeComment.html_url})`;
             }
 
             // Create APPROVE review
@@ -279,7 +279,7 @@ jobs:
             let reviewBody = '🤖 **Changes requested by Claude Code review.** Please review the detailed feedback in the comments.';
 
             if (claudeComment) {
-              reviewBody = `### 🤖 Changes requested by Claude Code review\n\n![Claude](https://raw.githubusercontent.com/anthropics/anthropic-cookbook/main/misc/anthropic_icon.png)\n\n[📋 **View detailed review →**](${claudeComment.html_url})`;
+              reviewBody = `### 🤖 Changes requested by Claude Code review\n\n[📋 **View detailed review →**](${claudeComment.html_url})`;
             }
 
             // Create REQUEST_CHANGES review
