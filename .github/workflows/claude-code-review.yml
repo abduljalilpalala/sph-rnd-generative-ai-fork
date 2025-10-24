@@ -141,10 +141,8 @@ jobs:
             - Do NOT add inline comments - keep all feedback in one summary
             - Report any errors if MCP tools fail
 
-          # CRITICAL: Enable the GitHub MCP server and specify allowed tools
-          claude_args: |
-            --mcp-server github
-            --allowed-tools "mcp__github__get_pull_request,mcp__github__get_pull_request_diff,mcp__github__add_issue_comment,mcp__github__create_issue_comment,mcp__github__add_labels,mcp__github__remove_label,mcp__github__create_and_submit_pull_request_review"
+          # CRITICAL: Enable the GitHub MCP server
+          claude_args: --mcp-server github
 
       - name: Add completion reaction
         if: success() && github.event_name == 'issue_comment'
