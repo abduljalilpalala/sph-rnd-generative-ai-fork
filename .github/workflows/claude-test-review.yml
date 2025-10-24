@@ -56,7 +56,7 @@ jobs:
             🧩 What to Do (run in order asynchronous)
               1. Post TODO list: gather test cases, run Claude's own tests, and post the results.
               2. Extract the inputted test case in the comment body. Strictly follow [Inputted Test Case Rules].
-              3. Recheck previous Claude review unresolved comments. Strictly follow [Previous Claude Review Rules]. 
+              3. Recheck previous Claude review comments. Strictly follow [Previous Claude Review Rules]. 
               4. Run your own behavioral checks. Strictly follow [Behavioral Check Guidelines].
               5. Combine all test cases (from steps 2–4), and remove duplicates. Strictly follow [Combined Test Cases Rules].
               6. Using the combined test cases, submit inline comments. Strictly follow [Inline Comment Rules].
@@ -182,8 +182,8 @@ jobs:
             [/Inline Comment Rules]
 
             [Previous Claude Review Rules]
-              - Fetch all previous PR comments and reviews
-              - If an identical or similar comment already exists for the same file/line, skip it..
+              - Gather and retain all previous claude test cases (both "❌ Fail" and "✅ Pass"). Inlcude these test cases in the summary.
+              - Rerun again these test cases to verify its working or not broken.
               - It should remain as "❌ Fail" if the code suggestion are not followed.
               - Otherwise, it should indicate as "✅ Pass" or APPROVED in the summary. And it should **RESOLVE CONVERSATION**
             [/Previous Claude Review Rules]
