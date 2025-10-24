@@ -205,6 +205,7 @@ jobs:
               - Extract content after "@claude-test-review"
               - Should separate test case per bullets
               - Should separate test case per newline if no bullets provided
+              - Exact line must be retain as [Expected Result]. Do not transform/translate.
             [/Inputted Test Case Rules]
 
           claude_args: |
