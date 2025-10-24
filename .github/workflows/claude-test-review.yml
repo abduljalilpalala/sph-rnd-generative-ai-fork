@@ -45,35 +45,6 @@ jobs:
           echo "Branch Ref: ${{ github.ref }}"
           echo "GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}"
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
-
-      - name: Install dependencies
-        run: npm install
-
-      # 🧩 Extract inline test cases from comment
-      - name: Extract inline test cases from comment
-        id: inline-testcases
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          node .github/scripts/extractInlineTestCases.mjs > inline.md
-          echo "cases<<EOF" >> $GITHUB_OUTPUT
-          cat inline.md >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Fetch previous comment test cases
-        id: previous-test-case
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          node .github/scripts/getPreviousCases.mjs > previous.md
-          echo "previous_context<<EOF" >> $GITHUB_OUTPUT
-          cat previous.md >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
       - name: Run Claude Test Review
         id: claude-review
         uses: anthropics/claude-code-action@v1
