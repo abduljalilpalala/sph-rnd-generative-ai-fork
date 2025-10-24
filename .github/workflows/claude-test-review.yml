@@ -76,6 +76,7 @@ jobs:
             2. Extract the inputted test case in the comment body. Strictly follow [Inputted Test Case Rules].
             3. Recheck Previous Test Cases comments. Strictly follow [Previous Test Cases Rules]. 
             4. Run your own behavioral checks. Strictly follow [Behavioral Check Guidelines].
+              - Test case title or expected result generated in this step#4 should be simple terms that a manager can easily understand instead of technical terms.
             5. Combine all test cases (from steps 2–4), and remove duplicates. Strictly follow [Combined Test Cases Rules].
             6. Using the combined test cases, submit inline comments. Strictly follow [Inline Comment Rules].
             7. After submitting inline comments, submit a new review. Strictly follow [Submit Review Rules].
