@@ -73,6 +73,7 @@ jobs:
 
               ### General
               - Run your own checking independently. Focus to critical issues only.
+              - IMPORTANT: Check if these changes affects or breaks any other functions used across the whole repository.
               - After validating inputted test cases, run an **independent full behavioral scan** of all changed files.
                 - IMPORTANT: run full scan checking.
               - The behavioral scan must detect **new or critical runtime issues** not covered by the provided in [Inputted Test Case].
