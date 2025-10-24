@@ -156,8 +156,7 @@ jobs:
               **Suggestion:**
               <Plain English suggestion — e.g., “Restore correct function name in controller to fix flow”.>
               ```suggestion
-                // When proposing a code change, ensure the ```suggestion``` block fully replaces the old lines, including deletions. Do not append new lines below existing ones.
-                // If unsure, include the entire function body (or at least the full affected lines) so that GitHub’s “Commit suggestion” produces valid and working code.
+                // The code suggestion needs to apply to the full diff, not just part of it.
               ```
             [/Inline Comment Format]
 
@@ -217,6 +216,7 @@ jobs:
             
             [Inline Comment Rules]
               - Add inline comments only for "❌ Fail" test cases only. 
+              - The inline code suggestion needs to apply to the full diff, not just part of it.
               - Exclude the "✅ PASS" test cases cases.
               - Do not inline comment if there is same existing unresolved inline comment (no duplicate inline comment).
               - Do not inline comment if lines that are not part of the PR's changes.
