@@ -141,7 +141,7 @@ jobs:
               <Plain English suggestion — e.g., “Restore correct function name in controller to fix flow”.>
 
               ```suggestion
-                // The code suggestion needs to include the full `git diff`, not just part of it.
+                // The code suggestion should align exactly with the `git diff` line range changes. Please suggest nothing more or less.
               ```
             [/Inline Comment Format]
 
