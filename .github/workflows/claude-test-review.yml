@@ -64,7 +64,7 @@ jobs:
 
       - name: Resolve Passed Test Case Comments
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
         run: node .github/scripts/resolvePassedComments.mjs
 
       - name: Run Claude Test Review
