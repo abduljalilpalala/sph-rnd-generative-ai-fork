@@ -95,7 +95,7 @@ jobs:
 
             REVIEW SUBMISSION RULES:
             - Post inline comments directly on the relevant changed lines for each identified issue.
-            - Once all inline comments have been added, **submit them together as a “Request Changes” review**, not a normal review.
+            - Once all inline comments have been added, **submit them together as a single GitHub review using the “REQUEST_CHANGES” review event** (not a normal comment review).
             - After submitting the inline review as a “Request Changes” review, create a summary comment
               summarizing your findings, approval status, and next steps for the developer.
 
