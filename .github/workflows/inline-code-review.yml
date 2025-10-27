@@ -74,11 +74,14 @@ jobs:
             Use it to ensure your review aligns with the intended design and coding standards.
 
             IMPORTANT:
-            Before suggesting any inline comment:
-            - Fetch all previous PR comments and reviews.
-            - If an identical or similar comment already exists for the same file/line, skip it.
-            - If the issue appears resolved in the latest commit, do not re-comment.
-            - If all prior issues are fixed, clearly indicate APPROVED in the summary.
+              Before suggesting any inline comment:
+              - Fetch all previous PR comments and reviews.
+              - If an identical or similar comment already exists for the same file/line:
+                  - Check whether the issue has been resolved in the latest commit.
+                  - If the issue remains unresolved, you may re-comment or update the previous feedback for clarity.
+                  - If the issue has been resolved, skip re-commenting.
+              - If the issue is new or newly introduced, comment normally.
+              - If all prior issues have been addressed and no new problems are found, clearly indicate APPROVED in the summary.
 
             For each issue you identify:
             - Issue: Briefly describe the problem.
