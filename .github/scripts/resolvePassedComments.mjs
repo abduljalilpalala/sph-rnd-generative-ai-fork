@@ -7,11 +7,9 @@ import { execSync } from "child_process";
   try {
     const { owner, repo, prNumber } = repoInfo;
 
-    // 1️⃣ Call getPreviousCases to generate previous.json
     console.log("🔹 Running getPreviousCases...");
     execSync(`node .github/scripts/getPreviousCases.mjs`, { stdio: "inherit" });
 
-    // 2️⃣ Read parsed JSON
     if (!fs.existsSync("previous.json")) {
       exitWith("❌ Could not find previous.json");
       return;
@@ -29,53 +27,74 @@ import { execSync } from "child_process";
 
     console.log(`✅ Found ${passedIds.length} passed test cases to resolve.`);
 
-    // 3️⃣ Get all review comments
-    const { data: reviewComments } = await octokit.rest.pulls.listReviewComments({
+    // 1️⃣ Fetch all review threads (GraphQL is required to get threadId)
+    const threadsQuery = `
+      query($owner: String!, $repo: String!, $pr: Int!) {
+        repository(owner: $owner, name: $repo) {
+          pullRequest(number: $pr) {
+            reviewThreads(first: 100) {
+              nodes {
+                id
+                isResolved
+                comments(first: 10) {
+                  nodes {
+                    id
+                    body
+                    isMinimized
+                    path
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    `;
+
+    const threadData = await octokit.graphql(threadsQuery, {
       owner,
       repo,
-      pull_number: prNumber,
-      per_page: 100,
+      pr: parseInt(prNumber),
     });
 
-    const unresolved = reviewComments.filter((c) => !c.resolved);
+    const threads = threadData.repository.pullRequest.reviewThreads.nodes || [];
+    const unresolvedThreads = threads.filter((t) => !t.isResolved);
 
-    if (!unresolved.length) {
-      console.log("✅ No unresolved review comments.");
-      return;
-    }
+    console.log(`🔹 Found ${unresolvedThreads.length} unresolved threads.`);
 
-    // 4️⃣ Find comments matching TEST_CASE_ID
-    const matchedComments = unresolved.filter((comment) =>
-      passedIds.some((id) => comment.body.includes(id))
+    // 2️⃣ Find threads with comment bodies containing TEST_CASE_ID
+    const threadsToResolve = unresolvedThreads.filter((thread) =>
+      thread.comments.nodes.some((comment) =>
+        passedIds.some((id) => comment.body.includes(id))
+      )
     );
 
-    if (!matchedComments.length) {
-      console.log("✅ No unresolved comments match passed test cases.");
+    if (!threadsToResolve.length) {
+      console.log("✅ No unresolved threads matched passed test cases.");
       return;
     }
 
-    console.log(`🔹 Found ${matchedComments.length} matching unresolved comments.`);
+    console.log(`🟢 Found ${threadsToResolve.length} threads to resolve.`);
 
-    // 5️⃣ Resolve them
-    for (const comment of matchedComments) {
+    // 3️⃣ Resolve them via GraphQL mutation
+    const resolveMutation = `
+      mutation($threadId: ID!) {
+        resolveReviewThread(input: {threadId: $threadId}) {
+          thread { isResolved }
+        }
+      }
+    `;
+
+    for (const thread of threadsToResolve) {
       try {
-        console.log(`🟢 Resolving comment ${comment.id} (${comment.path})...`);
-        await octokit.request(
-          "PUT /repos/{owner}/{repo}/pulls/{pull_number}/comments/{comment_id}/resolve",
-          {
-            owner,
-            repo,
-            pull_number: prNumber,
-            comment_id: comment.id,
-          }
-        );
-        console.log(`✅ Resolved ${comment.id}`);
+        await octokit.graphql(resolveMutation, { threadId: thread.id });
+        console.log(`✅ Resolved thread: ${thread.id}`);
       } catch (err) {
-        console.warn(`⚠️ Failed to resolve ${comment.id}:`, err.message);
+        console.warn(`⚠️ Failed to resolve thread ${thread.id}:`, err.message);
       }
     }
 
-    console.log("🎉 Done resolving all passed test case comments!");
+    console.log("🎉 Done resolving all matching passed test case threads!");
   } catch (err) {
     exitWith("❌ Error in resolvePassedComments.mjs:", err);
   }
