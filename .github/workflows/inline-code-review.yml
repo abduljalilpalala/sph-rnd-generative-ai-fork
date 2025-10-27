@@ -52,13 +52,13 @@ jobs:
       - name: Checkout PR branch
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          # token: ${{ secrets.GITHUB_TOKEN }}
           ref: refs/pull/${{ github.event.issue.number }}/head
           fetch-depth: 1
 
-      - name: Fetch base branch
-        run: |
-          git fetch origin ${{ github.event.pull_request.base.ref }}
+      # - name: Fetch base branch
+      #   run: |
+      #     git fetch origin ${{ github.event.pull_request.base.ref }}
 
       - name: Run Claude Inline Code Review
         id: claude-review
