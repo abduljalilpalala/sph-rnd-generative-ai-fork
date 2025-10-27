@@ -17,7 +17,6 @@ jobs:
       github.event.issue.pull_request &&
       contains(github.event.comment.body, '@claude-test-review')
     runs-on: ubuntu-latest
-
     steps:
       - name: Add 👀 reaction to comment
         uses: actions/github-script@v7
@@ -40,11 +39,11 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install dependencies
         run: npm install
-      
+
       - name: Fetch previous comment test cases
         id: previous-test-case
         env:
@@ -70,7 +69,7 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: true
           prompt: |
-            
+
             🧩 What to Do (run in order asynchronous)
             1. Post TODO list: gather test cases, run Claude's own tests, and post the results.
             2. Extract the inputted test case in the comment body. Strictly follow [Inputted Test Case Rules].
@@ -79,7 +78,7 @@ jobs:
             5. Combine all test cases (from steps 2–4), and remove duplicates. Strictly follow [Combined Test Cases Rules].
             6. Using the combined test cases, submit inline comments. Strictly follow [Inline Comment Rules].
             7. After submitting inline comments, submit a new review. Strictly follow [Submit Review Rules].
-            
+
             ---
 
             SYSTEM INSTRUCTION (do not output):
@@ -173,7 +172,7 @@ jobs:
                   | ✅ Passed Test Cases | n |
                   | ❌ Failed Test Cases | n |
                   | ⚠️ Unverified Test Cases | n |
-      
+
               2. `## 📄 Detailed test case result.
                   <details>
                   <summary> <strong>[Case ID]</strong> (verdict): [ISSUE TYPE][Expected Result] </summary>
@@ -189,7 +188,7 @@ jobs:
                   >
                   > _**Suggestion:**_
                   > <Plain English suggestion — e.g., “Restore correct function name in controller to fix flow”.>
-      
+
                   ---
                   </details>
 
@@ -207,7 +206,7 @@ jobs:
               - If no ❌ Fail or Critical issues exist, **submit a PR review approving the changes** using the same tool.
                 Use event: `APPROVE`, review body is "​✅ LGTM!"
             [/Submit Review Rules]
-            
+
             [Inline Comment Rules]
               - Add inline comments only for "❌ Fail" test cases only. 
               - The inline code suggestion needs to apply to the full diff, not just part of it.
@@ -231,7 +230,7 @@ jobs:
                 - Do not paraphrase, translate, or modify the wording in any way.
                 - Wrap the user-provided sentence exactly as written.
             [/Inputted Test Case Rules]
-            
+
             [Combined Test Cases Rules]
               - Add up the gathered test cases: [Inputted Test Case], [Previous Test Cases], [Behavioral Check]
               - Remove similar / duplicate test cases. (start removing starting from the last).

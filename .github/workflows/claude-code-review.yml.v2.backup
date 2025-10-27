@@ -1,0 +1,332 @@
+name: Claude Code Review (v2.17 | Able to Change Request Review & Add Label)
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request:
+    types: [labeled]
+
+jobs:
+  claude-review:
+    if: |
+      (github.event_name == 'issue_comment' &&
+       github.event.issue.pull_request &&
+       contains(github.event.comment.body, '@claude-review')) ||
+      (github.event_name == 'pull_request' &&
+       github.event.label.name == 'claude-review')
+
+    runs-on: [self-hosted, claude-code-review]
+
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+
+    steps:
+      - name: Add eye reaction to acknowledge comment
+        if: github.event_name == 'issue_comment'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'eyes'
+            })
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'issue_comment' && format('refs/pull/{0}/head', github.event.issue.number) || github.event.pull_request.head.ref }}
+          fetch-depth: 1
+
+      - name: Set PR number
+        id: pr-number
+        run: |
+          if [ "${{ github.event_name }}" == "issue_comment" ]; then
+            echo "number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
+          else
+            echo "number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run Claude Code Review
+        id: claude-review
+        uses: anthropics/claude-code-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_CODE_REVIEW }}
+          track_progress: true
+          additional_permissions: |
+            actions: read
+          prompt: |
+            Review PR #${{ steps.pr-number.outputs.number }} in repository ${{ github.repository }}.
+
+            **INSTRUCTIONS:**
+
+            1. Read all files in the repository to understand the PR changes
+            2. Perform a comprehensive code review following CLAUDE.md guidelines
+            3. Post your review comment with this EXACT format:
+
+            ## 🧩 Overview
+            - Brief summary of what this PR does
+
+            ## 💪 Strengths
+            - Highlight good code patterns or architecture decisions
+
+            ## ⚠️ Issues
+            - List found bugs, risks, or inconsistencies
+            - Skip purely stylistic issues covered by our linter
+
+            ## 💡 Recommendations
+            - Provide concrete improvement ideas or code snippets
+
+            ## 🧾 Verdict
+            - [✅ Approved OR 🛠️ Needs Revision]
+            - Confidence level, maintainability, and test coverage impression
+
+            4. **CRITICAL: Create a file called `verdict.txt` in the working directory containing ONLY:**
+               - The word `approved` if your verdict is "✅ Approved"
+               - The word `needs_revision` if your verdict is "🛠️ Needs Revision"
+
+            **Example verdict.txt contents:**
+            ```
+            needs_revision
+            ```
+
+            Do NOT include any other text in this file - just the single word.
+            Do NOT commit verdict.txt to the current branch - it should only exist in the action's working directory.
+
+      - name: Read Claude's Verdict
+        id: read-verdict
+        run: |
+          if [ -f verdict.txt ]; then
+            VERDICT=$(cat verdict.txt | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
+            echo "verdict=$VERDICT" >> $GITHUB_OUTPUT
+            echo "Found verdict: $VERDICT"
+          else
+            echo "verdict=unknown" >> $GITHUB_OUTPUT
+            echo "⚠️ verdict.txt not found"
+          fi
+
+      - name: Add Label and Approve - Approved
+        if: steps.read-verdict.outputs.verdict == 'approved'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ steps.pr-number.outputs.number }};
+
+            // Remove "Claude Requests Changes" if it exists
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                name: 'Claude Requests Changes'
+              });
+              console.log('Removed "Claude Requests Changes" label');
+            } catch (error) {
+              console.log('Label "Claude Requests Changes" not found or already removed');
+            }
+
+            // Add "Claude Code Approved"
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              labels: ['Claude Code Approved']
+            });
+            console.log('✅ Added "Claude Code Approved" label');
+
+            // Get PR details
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+
+            // Get all reviews on the PR
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+
+            // Find the most recent REQUEST_CHANGES review
+            const requestChangesReview = reviews.reverse().find(review =>
+              review.user.login === 'github-actions[bot]' &&
+              review.state === 'CHANGES_REQUESTED'
+            );
+
+            // Dismiss if found
+            if (requestChangesReview) {
+              await github.rest.pulls.dismissReview({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+                review_id: requestChangesReview.id,
+                message: 'Claude has approved the changes. Previous change requests have been addressed.'
+              });
+              console.log('✅ Dismissed previous REQUEST_CHANGES review');
+            }
+
+            // Get Claude’s approval comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              per_page: 100
+            });
+
+            const claudeComment = comments.reverse().find(comment =>
+              comment.user.login === 'claude[bot]' &&
+              comment.body.includes('## 🧩 Overview')
+            );
+
+            let approvalBody = '✅ **Approved by Claude Code review.**';
+
+            if (claudeComment) {
+              approvalBody = `### ✅ Approved by Claude Code review\n\n[📋 **View detailed review →**](${claudeComment.html_url})`;
+            }
+
+            // Create APPROVE review
+            await github.rest.pulls.createReview({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+              commit_id: pr.head.sha,
+              event: 'APPROVE',
+              body: approvalBody
+            });
+            console.log('✅ Created APPROVE review');
+
+      - name: Add Label and Create Review - Needs Revision
+        if: steps.read-verdict.outputs.verdict == 'needs_revision'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ steps.pr-number.outputs.number }};
+
+            // Remove "Claude Code Approved" if it exists
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                name: 'Claude Code Approved'
+              });
+              console.log('Removed "Claude Code Approved" label');
+            } catch (error) {
+              console.log('Label "Claude Code Approved" not found or already removed');
+            }
+
+            // Add "Claude Requests Changes"
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              labels: ['Claude Requests Changes']
+            });
+            console.log('✅ Added "Claude Requests Changes" label');
+
+            // Get PR
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+
+            // Dismiss any previous APPROVE reviews
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+
+            const approveReview = reviews.reverse().find(review =>
+              review.user.login === 'github-actions[bot]' &&
+              review.state === 'APPROVED'
+            );
+
+            if (approveReview) {
+              await github.rest.pulls.dismissReview({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+                review_id: approveReview.id,
+                message: 'Claude has identified issues that need to be addressed.'
+              });
+              console.log('✅ Dismissed previous APPROVE review');
+            }
+
+            // Get latest Claude comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              per_page: 100
+            });
+
+            // Find the most recent comment that contains the review format
+            const claudeComment = comments.reverse().find(comment => 
+              comment.user.login === 'claude[bot]' && 
+              comment.body.includes('## 🧩 Overview')
+            );
+
+            let reviewBody = '🤖 **Changes requested by Claude Code review.** Please review the detailed feedback in the comments.';
+
+            if (claudeComment) {
+              reviewBody = `### 🤖 Changes requested by Claude Code review\n\n[📋 **View detailed review →**](${claudeComment.html_url})`;
+            }
+
+            // Create REQUEST_CHANGES review
+            await github.rest.pulls.createReview({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+              commit_id: pr.head.sha,
+              event: 'REQUEST_CHANGES',
+              body: reviewBody
+            });
+            console.log('✅ Created REQUEST_CHANGES review');
+
+      - name: Handle Unknown Verdict
+        if: steps.read-verdict.outputs.verdict == 'unknown'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ steps.pr-number.outputs.number }};
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: '⚠️ Could not determine review verdict. Please check the review comment above and manually add the appropriate label.'
+            });
+
+      - name: Add completion reaction
+        if: success() && github.event_name == 'issue_comment'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'rocket'
+            });
+
+      - name: Add failure reaction
+        if: failure() && github.event_name == 'issue_comment'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'confused'
+            });
