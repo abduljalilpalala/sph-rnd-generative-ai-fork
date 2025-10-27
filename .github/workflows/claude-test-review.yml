@@ -62,10 +62,21 @@ jobs:
           echo "Branch Ref: ${{ github.ref }}"
           echo "GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}"
 
-      - name: Resolve Passed Test Case Comments
+      - name: Collect Comment IDs for Resolution
+        id: collect-resolve-ids
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
-        run: node .github/scripts/resolvePassedComments.mjs
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node .github/scripts/getResolvedCommentIds.mjs
+
+      - name: Let Claude Resolve Passed Comments via MCP
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          track_progress: true
+          prompt: |
+            Use the tool `mcp__github__resolve_pull_request_conversation`
+            to resolve all comment threads whose IDs are listed in `resolved_comment_ids.json`.
+            Make sure to handle them one by one and skip any that are already resolved.
 
       - name: Run Claude Test Review
         id: claude-review
