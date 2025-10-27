@@ -62,35 +62,17 @@ jobs:
           echo "Branch Ref: ${{ github.ref }}"
           echo "GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}"
 
-      - name: Collect Comment IDs for Resolution
-        id: collect-resolve-ids
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node .github/scripts/getResolvedCommentIds.mjs
-
-      - name: Let Claude Resolve Passed Comments via MCP
-        uses: anthropics/claude-code-action@v1
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          track_progress: true
-          prompt: |
-            Use the tool `mcp__github__resolve_pull_request_conversation`
-            to resolve all comment threads whose IDs are listed in `resolved_comment_ids.json`.
-            Make sure to handle them one by one and skip any that are already resolved.
-          claude_args: |
-            --allowedTools "mcp__github__get_pull_request,
-                            mcp__github__get_pull_request_files,
-                            mcp__github__get_pull_request_diff,
-                            mcp__github__create_pending_pull_request_review,
-                            mcp__github__add_comment_to_pending_review,
-                            mcp__github__submit_pending_pull_request_review,
-                            mcp__github_inline_comment__create_inline_comment,
-                            mcp__github__create_and_submit_pull_request_review,
-                            mcp__github__add_issue_comment,
-                            mcp__github__get_pull_request_comments,
-                            mcp__github__get_pull_request_reviews,
-                            mcp__github__resolve_pull_request_conversation,
-                            mcp__github__create_issue_comment"
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Resolve Passed Test Case Comments
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: node .github/scripts/resolvePassedComments.mjs
 
       - name: Run Claude Test Review
         id: claude-review
