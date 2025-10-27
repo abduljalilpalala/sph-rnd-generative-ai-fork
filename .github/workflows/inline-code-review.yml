@@ -59,7 +59,7 @@ jobs:
         id: claude-review
         uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.CLAUDE_INLINE_CODE_REVIEW_BE }}
+          anthropic_api_key: ${{ secrets.RND_INLINE_REVIEW }}
           track_progress: true
           prompt: |
             Please review this pull request and provide inline feedback that is highly actionable, concise, and aligned with best practices.
