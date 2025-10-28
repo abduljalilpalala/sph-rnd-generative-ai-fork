@@ -5,7 +5,7 @@ import { exitWith } from "./_helpers.mjs";
   try {
     const { owner, repo, prNumber } = repoInfo;
 
-    console.log(`🔍 Checking latest Claude qa summary comment for PR #${prNumber}...`);
+    console.log(`🔍 Checking latest Claude QA summary comment for PR #${prNumber}...`);
 
     // 1️⃣ Fetch all comments
     const { data: comments } = await octokit.rest.issues.listComments({
@@ -20,9 +20,11 @@ import { exitWith } from "./_helpers.mjs";
     }
 
     // 2️⃣ Find latest comment with "📄 Claude QA Summary"
-    const claudeComments = comments.filter((c) => c.body?.includes("📄 Claude QA Summary"));
+    const claudeComments = comments.filter((c) =>
+      c.body?.includes("📄 Claude QA Summary")
+    );
     if (!claudeComments.length) {
-      console.log("❌ No Claude qa summary comment found.");
+      console.log("❌ No Claude QA summary comment found.");
     }
 
     // Sort newest → oldest and get latest
@@ -40,7 +42,8 @@ import { exitWith } from "./_helpers.mjs";
 
     // 4️⃣ Determine review action and label
     const event = failedCount > 0 ? "REQUEST_CHANGES" : "APPROVE";
-    const label = failedCount > 0 ? "Claude QA Reviewing" : "Claude QA Approved";
+    const labelToAdd = failedCount > 0 ? "Claude QA Reviewing" : "Claude QA Approved";
+    const labelToRemove = failedCount > 0 ? "Claude QA Approved" : "Claude QA Reviewing";
 
     // 5️⃣ Build Markdown link for summary
     const summaryUrl = latestComment.html_url
@@ -64,13 +67,27 @@ import { exitWith } from "./_helpers.mjs";
       body: reviewBody,
     });
 
-    // 8️⃣ Add appropriate label
-    console.log(`🏷️ Adding label: ${label}`);
+    // 8️⃣ Remove opposite label if exists
+    console.log(`🧹 Removing label if exists: ${labelToRemove}`);
+    try {
+      await octokit.rest.issues.removeLabel({
+        owner,
+        repo,
+        issue_number: prNumber,
+        name: labelToRemove,
+      });
+      console.log(`🗑️ Removed label: ${labelToRemove}`);
+    } catch (removeErr) {
+      console.log(`⚠️ No existing label to remove: ${labelToRemove}`);
+    }
+
+    // 9️⃣ Add appropriate label
+    console.log(`🏷️ Adding label: ${labelToAdd}`);
     await octokit.rest.issues.addLabels({
       owner,
       repo,
       issue_number: prNumber,
-      labels: [label],
+      labels: [labelToAdd],
     });
 
     console.log(`✅ Review process completed successfully.`);
