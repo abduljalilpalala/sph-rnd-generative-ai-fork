@@ -76,9 +76,10 @@ jobs:
             2. Extract the inputted test case in the comment body. Strictly follow [Inputted Test Case Rules].
             3. Review and enlist again Previous Test Cases. Strictly follow [Previous Test Cases Rules]. 
             4. Run your own behavioral checks. Strictly follow [Behavioral Check Guidelines].
-            5. Combine all test cases (from steps 2–4), and remove duplicates. Strictly follow [Combined Test Cases Rules].
-            6. Using the combined test cases, submit inline comments. Strictly follow [Inline Comment Rules].
-            7. After submitting inline comments, submit a new review. Strictly follow [Submit Review Rules].
+            5. Translate or transform the test cases in step#4 sound more simple and easy to follow for a manager instead of using technical terms.
+            6. Combine all test cases (from steps 2–4), and remove duplicates. Strictly follow [Combined Test Cases Rules].
+            7. Using the combined test cases, submit inline comments. Strictly follow [Inline Comment Rules].
+            8. After submitting inline comments, submit a new review. Strictly follow [Submit Review Rules].
 
             ---
 
@@ -89,7 +90,7 @@ jobs:
 
             [Behavioral Check Guidelines]
               You are reviewing this as a **Behavioral QA Reviewer and Engineering Manager**.  
-              Your goal is to review the changes and check if they affect or break in the client side (FE).
+              Your goal is to review the changes and check if they affect or break any other functions used throughout the project or repository.
 
               ### Important
               - Claude should run an **independent full behavioral scan** for breaking functions in all files (even outside this PR).
