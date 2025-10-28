@@ -24,7 +24,7 @@ jobs:
         with:
           script: |
             const body = context.payload.comment.body
-            const reaction = body.includes('@claude-approve') ? 'thumbsup' : 'thumbsdown'
+            const reaction = body.includes('@claude-approve') ? '+1' : '-1'
             await github.rest.reactions.createForIssueComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
