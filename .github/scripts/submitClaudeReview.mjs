@@ -38,12 +38,23 @@ import { exitWith } from "./_helpers.mjs";
 
     console.log(`📊 Failed Test Cases: ${failedCount}`);
 
-    // 4️⃣ Determine review action
+    // 4️⃣ Determine review action and label
     const event = failedCount > 0 ? "REQUEST_CHANGES" : "APPROVE";
     const label = failedCount > 0 ? "Claude QA Reviewing" : "Claude QA Approved";
-    const reviewBody = failedCount > 0 ? "🚫 Changes required." : "✅ LGTM!";
 
-    // 5️⃣ Submit PR review
+    // 5️⃣ Build Markdown link for summary
+    const summaryUrl = latestComment.html_url
+      ? latestComment.html_url
+      : `https://github.com/${owner}/${repo}/pull/${prNumber}`;
+    const summaryLink = `[📄 Claude Summary Link](${summaryUrl})`;
+
+    // 6️⃣ Construct review message with Markdown link
+    const reviewBody =
+      failedCount > 0
+        ? `🚫 Changes required.\n${summaryLink}`
+        : `✅ LGTM!\n${summaryLink}`;
+
+    // 7️⃣ Submit PR review
     console.log(`📝 Submitting review: ${event}`);
     await octokit.rest.pulls.createReview({
       owner,
@@ -53,7 +64,7 @@ import { exitWith } from "./_helpers.mjs";
       body: reviewBody,
     });
 
-    // 6️⃣ Add appropriate label
+    // 8️⃣ Add appropriate label
     console.log(`🏷️ Adding label: ${label}`);
     await octokit.rest.issues.addLabels({
       owner,
