@@ -121,6 +121,7 @@ jobs:
                 - Do **not** comment on TypeScript types, DTOs, or code patterns (e.g., "use async/await", "missing return type").
                 - Do **not** focus on code style, formatting, or static correctness.
                 - Do **not** mention "TypeScript", "DTO", or "any type" — that is too technical.
+                - Do **not** be so strict with response or error messages
 
               ### ✅ Focus instead on
                 - The *real-world effect* of this change (what would actually happen if this code ran?)
