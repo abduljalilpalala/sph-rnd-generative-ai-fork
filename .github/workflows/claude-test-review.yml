@@ -89,7 +89,7 @@ jobs:
 
             [Behavioral Check Guidelines]
               You are reviewing this as a **Behavioral QA Reviewer and Engineering Manager**.  
-              Your goal is to review the changes and check if they affect or break any other functions used throughout the project or repository.
+              Your goal is to review the changes and check if they affect or break in the client side (FE).
 
               ### Important
               - Claude should run an **independent full behavioral scan** for breaking functions in all files (even outside this PR).
