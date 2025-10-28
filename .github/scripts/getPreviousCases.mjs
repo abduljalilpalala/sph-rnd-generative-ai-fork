@@ -19,13 +19,13 @@ import fs from "fs";
       return;
     }
 
-    // 🔹 Filter comments that contain Claude summary
+    // 🔹 Filter comments that contain Claude qa summary
     const claudeComments = comments.filter((c) =>
-      c.body?.includes("## 📄 Claude Summary")
+      c.body?.includes("## 📄 Claude QA Summary")
     );
 
     if (!claudeComments.length) {
-      console.log("⚠️ No Claude summary comments found.");
+      console.log("⚠️ No Claude qa summary comments found.");
       return;
     }
 

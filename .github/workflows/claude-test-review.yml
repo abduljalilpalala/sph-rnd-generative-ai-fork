@@ -167,7 +167,7 @@ jobs:
             [COMMENT BODY RULES]
               The test cases used here are combined test cases from the Previous Test Cases result and the current one.
               The final PR comment **must contain only these two sections** and nothing else:
-              1. `## 📄 Claude Summary`
+              1. `## 📄 Claude QA Summary`
                   | **Metric** | **Count** |
                   |:----------------------|:------:|
                   | 📋 **Test Cases** | **n** |

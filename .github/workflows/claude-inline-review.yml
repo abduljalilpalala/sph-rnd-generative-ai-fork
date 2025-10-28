@@ -170,10 +170,10 @@ jobs:
               - Submit a PR review comment in this current.
               - Send request to change status if there is Fail or Critical Issues.
               - Send approval if if no Fail or Critical Issues.
-              - The comment body should contain only two sections (## Claude Summary and ## Claude Detailed Analysis)
+              - The comment body should contain only two sections (## Claude QA Summary and ## Claude QA Detailed Analysis)
 
             Comment body format:
-              ## Claude Summary
+              ## Claude QA Summary
   
               | **Metric** | **Count** |
               |:----------------------|:------:|

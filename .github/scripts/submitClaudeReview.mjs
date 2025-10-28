@@ -5,7 +5,7 @@ import { exitWith } from "./_helpers.mjs";
   try {
     const { owner, repo, prNumber } = repoInfo;
 
-    console.log(`🔍 Checking latest Claude summary comment for PR #${prNumber}...`);
+    console.log(`🔍 Checking latest Claude qa summary comment for PR #${prNumber}...`);
 
     // 1️⃣ Fetch all comments
     const { data: comments } = await octokit.rest.issues.listComments({
@@ -16,13 +16,13 @@ import { exitWith } from "./_helpers.mjs";
     });
 
     if (!comments.length) {
-      exitWith("❌ No comments found on this PR.");
+      console.log("❌ No comments found on this PR.");
     }
 
-    // 2️⃣ Find latest comment with "📄 Claude Summary"
-    const claudeComments = comments.filter((c) => c.body?.includes("📄 Claude Summary"));
+    // 2️⃣ Find latest comment with "📄 Claude QA Summary"
+    const claudeComments = comments.filter((c) => c.body?.includes("📄 Claude QA Summary"));
     if (!claudeComments.length) {
-      exitWith("❌ No Claude summary comment found.");
+      console.log("❌ No Claude qa summary comment found.");
     }
 
     // Sort newest → oldest and get latest
@@ -46,7 +46,7 @@ import { exitWith } from "./_helpers.mjs";
     const summaryUrl = latestComment.html_url
       ? latestComment.html_url
       : `https://github.com/${owner}/${repo}/pull/${prNumber}`;
-    const summaryLink = `[📄 Claude Summary Link](${summaryUrl})`;
+    const summaryLink = `[📄 Claude QA Summary Link](${summaryUrl})`;
 
     // 6️⃣ Construct review message with Markdown link
     const reviewBody =
