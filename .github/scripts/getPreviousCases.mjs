@@ -58,16 +58,16 @@ import fs from "fs";
     const testCases = detailsMatches.map((m) => {
       const block = m[0];
 
-      // Extract Test Case ID, Verdict, and Expected Result
+      // ✅ Updated regex to handle both [TC-001] and TC-001
       const summaryMatch = block.match(
-        /<summary>\s*<strong>\[([^\]]+)\]<\/strong>\s*\(([^)]+)\):\s*(.*?)<\/summary>/is
+        /<summary>\s*<strong>\[?([^\]<]+)\]?\s*<\/strong>\s*\(([^)]+)\):\s*(.*?)<\/summary>/is
       );
 
       const TEST_CASE_ID = summaryMatch ? summaryMatch[1].trim() : "";
       const VERDICT = summaryMatch ? summaryMatch[2].trim() : "";
       const EXPECTED_RESULT = summaryMatch ? summaryMatch[3].trim() : "";
 
-      // Extract all lines inside the <details> block after the summary
+      // Extract all lines inside <details> after the summary
       const contentMatch = block.match(/<\/summary>([\s\S]*?)<\/details>/i);
       let DETAILS = contentMatch ? contentMatch[1].trim() : "";
 
