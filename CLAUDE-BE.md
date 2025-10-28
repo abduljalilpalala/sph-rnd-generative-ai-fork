@@ -98,3 +98,5 @@ test-projects/test-backend/
 - Services should inject `PrismaService` via constructor for database operations
 - All models auto-generate TypeScript types via Prisma Client
 - DATABASE_URL environment variable required for Prisma connection
+
+- Unit test can be optional and not required on PRs
