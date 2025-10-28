@@ -45,6 +45,7 @@ jobs:
         run: npm install
 
       - name: Fetch previous comment test cases
+        if: false
         id: previous-test-case
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -245,6 +246,7 @@ jobs:
                             mcp__github__create_issue_comment"
 
       - name: Submit Claude Review Result
+        if: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
