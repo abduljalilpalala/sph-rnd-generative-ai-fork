@@ -1,4 +1,4 @@
-name: Claude Code Review (v2.17 | Able to Change Request Review & Add Label)
+name: Claude Code Review (v2.2 | Able to Change Request Review & Add Label)
 
 on:
   issue_comment:
