@@ -74,7 +74,6 @@ jobs:
 
       - name: Run Claude Test Review
         id: claude-review
-        if: false
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -256,7 +255,6 @@ jobs:
                             mcp__github__create_issue_comment"
 
       - name: Submit Claude Review Result
-        if: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
