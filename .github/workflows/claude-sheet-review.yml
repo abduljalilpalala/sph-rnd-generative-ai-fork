@@ -15,7 +15,7 @@ jobs:
   claude-sheet-review:
     if: |
       github.event.issue.pull_request &&
-      contains(github.event.comment.body, '@claude-test-review')
+      contains(github.event.comment.body, '@claude-sheet-review')
     runs-on: [self-hosted, claude-code-review]
 
     steps:
