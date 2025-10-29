@@ -13,7 +13,9 @@ permissions:
 
 jobs:
   claude-sheet-review:
-    if: false
+    if: |
+      github.event.issue.pull_request &&
+      contains(github.event.comment.body, '@claude-test-review')
     runs-on: ubuntu-latest
 
     steps:
@@ -63,6 +65,7 @@ jobs:
 
       - name: Fetch previous comment test cases
         id: previous-test-case
+        if: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -87,6 +90,7 @@ jobs:
 
       - name: Run Claude Sheet Review
         id: claude-review
+        if: false
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -204,7 +208,8 @@ jobs:
                             mcp__github__create_issue_comment"
 
       - name: Update status feedback
-        if: success()
+        # if: success()
+        if: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
