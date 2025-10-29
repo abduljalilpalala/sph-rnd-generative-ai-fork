@@ -13,7 +13,9 @@ permissions:
 
 jobs:
   claude-sheet-review:
-    if: false
+    if: |
+      github.event.issue.pull_request &&
+      contains(github.event.comment.body, '@claude-test-review')
     runs-on: ubuntu-latest
 
     steps:
