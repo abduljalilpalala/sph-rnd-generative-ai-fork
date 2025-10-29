@@ -1,5 +1,6 @@
 import { google } from "googleapis";
 import { exitWith } from "./_helpers.mjs";
+import fs from "fs";
 
 export async function getQATestCases(spreadsheetUrl, ids = [], excludeIds = [], GOOGLE_SERVICE_ACCOUNT_JSON) {
   try {
