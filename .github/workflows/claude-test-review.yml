@@ -28,12 +28,6 @@ jobs:
               comment_id: context.payload.comment.id,
               content: 'eyes'
             })
-      
-      - name: Check if commit already reviewed
-        id: commit-check
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node .github/scripts/checkLatestCommit.mjs
 
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -48,7 +42,13 @@ jobs:
           node-version: "20"
 
       - name: Install dependencies
-        run: npm install
+        run: npm install    
+
+      - name: Check if commit already reviewed
+        id: commit-check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node .github/scripts/checkLatestCommit.mjs
 
       - name: Fetch previous comment test cases
         id: previous-test-case
