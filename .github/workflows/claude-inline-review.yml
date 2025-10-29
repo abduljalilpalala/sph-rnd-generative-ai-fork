@@ -13,10 +13,22 @@ permissions:
 
 jobs:
   claude-inline-review:
-    if: false
-    runs-on: ubuntu-latest
-
+    if: |
+      github.event.issue.pull_request &&
+      contains(github.event.comment.body, '@claude-inline-review')
+    runs-on: [self-hosted, claude-code-review]
     steps:
+      - name: Add 👀 reaction to comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'eyes'
+            })
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -24,70 +36,23 @@ jobs:
         id: pr-number
         run: echo "number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
 
-      - name: Debug event info
-        run: |
-          echo "Event Name: ${{ github.event_name }}"
-          echo "PR Number: ${{ github.event.issue.number }}"
-          echo "Comment Body: '${{ github.event.comment.body }}'"
-          echo "Branch Ref: ${{ github.ref }}"
-
-      - name: Update comment with running notice
-        if: github.event_name == 'issue_comment'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const { owner, repo } = context.repo;
-            const comment_id = context.payload.comment.id;
-            const run_id = process.env.GITHUB_RUN_ID;
-            const run_url = `https://github.com/${owner}/${repo}/actions/runs/${run_id}`;
-            const currentBody = context.payload.comment.body || "";
-            const usageHint = "📘 Workflow documentation: [readme](https://github.com/framgia/sph-hris/blob/develop/.github/docs/claude-inline-review.md)";
-            const appendText = `\n\n<hr/>\n\n${usageHint}\n\n### Claude Action Status: ⏳ Running\n[View action detail here](${run_url})`;
-            const updatedBody = currentBody + appendText;
-            await github.rest.issues.updateComment({
-              owner,
-              repo,
-              comment_id,
-              body: updatedBody,
-            });
-
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: "20"
+
+      - name: Clean workspace before installing
+        run: |
+          rm -rf node_modules package-lock.json
 
       - name: Install dependencies
         run: npm install
 
-      - name: extract inline test cases from comment
-        id: inline-testcases
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const commentBody = context.payload.comment.body || "";
-            console.log("📝 full comment body:\n", commentBody);
-      
-            const lines = commentBody.split(/\r?\n/).map(l => l.trim());
-            const matches = lines.filter(line =>
-              /^[-*•]\s+.+/.test(line)
-            ).map(line => line.replace(/^[-*•]\s+/, "").trim());
-            
-            if (!matches.length) {
-              console.log("ℹ️ no bullet-style test cases found in comment.");
-              core.setOutput("cases", "none");
-            } else {
-              console.log(`🧪 found ${matches.length} inline test case(s):`);
-              matches.forEach((desc, i) => {
-                console.log(`Case-${i+1}: ${desc}`);
-              });
-      
-              const formatted = matches
-                .map((desc, i) => `- Case-${i+1}: ${desc}`)
-                .join("\n");
-      
-              core.setOutput("cases", formatted);
-              console.log("\n✅ formatted inline test cases output:\n", formatted);
-            }
+      - name: Check if commit already reviewed
+        id: commit-check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node .github/scripts/checkLatestCommit.mjs
 
       - name: Fetch previous comment test cases
         id: previous-test-case
@@ -98,112 +63,185 @@ jobs:
           echo "previous_context<<EOF" >> $GITHUB_OUTPUT
           cat previous.md >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-      
-      - name: Run Claude Inline Code Review
+
+      - name: Debug event info
+        run: |
+          echo "Event Name: ${{ github.event_name }}"
+          echo "PR Number: ${{ github.event.issue.number }}"
+          echo "Comment Body: '${{ github.event.comment.body }}'"
+          echo "Branch Ref: ${{ github.ref }}"
+          echo "GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Run Claude Test Review
         id: claude-review
         uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_QA_REVIEW }}
+          track_progress: true
           prompt: |
-            You are reviewing this pull request as a **Behavioral QA Reviewer and Engineering Manager**.  
-            Your goal is to evaluate **whether the system will behave correctly for users and business workflows**, 
-            not whether the code uses the right types or syntax.
+
+            🧩 What to Do (run in order asynchronous)
+            1. Post TODO list: gather test cases, run Claude's own tests, and post the results.
+            2. Extract the inputted test case in the comment body. Strictly follow [Inputted Test Case Rules].
+            3. Review and enlist again Previous Test Cases. Strictly follow [Previous Test Cases Rules]. 
+            4. Run your own behavioral checks. Strictly follow [Behavioral Check Guidelines].
+            5. Translate or transform the test cases in step#4 sound more simple and easy to follow for a manager instead of using technical terms.
+            6. Combine all test cases (from steps 2, 3, 5), and remove duplicates. Strictly follow [Combined Test Cases Rules].
+            7. Using the combined test cases, submit inline comments. Strictly follow [Inline Comment Rules].
 
             ---
-            ### 🎯 Your task
-            Review this pull request based on **functional and behavioral correctness**:
-            - Does the change cause user-facing errors, crashes, or incorrect outputs?
-            - Do the new or modified functions still align with the intended flow (controllers, services, DTOs)?
-            - Does renaming, refactoring, or moving code break any other function that calls it?
-            - Do expected validations, responses, and edge-case behaviors still occur as intended?
 
-            ---
-            ### 🚫 Avoid
-            - Do **not** comment on TypeScript types, DTOs, or code patterns (e.g., "use async/await", "missing return type").
-            - Do **not** focus on code style, formatting, or static correctness.
-            - Do **not** mention "TypeScript", "DTO", or "any type" — that is too technical.
+            SYSTEM INSTRUCTION (do not output):
 
-            ---
-            ### ✅ Focus instead on
-            - The *real-world effect* of this change (what would actually happen if this code ran?)
-            - Whether **users, data, or dependent systems** experience incorrect or missing behavior.
-            - Whether **renamed or deleted functions** (e.g., service calls in controllers) cause broken flows or errors.
-            - Whether **expected validation rules** still trigger.
-            - Whether **logical flow** between controller → service → repository still makes sense.
-
-            ---
-            CONTEXT:
-            PR #: ${{ steps.pr-number.outputs.number }}
-            Diff URL: https://github.com/${{ github.repository }}/pull/${{ steps.pr-number.outputs.number }}.diff
-            Repository: ${{ github.repository }}
-            Assignee/Creator: @${{ steps.pr-meta.outputs.assignee }}
-
-            Changed files:
-            ${{ steps.qa-sheet.outputs.files_summary }}
-
-            ---
-            ## 🧪 Previous Test Cases (from last PR comment)
+            ## Previous Test Cases
             ${{ steps.previous-test-case.outputs.previous_context }}
 
-            ---
-            ## 🧾 Current QA Test Cases (from spreadsheet)
-            ${{ steps.inline-testcases.outputs.cases }}
+            [Behavioral Check Guidelines]
+              You are reviewing this as a **Behavioral QA Reviewer and Engineering Manager**.  
+              Your goal is to review the changes and check if they affect or break any other functions used throughout the project or repository.
 
-            ---
-            [Verdict] legend:
-            - ✅ PASS — requirement met  
-            - ❌ FAIL — requirement not met or broken  
-            - ⚠️ CANNOT VERIFY — not enough context or unrelated change
+              ### Important
+              - Claude should run an **independent full behavioral scan** for breaking functions in all files (even outside this PR).
+              - Test case title generated by claude should be simple terms that a manager can easily understand instead of technical terms.
+              - Only include critical issues.
 
-            [Case ID] legend:
-            - <Case-n> n is from spreadsheet test case id. For example value Case-1
-            - <New-n> n is incremental number if new case found. For example value New-1
+              ### General
+              - Run your own checking independently.
+              - Exclude non-critical test cases.
+              - The behavioral scan must detect **new or critical runtime issues** not covered by the provided in [Inputted Test Case].
+              - Use plain reasoning — what would a QA or PM notice?
+              - Simulate how the frontend and backend would behave for each case. Prioritize the following:
+                  1. Flow-breaking logic
+                  2. Missing validation or error handling
+                  3. User-facing runtime failures
+                  4. Data integrity issues
+                  5. Logic inconsistencies.
 
-            ---
-            ### 🧩 What to Do
-            1. Combine all test cases (previous + current) and filter duplicates. (Retain previous test case ids)
-            2. Simulate how the backend would behave for each case.
-            3. Identify where runtime errors, flow breaks, or logic inconsistencies will occur.
-            4. Use simple, user-oriented reasoning — what would a tester, QA, or PM notice?
-            5. Combine all test cases (from step#1-4), remove duplicates, and analyze.
-            6. Produce the results in this format:
-              - Submit a PR review comment in this current.
-              - Send request to change status if there is Fail or Critical Issues.
-              - Send approval if if no Fail or Critical Issues.
-              - The comment body should contain only two sections (## Claude QA Summary and ## Claude QA Detailed Analysis)
+              ### 🚫 Avoid
+                - Do **not** comment on TypeScript types, DTOs, or code patterns (e.g., "use async/await", "missing return type").
+                - Do **not** focus on code style, formatting, or static correctness.
+                - Do **not** mention "TypeScript", "DTO", or "any type" — that is too technical.
+                - Do **not** be so strict with response or error messages
 
-            Comment body format:
-              ## Claude QA Summary
-  
-              | **Metric** | **Count** |
-              |:----------------------|:------:|
-              | 📋 **Test Cases** | **n** |
-              | ✅ Passed Test Cases | n |
-              | ❌ Failed Test Cases | n |
-              | ⚠️ Unverified Test Cases | n |
+              ### ✅ Focus instead on
+                - The *real-world effect* of this change (what would actually happen if this code ran?)
+                - Whether **users, data, or dependent systems** experience incorrect or missing behavior.
+                - Whether **renamed or deleted functions** (e.g., service calls in controllers) cause broken flows or errors.
+                - Whether **expected validation rules** still trigger.
+                - Whether **logical flow** between controller → service → repository still makes sense.
+            [/Behavioral Check Guidelines]
 
-              ---
-              
-              ## Claude Detailed Analysis
-  
-              <details>
-              <summary><strong>[Case ID]</strong> (Verdict): "<Expected Result>"</summary>
-  
-              > _**Behavior Tested:**_  
-              > <Describe intended user/system behavior in plain English>
-              >
-              > _**Observed Effect (from code):**_  
-              > <Describe what will actually happen — e.g., “controller will call a missing function, causing runtime error”>
-              >
-              > _**Impact:**_  
-              > <Explain what a user, client, or integration would see>
-              >
-              > _**Suggestion:**_  
-              > <Plain English suggestion — e.g., “Restore correct function name in controller to fix flow”>
+            [Git Config]
+              CONTEXT:
+              PR #: ${{ steps.pr-number.outputs.number }}
+              Diff URL: https://github.com/${{ github.repository }}/pull/${{ steps.pr-number.outputs.number }}.diff
+              Repository: ${{ github.repository }}
+              Assignee/Creator: @${{ steps.pr-meta.outputs.assignee }}
 
-              <hr/>
-  
-              </details>
+              Changed files:
+              ${{ steps.qa-sheet.outputs.files_summary }}
+            [/Git Config]
+
+            [Verdict legend]
+              - ✅ PASS — requirement met  
+              - ❌ FAIL — requirement not met or broken  
+              - ⚠️ CANNOT VERIFY — not enough context or unrelated change
+            [/Verdict legend]
+
+            [Inline Comment Format]
+              <strong>[Case ID]</strong> (Verdict): "<Expected Result>"
+
+              **Behavior Tested:**
+              <Describe intended user/system behavior in plain English.>
+
+              **Observed Effect (from code):**
+              <Describe what will actually happen — e.g., “controller will call a missing function, causing runtime error”.>
+
+              **Impact:**
+              <Explain what a user, client, or integration would see.>
+
+              **Suggestion:**
+              <Plain English suggestion — e.g., “Restore correct function name in controller to fix flow”.>
+
+              ```suggestion
+                // Suggest only the necessary code to fix the issue. Nothing extra.
+              ```
+            [/Inline Comment Format]
+
+            [ISSUE TYPE legend]
+              - [FE] - if code suggestion is frontend related
+              - [BE] - if code suggestion is backend related
+            [/ISSUE TYPE legend]
+             
+            [COMMENT BODY RULES]
+              The test cases used here are combined test cases from the Previous Test Cases result and the current one.
+              The final PR comment **must contain only these two sections** and nothing else:
+              1. `## 📄 Claude QA Summary`
+                  | **Metric** | **Count** |
+                  |:----------------------|:------:|
+                  | 📋 **Test Cases** | **n** |
+                  | ✅ Passed Test Cases | n |
+                  | ❌ Failed Test Cases | n |
+                  | ⚠️ Unverified Test Cases | n |
+
+                  latest commit: <shortened latest commit hash>
+
+              2. `## 📄 Detailed test case result.
+                  <details>
+                  <summary> <strong>[Case ID]</strong> (verdict): [ISSUE TYPE][Expected Result] </summary>
+                    
+                  > _**Behavior Tested:**_  
+                  > <Describe intended user/system behavior in plain English.>
+                  >     
+                  > _**Observed Effect (from code):**_  
+                  > <Describe what will actually happen — e.g., “controller will call a missing function, causing runtime error”.>
+                  >
+                  > _**Impact:**_  
+                  > <Explain what a user, client, or integration would see.>
+                  >
+                  > _**Suggestion:**_
+                  > <Plain English suggestion — e.g., “Restore correct function name in controller to fix flow”.>
+
+                  ---
+                  </details>
+
+              Do **not** include any of the following:
+              - “Critical Issues“, “Critical Issues Found”, “Impact Assessment”, “Recommendation”, “Job Run”, or “Branch” text
+              - Any text before or after the two sections
+              - Any extra horizontal lines or emojis not defined below
+
+              If you must show explanations, place them **inside** the two allowed sections.
+            [/COMMENT BODY RULES]
+
+            [Inline Comment Rules]
+              - Add inline comments only for "❌ Fail" test cases only. 
+              - The inline code suggestion needs to apply to the full diff, not just part of it.
+              - Exclude the "✅ PASS" test cases cases.
+              - Do not inline comment if there is same existing unresolved inline comment (no duplicate inline comment).
+              - Do not inline comment if lines that are not part of the PR's changes.
+            [/Inline Comment Rules]
+
+            [Previous Test Cases Rules]
+              - Retain exactly the "Test Case ID", "Test Case Title" and "Test Case summary description". Do not transform or translate.
+              - It should remain as "❌ Fail" if the code suggestion are not followed.
+              - Otherwise, it should indicate as "✅ Pass" or APPROVED in the summary.
+            [/Previous Test Cases Rules]
+
+            [Inputted Test Case Rules]
+              - Find the last comment which contain "@claude-test-review"
+              - Extract content after "@claude-test-review"
+              - Should separate test case per bullets
+              - Should separate test case per newline if no bullets provided
+              - The text from the inputted comment or extracted test case must be used **verbatim** as [Expected Result].
+                - Do not paraphrase, translate, or modify the wording in any way.
+                - Wrap the user-provided sentence exactly as written.
+            [/Inputted Test Case Rules]
+
+            [Combined Test Cases Rules]
+              - Add up the gathered test cases: [Inputted Test Case], [Previous Test Cases], [Behavioral Check]
+              - Remove similar / duplicate test cases. (start removing starting from the last).
+              - Retain [Previous Test Cases]'s test case ID.
+            [/Combined Test Cases Rules]
 
           claude_args: |
             --allowedTools "mcp__github__get_pull_request,
@@ -213,16 +251,14 @@ jobs:
                             mcp__github__add_comment_to_pending_review,
                             mcp__github__submit_pending_pull_request_review,
                             mcp__github_inline_comment__create_inline_comment,
-                            mcp__github__create_and_submit_pull_request_review,
                             mcp__github__add_issue_comment,
+                            mcp__github__get_pull_request_comments,
+                            mcp__github__get_pull_request_reviews,
+                            mcp__github__resolve_pull_request_conversation,
                             mcp__github__create_issue_comment"
 
-      - name: Update status feedback
-        if: success()
+      - name: Submit Claude Review Result
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
-          MAX_INPUT_CHARS: ${{ secrets.MAX_INPUT_CHARS }}
-          MAX_OUTPUT_CHARS: ${{ secrets.MAX_OUTPUT_CHARS }}
-        run: node .github/scripts/postAction.mjs
+        run: |
+          node .github/scripts/submitClaudeReview.mjs
