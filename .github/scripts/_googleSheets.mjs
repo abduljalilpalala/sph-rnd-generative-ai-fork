@@ -93,7 +93,7 @@ export async function getQATestCases (spreadsheetUrl, ids = [], excludeIds = [],
       return { id: ${tc.id}, description: ${desc}, expected: ${expected} };
     });
 
-    return mapped;
+    return beautified;
   } catch (error) {
     const svc = JSON.parse(GOOGLE_SERVICE_ACCOUNT_JSON || "{}");
     if (svc?.client_email) console.log(`👤 Service account: ${svc.client_email}`);
