@@ -21,17 +21,9 @@ import { exitWith, parseComment } from './_helpers.mjs';
 
   const testCases = await getQATestCases(sheetUrl, finalIds, finalExceptIds, GOOGLE_SERVICE_ACCOUNT_JSON);
 
-  console.log("🚀 ~ main ~ testCases:", testCases);
-
   if (!testCases.length) {
     exitWith('❌ No test cases detected. Kindly make sure your selected range covers only from the "Test Case ID" column up to the "Expected Result" column.');
   }
 
-  // Convert test cases to Markdown format for Claude
-  // const markdown = testCases
-  //   .map(tc => `**ID:** ${tc.id}\n**Expected:** ${tc.expected}\n---`)
-  //   .join("\n");
-
-  // Output Markdown so workflow can capture it
-  // console.log(markdown);
+  console.log("🚀 ~ main ~ testCases:", testCases);
 })();
