@@ -54,19 +54,9 @@ export async function getQATestCases (spreadsheetUrl, ids = [], excludeIds = [],
       filtered = dataRows;
     }
 
-
     if (!filtered.length) {
-      console.log(`⚠️ No matching test cases found. Skipping testcase analysis.`);
       return [];
     }
-
-    console.log(
-      ids.length
-        ? `✅ Filtered ${filtered.length}/${rows.length} test cases by IDs.`
-        : excludeIds.length
-          ? `🚫 Excluded ${excludeIds.length} test cases. Using ${filtered.length} remaining.`
-          : `ℹ️ Using all ${rows.length} test cases from the range.`
-    );
 
     // Map rows to objects. Note: r is an array of cells for the row.
     const mapped = filtered.map(r => {
@@ -100,13 +90,8 @@ export async function getQATestCases (spreadsheetUrl, ids = [], excludeIds = [],
       // sanitize inner commas to avoid confusing the log (optional):
       const desc = tc.description;
       const expected = tc.expected;
-      return `{ id: ${tc.id}, description: ${desc}, expected: ${expected} }`;
+      return { id: ${tc.id}, description: ${desc}, expected: ${expected} };
     });
-
-    console.log("🚀 ~ main ~ testCases:");
-    console.log("[");
-    beautified.forEach(line => console.log("  " + line + ","));
-    console.log("]");
 
     return mapped;
   } catch (error) {
