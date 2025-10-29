@@ -65,7 +65,6 @@ jobs:
 
       - name: Fetch previous comment test cases
         id: previous-test-case
-        if: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -207,8 +206,7 @@ jobs:
                             mcp__github__create_issue_comment"
 
       - name: Update status feedback
-        # if: success()
-        if: false
+        if: success()
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
