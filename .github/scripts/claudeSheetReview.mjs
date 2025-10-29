@@ -28,9 +28,9 @@ import { exitWith, parseComment } from './_helpers.mjs';
   }
 
   // Convert test cases to Markdown format for Claude
-  const markdown = testCases
-    .map(tc => `**ID:** ${tc.id}\n**Expected:** ${tc.expected}\n---`)
-    .join("\n");
+  // const markdown = testCases
+  //   .map(tc => `**ID:** ${tc.id}\n**Expected:** ${tc.expected}\n---`)
+  //   .join("\n");
 
   // Output Markdown so workflow can capture it
   // console.log(markdown);
