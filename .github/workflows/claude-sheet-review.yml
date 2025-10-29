@@ -111,10 +111,9 @@ jobs:
 
             ## Previous Test Cases
             ${{ steps.previous-test-case.outputs.previous_context }}
-            
 
             ## 🧾 Spreadsheet Test Cases (from spreadsheet)
-            ${{ steps.qa-sheet.outputs.qa_context }}
+            ${{ steps.qa-sheet.outputs.qa }}
 
             [Behavioral Check Guidelines]
               You are reviewing this as a **Behavioral QA Reviewer and Engineering Manager**.  
