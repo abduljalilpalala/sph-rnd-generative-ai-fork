@@ -68,19 +68,50 @@ export async function getQATestCases (spreadsheetUrl, ids = [], excludeIds = [],
           : `ℹ️ Using all ${rows.length} test cases from the range.`
     );
 
-    const mapped = filtered.map(r => ({
-      id: r[0],
-      description: r.slice(1, -1)
-        .replace(/\n+/g, '; ')       // Replace newlines with semicolon + space
-        .replace(/\s{2,}/g, ' ')     // Collapse multiple spaces
-        .trim(),
-      expected: r[r.length - 1],
-    }));
+    // Map rows to objects. Note: r is an array of cells for the row.
+    const mapped = filtered.map(r => {
+      const id = String(r[0]).trim();
+
+      // Join middle columns into a single description string.
+      // r.slice(1, -1) is an array; join into a string first.
+      const rawDescParts = r.slice(1, -1).map(c => (c === undefined || c === null) ? "" : String(c));
+      const rawDesc = rawDescParts.join(" | ").trim();
+
+      // Now normalize: replace newlines with semicolons, collapse multiple spaces, trim.
+      const description = rawDesc
+        .replace(/\r\n|\r|\n+/g, '; ')  // Replace any newline style with semicolon + space
+        .replace(/\s{2,}/g, ' ')        // Collapse multiple spaces
+        .replace(/;\s*;+/g, '; ')       // Collapse accidental repeated semicolons
+        .replace(/\s*\|\s*/g, ' | ')    // normalize pipes spacing
+        .trim()
+        .replace(/^\| /, '')            // remove leading pipe if any
+        .replace(/ \|$/, '');           // remove trailing pipe if any
+
+      const expected = (r[r.length - 1] === undefined || r[r.length - 1] === null)
+        ? ""
+        : String(r[r.length - 1]).trim();
+
+      return { id, description, expected };
+    });
+
+    // --- Beautified console output (single-line, no surrounding quotes) ---
+    // This only affects the logs. The 'mapped' return value remains a proper array of objects.
+    const beautified = mapped.map(tc => {
+      // sanitize inner commas to avoid confusing the log (optional):
+      const desc = tc.description;
+      const expected = tc.expected;
+      return `{ id: ${tc.id}, description: ${desc}, expected: ${expected} }`;
+    });
+
+    console.log("🚀 ~ main ~ testCases:");
+    console.log("[");
+    beautified.forEach(line => console.log("  " + line + ","));
+    console.log("]");
 
     return mapped;
   } catch (error) {
-    const svc = JSON.parse(GOOGLE_SERVICE_ACCOUNT_JSON);
-    console.log(`👤 Service account: ${svc.client_email}`);
+    const svc = JSON.parse(GOOGLE_SERVICE_ACCOUNT_JSON || "{}");
+    if (svc?.client_email) console.log(`👤 Service account: ${svc.client_email}`);
     await exitWith(`❌ Error in getQATestCases: ${error.message}`);
   }
 }
