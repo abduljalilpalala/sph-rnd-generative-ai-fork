@@ -7,7 +7,6 @@ import { updateStatusFeedback } from './_githubComment.mjs';
  */
 export async function exitWith (message) {
   console.error(message);
-  await updateStatusFeedback("Fail", message);
   process.exit(1);
 }
 
