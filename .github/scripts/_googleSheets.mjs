@@ -24,9 +24,6 @@ export async function getQATestCases(spreadsheetUrl, ids = [], excludeIds = [], 
     if (!range)
       await exitWith("❌ No range detected in the Google Sheets URL. Please include '?range=' in the link.");
 
-    console.log(`📘 Reading Google Sheet: ${spreadsheetId}`);
-    console.log(`📗 Range to read: ${range}`);
-
     const meta = await sheets.spreadsheets.get({ spreadsheetId });
     const sheet = meta.data.sheets.find((s) => String(s.properties.sheetId) === gid);
     const sheetName = sheet?.properties?.title;
@@ -56,17 +53,8 @@ export async function getQATestCases(spreadsheetUrl, ids = [], excludeIds = [], 
     }
 
     if (!filtered.length) {
-      console.log(`⚠️ No matching test cases found. Skipping testcase analysis.`);
       return [];
     }
-
-    console.log(
-      ids.length
-        ? `✅ Filtered ${filtered.length}/${rows.length} test cases by IDs.`
-        : excludeIds.length
-        ? `🚫 Excluded ${excludeIds.length} test cases. Using ${filtered.length} remaining.`
-        : `ℹ️ Using all ${rows.length} test cases from the range.`
-    );
 
     // 🧩 Map to clean JSON structure
     const mapped = filtered.map((r) => {

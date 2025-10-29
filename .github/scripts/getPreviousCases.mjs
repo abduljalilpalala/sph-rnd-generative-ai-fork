@@ -25,7 +25,7 @@ import fs from "fs";
     );
 
     if (!claudeComments.length) {
-      console.log("⚠️ No Claude qa summary comments found.");
+      console.log("none");
       return;
     }
 

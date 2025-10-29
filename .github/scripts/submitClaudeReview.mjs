@@ -42,8 +42,8 @@ import { exitWith } from "./_helpers.mjs";
 
     // 4️⃣ Determine review action and label
     const event = failedCount > 0 ? "REQUEST_CHANGES" : "APPROVE";
-    const labelToAdd = failedCount > 0 ? "Claude QA Reviewing" : "Claude QA Approved";
-    const labelToRemove = failedCount > 0 ? "Claude QA Approved" : "Claude QA Reviewing";
+    const labelToAdd = failedCount > 0 ? "Claude QA Changes 🚫" : "Claude QA Approved ✅";
+    const labelToRemove = failedCount > 0 ? "Claude QA Approved ✅" : "Claude QA Changes 🚫";
 
     // 5️⃣ Build Markdown link for summary
     const summaryUrl = latestComment.html_url

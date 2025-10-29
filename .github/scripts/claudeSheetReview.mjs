@@ -25,5 +25,5 @@ import { exitWith, parseComment } from './_helpers.mjs';
     exitWith('❌ No test cases detected. Kindly make sure your selected range covers only from the "Test Case ID" column up to the "Expected Result" column.');
   }
 
-  console.log("🚀 ~ main ~ testCases:", testCases);
+  console.log(testCases);
 })();
