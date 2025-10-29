@@ -184,6 +184,8 @@ jobs:
                   | ❌ Failed Test Cases | n |
                   | ⚠️ Unverified Test Cases | n |
 
+                  latest commit: <shortened latest commit hash>
+
               2. `## 📄 Detailed test case result.
                   <details>
                   <summary> <strong>[Case ID]</strong> (verdict): [ISSUE TYPE][Expected Result] </summary>
