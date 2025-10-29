@@ -88,6 +88,16 @@ jobs:
           cat qa.md >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
+      - name: Log QA test cases
+        if: always()
+        run: |
+          echo "============================="
+          echo "📋 Parsed Previous Test Cases"
+          echo "============================="
+          cat qa.md
+          echo ""
+          echo "✅ End of previous test cases log."
+
       - name: Run Claude Sheet Review
         id: claude-review
         if: false
