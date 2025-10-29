@@ -1,7 +1,7 @@
 import { google } from "googleapis";
 import { exitWith } from "./_helpers.mjs";
 
-export async function getQATestCases (spreadsheetUrl, ids = [], excludeIds = [], GOOGLE_SERVICE_ACCOUNT_JSON) {
+export async function getQATestCases(spreadsheetUrl, ids = [], excludeIds = [], GOOGLE_SERVICE_ACCOUNT_JSON) {
   try {
     const auth = new google.auth.GoogleAuth({
       credentials: JSON.parse(GOOGLE_SERVICE_ACCOUNT_JSON),
@@ -27,7 +27,7 @@ export async function getQATestCases (spreadsheetUrl, ids = [], excludeIds = [],
     console.log(`📗 Range to read: ${range}`);
 
     const meta = await sheets.spreadsheets.get({ spreadsheetId });
-    const sheet = meta.data.sheets.find(s => String(s.properties.sheetId) === gid);
+    const sheet = meta.data.sheets.find((s) => String(s.properties.sheetId) === gid);
     const sheetName = sheet?.properties?.title;
 
     if (!sheetName) await exitWith(`❌ Could not find sheet for gid '${gid}'.`);
@@ -40,60 +40,50 @@ export async function getQATestCases (spreadsheetUrl, ids = [], excludeIds = [],
     const rows = res.data.values || [];
     if (!rows.length) await exitWith(`❌ No data found in range '${sheetName}!${range}'`);
 
-    const dataRows = rows.filter(r => /^\d+$/.test(r[0]));
+    const dataRows = rows.filter((r) => /^\d+$/.test(r[0]));
     let filtered = [];
 
-    const validIds = (ids || []).map(i => String(i).trim()).filter(Boolean);
-    const validExceptIds = (excludeIds || []).map(i => String(i).trim()).filter(Boolean);
+    const validIds = (ids || []).map((i) => String(i).trim()).filter(Boolean);
+    const validExceptIds = (excludeIds || []).map((i) => String(i).trim()).filter(Boolean);
 
     if (validIds.length > 0) {
-      filtered = dataRows.filter(r => validIds.includes(String(r[0]).trim()));
+      filtered = dataRows.filter((r) => validIds.includes(String(r[0]).trim()));
     } else if (validExceptIds.length > 0) {
-      filtered = dataRows.filter(r => !validExceptIds.includes(String(r[0]).trim()));
+      filtered = dataRows.filter((r) => !validExceptIds.includes(String(r[0]).trim()));
     } else {
       filtered = dataRows;
     }
 
     if (!filtered.length) {
+      console.log(`⚠️ No matching test cases found. Skipping testcase analysis.`);
       return [];
     }
 
-    // Map rows to objects. Note: r is an array of cells for the row.
-    const mapped = filtered.map(r => {
-      const id = String(r[0]).trim();
+    console.log(
+      ids.length
+        ? `✅ Filtered ${filtered.length}/${rows.length} test cases by IDs.`
+        : excludeIds.length
+        ? `🚫 Excluded ${excludeIds.length} test cases. Using ${filtered.length} remaining.`
+        : `ℹ️ Using all ${rows.length} test cases from the range.`
+    );
 
-      // Join middle columns into a single description string.
-      // r.slice(1, -1) is an array; join into a string first.
-      const rawDescParts = r.slice(1, -1).map(c => (c === undefined || c === null) ? "" : String(c));
-      const rawDesc = rawDescParts.join(" | ").trim();
+    // 🧩 Map to clean JSON structure
+    const mapped = filtered.map((r) => {
+      const TEST_CASE_ID = String(r[0]).trim();
+      const rawDescParts = r.slice(1, -1).map((c) => (c ? String(c) : ""));
+      const DETAILS = rawDescParts
+        .join(" | ")
+        .replace(/\r\n|\r|\n+/g, "; ") // newline → semicolon
+        .replace(/\s{2,}/g, " ") // collapse spaces
+        .replace(/\s*\|\s*/g, " | ") // normalize pipe spacing
+        .trim();
 
-      // Now normalize: replace newlines with semicolons, collapse multiple spaces, trim.
-      const description = rawDesc
-        .replace(/\r\n|\r|\n+/g, '; ')  // Replace any newline style with semicolon + space
-        .replace(/\s{2,}/g, ' ')        // Collapse multiple spaces
-        .replace(/;\s*;+/g, '; ')       // Collapse accidental repeated semicolons
-        .replace(/\s*\|\s*/g, ' | ')    // normalize pipes spacing
-        .trim()
-        .replace(/^\| /, '')            // remove leading pipe if any
-        .replace(/ \|$/, '');           // remove trailing pipe if any
+      const EXPECTED_RESULT = r[r.length - 1] ? String(r[r.length - 1]).trim() : "";
 
-      const expected = (r[r.length - 1] === undefined || r[r.length - 1] === null)
-        ? ""
-        : String(r[r.length - 1]).trim();
-
-      return { id, description, expected };
+      return { TEST_CASE_ID, EXPECTED_RESULT, DETAILS };
     });
 
-    // --- Beautified console output (single-line, no surrounding quotes) ---
-    // This only affects the logs. The 'mapped' return value remains a proper array of objects.
-    const beautified = mapped.map(tc => {
-      // sanitize inner commas to avoid confusing the log (optional):
-      const desc = tc.description;
-      const expected = tc.expected;
-      return { id: ${tc.id}, description: ${desc}, expected: ${expected} };
-    });
-
-    return beautified;
+    return mapped;
   } catch (error) {
     const svc = JSON.parse(GOOGLE_SERVICE_ACCOUNT_JSON || "{}");
     if (svc?.client_email) console.log(`👤 Service account: ${svc.client_email}`);
