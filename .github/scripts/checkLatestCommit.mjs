@@ -65,8 +65,7 @@ import { exitWith } from "./_helpers.mjs";
         body: message,
       });
 
-      console.log("📝 Posted skip comment to PR.");
-      process.exit(0); // graceful stop
+      exitWith('📝 Posted skip comment to PR.');
     } else {
       console.log("✅ New commit detected. Proceeding...");
     }
