@@ -1,4 +1,4 @@
-name: Framework Agnostic Claude Unit Test Generator v1
+name: Framework Agnostic Claude Unit Test Generator v1.1
 
 on:
   issue_comment:
@@ -13,7 +13,7 @@ jobs:
        github.event.issue.pull_request &&
        contains(github.event.comment.body, '@claude-create-unit-test')) ||
       (github.event_name == 'pull_request' &&
-      github.event.label.name == 'claude-create-unit-test')
+       github.event.label.name == 'claude-create-unit-test')
 
     runs-on: [self-hosted, claude-code-review]
 
@@ -78,61 +78,70 @@ jobs:
           INSTRUCTIONS=""
           FRAMEWORK="unknown"
           USE_CLAUDE_MD=false
+          FRAMEWORK_SOURCE="none"
 
-          echo "📋 Checking for project-specific unit test instructions..."
+          echo "📋 Checking for project guidance files..."
 
+          # Step 1: Check for claude.md and extract framework
           if [ -f "claude.md" ]; then
             echo "✓ Found claude.md in project"
-            if grep -qi "unit.*test\|test.*instruction\|testing.*guide" claude.md; then
-              echo "✓ Found unit test instructions in claude.md"
+            EXTRACTED_FRAMEWORK=$(grep -iE "framework:\s*(\w+)|this is a (\w+) (project|application|app)|(\w+)\s*\+\s*prisma|(\w+)\s*backend|(\w+)\s*frontend|using\s+(\w+)|(\w+)\s*\+" claude.md | grep -oiE "(nestjs|nextjs|next\.js|next|react|express|laravel|rails|vue|django|flask|fastapi|angular|svelte|remix|astro|solid|qwik|nuxt|fastify|koa|symfony|sinatra|gin|echo|spring-boot|springboot)" | head -1 | tr '[:upper:]' '[:lower:]' | sed 's/next\.js/nextjs/g' | sed 's/^next$/nextjs/' || echo "")
+
+            if [ -n "$EXTRACTED_FRAMEWORK" ]; then
+              FRAMEWORK="$EXTRACTED_FRAMEWORK"
+              FRAMEWORK_SOURCE="claude.md"
+              echo "✓ Extracted framework from claude.md: $FRAMEWORK"
+            fi
+
+            if grep -qiE "unit.*test|test.*instruction|testing.*guide|## test" claude.md; then
+              echo "✓ Found unit test instructions section in claude.md"
               INSTRUCTIONS=$(cat claude.md)
               USE_CLAUDE_MD=true
-
-              EXTRACTED_FRAMEWORK=$(grep -iE "framework:\s*(\w+)|this is a (\w+) (project|application)" claude.md | head -1 | grep -oE "(nestjs|nextjs|react|express|laravel|rails|vue|django|flask|fastapi|angular|svelte|remix|astro|solid|qwik|nuxt)" | tr '[:upper:]' '[:lower:]' || echo "")
-
-              if [ -n "$EXTRACTED_FRAMEWORK" ]; then
-                FRAMEWORK="$EXTRACTED_FRAMEWORK"
-                echo "✓ Extracted framework from claude.md: $FRAMEWORK"
-              else
-                FRAMEWORK="custom"
-                echo "→ Using custom instructions from claude.md (no specific framework detected)"
-              fi
+              FRAMEWORK_SOURCE="claude.md (with test instructions)"
             else
-              echo "⚠ claude.md exists but doesn't contain unit test instructions"
+              echo "→ claude.md found but no dedicated test instructions section"
+              echo "→ Will fetch test instructions from template repo for framework: $FRAMEWORK"
             fi
           fi
 
-          if [ -z "$INSTRUCTIONS" ] || [ "$USE_CLAUDE_MD" = false ]; then
-            echo "📦 Detecting framework from project structure..."
-
-            # === Framework Auto-Detection ===
-            if [ -f "nest-cli.json" ] || grep -q "@nestjs/core" package.json 2>/dev/null; then FRAMEWORK="nestjs"
-            elif grep -q "\"next\":" package.json 2>/dev/null || [ -f "next.config.js" ] || [ -f "next.config.ts" ] || [ -f "next.config.mjs" ]; then FRAMEWORK="nextjs"
-            elif [ -f "nuxt.config.js" ] || [ -f "nuxt.config.ts" ] || grep -q "\"nuxt\":" package.json 2>/dev/null; then FRAMEWORK="nuxt"
-            elif grep -q "\"react\":" package.json 2>/dev/null; then FRAMEWORK="react"
-            elif [ -f "artisan" ] && grep -q "laravel/framework" composer.json 2>/dev/null; then FRAMEWORK="laravel"
-            elif grep -q "flask" requirements.txt 2>/dev/null; then FRAMEWORK="flask"
-            else FRAMEWORK="generic"
+          # Step 2: Auto-detect framework if unknown
+          if [ "$FRAMEWORK" = "unknown" ]; then
+            echo "📦 Auto-detecting framework from project structure..."
+            if [ -f "nest-cli.json" ] || grep -q "@nestjs/core" package.json 2>/dev/null; then
+              FRAMEWORK="nestjs"
+              FRAMEWORK_SOURCE="auto-detection"
+            elif grep -q "\"next\":" package.json 2>/dev/null || [ -f "next.config.js" ]; then
+              FRAMEWORK="nextjs"
+              FRAMEWORK_SOURCE="auto-detection"
+            elif [ -f "artisan" ] && grep -q "laravel/framework" composer.json 2>/dev/null; then
+              FRAMEWORK="laravel"
+              FRAMEWORK_SOURCE="auto-detection"
+            else
+              FRAMEWORK="generic"
+              FRAMEWORK_SOURCE="fallback"
             fi
+            echo "✓ Framework detected: $FRAMEWORK"
+          fi
 
-            echo "📥 Fetching instructions for '$FRAMEWORK'..."
+          # Step 3: Fetch test instructions
+          if [ -z "$INSTRUCTIONS" ]; then
+            echo "📥 Fetching test instructions for '$FRAMEWORK'..."
             INSTRUCTIONS_URL="$TEMPLATE_REPO/$FRAMEWORK/instructions.md"
             HTTP_CODE=$(curl -s -o /tmp/fetched-instructions.txt -w "%{http_code}" "$INSTRUCTIONS_URL")
 
-            if [ "$HTTP_CODE" = "200" ] && [ -s /tmp/fetched-instructions.txt ]; then
+            if [ "$HTTP_CODE" = "200" ]; then
               INSTRUCTIONS=$(cat /tmp/fetched-instructions.txt)
-              echo "✓ Successfully fetched instructions for $FRAMEWORK"
+              echo "✓ Loaded framework instructions"
             else
-              echo "⚠ Could not fetch instructions, using generic template"
-              INSTRUCTIONS="Generate comprehensive unit tests for all modified files in this PR."
-              FRAMEWORK="generic"
+              echo "⚠ Could not fetch instructions (HTTP $HTTP_CODE)"
+              INSTRUCTIONS="Generate comprehensive unit tests following the project's conventions."
             fi
           fi
 
           echo "$INSTRUCTIONS" > /tmp/test-instructions.txt
           echo "framework=$FRAMEWORK" >> $GITHUB_OUTPUT
           echo "use_claude_md=$USE_CLAUDE_MD" >> $GITHUB_OUTPUT
-          echo "✅ Instructions loaded successfully for framework: $FRAMEWORK"
+          echo "framework_source=$FRAMEWORK_SOURCE" >> $GITHUB_OUTPUT
 
       - name: Create branch for unit tests
         id: create-branch
@@ -149,16 +158,17 @@ jobs:
           additional_permissions: |
             actions: read
           prompt: |
-            Generate comprehensive unit tests for the changes in PR #${{ steps.pr-info.outputs.number }}.
+            Generate comprehensive unit tests for PR #${{ steps.pr-info.outputs.number }}.
 
-            **Detected Framework:** ${{ steps.load-instructions.outputs.framework }}
+            **Framework:** ${{ steps.load-instructions.outputs.framework }}
+            **Source:** ${{ steps.load-instructions.outputs.framework_source }}
 
-            ## Instructions
+            ## Testing Instructions
             $(cat /tmp/test-instructions.txt)
 
-            Follow the framework-specific conventions and ensure comprehensive coverage.
+            Follow framework-specific test conventions and ensure full coverage.
 
-          claude_args: '--allowed-tools "Bash(gh pr diff:*),Bash(cat:*),Bash(ls:*),Bash(grep:*)" --dangerously-skip-permissions'
+          claude_args: '--allowed-tools "Bash(gh pr diff:*),Bash(cat:*),Bash(find:*),Bash(grep:*)" --dangerously-skip-permissions'
 
       - name: Push branch and create PR
         env:
@@ -173,9 +183,10 @@ jobs:
               --title "Unit Tests for PR #${{ steps.pr-info.outputs.number }}" \
               --body "This PR adds unit tests for the changes in #${{ steps.pr-info.outputs.number }}.
 
-            **Framework Detected:** ${{ steps.load-instructions.outputs.framework }}
+            **Framework:** ${{ steps.load-instructions.outputs.framework }}
+            **Detection:** ${{ steps.load-instructions.outputs.framework_source }}
 
-            Generated by Claude Code." \
+            Generated by Claude Code in response to @claude-create-unit-test comment." \
               --base ${{ github.event.repository.default_branch }} \
               --head ${{ steps.create-branch.outputs.branch }})
 
@@ -183,14 +194,13 @@ jobs:
               --method PATCH \
               -H "Accept: application/vnd.github+json" \
               "/repos/${{ github.repository }}/issues/comments/${{ steps.initial-comment.outputs.comment_id }}" \
-              -f body="✅ Unit tests have been generated and submitted in a new PR: $PR_URL
-            **Framework:** ${{ steps.load-instructions.outputs.framework }}"
+              -f body="✅ Unit tests have been generated and submitted in a new PR: $PR_URL"
           else
             gh api \
               --method PATCH \
               -H "Accept: application/vnd.github+json" \
               "/repos/${{ github.repository }}/issues/comments/${{ steps.initial-comment.outputs.comment_id }}" \
-              -f body="⚠️ No unit test files were generated. This may be because the changes don't require tests."
+              -f body="⚠️ No unit test files were generated. Please check if testable code exists or if claude.md needs update."
           fi
 
       - name: Add completion reaction
