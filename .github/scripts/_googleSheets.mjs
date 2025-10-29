@@ -71,11 +71,8 @@ export async function getQATestCases (spreadsheetUrl, ids = [], excludeIds = [],
     const mapped = filtered.map(r => ({
       id: r[0],
       description: r.slice(1, -1)
-        .join(" | ")
-        .replace(/^>+/gm, "") // remove blockquotes
-        .replace(/[_*`]/g, "") // remove markdown emphasis
-        .replace(/-{3,}/g, "") // remove divider lines
-        .replace(/\n{2,}/g, "\n") // normalize multiple newlines
+        .replace(/\n+/g, '; ')       // Replace newlines with semicolon + space
+        .replace(/\s{2,}/g, ' ')     // Collapse multiple spaces
         .trim(),
       expected: r[r.length - 1],
     }));
