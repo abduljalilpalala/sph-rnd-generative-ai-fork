@@ -72,17 +72,18 @@ jobs:
         id: detect-mode
         shell: bash
         run: |
-              COMMENT_BODY=$(cat <<'EOF'
-                ${{ github.event.comment.body }}
-                EOF
-              )
-              if echo "$COMMENT_BODY" | grep -Eiq 'testcase:\s*https:\/\/docs\.google\.com\/spreadsheets\/d\/'; then
-                echo "mode=sheet" >> $GITHUB_OUTPUT
-                echo "Detected: Sheet Mode"
-              else
-                echo "mode=inline" >> $GITHUB_OUTPUT
-                echo "Detected: Inline Mode"
-              fi
+          # Read entire comment body safely (multi-line, special chars, quotes)
+          COMMENT_BODY=$(cat <<'EOF'
+          ${{ github.event.comment.body }}
+          EOF
+          )
+          if echo "$COMMENT_BODY" | grep -Eiq 'testcase:\s*https:\/\/docs\.google\.com\/spreadsheets\/d\/'; then
+            echo "mode=sheet" >> $GITHUB_OUTPUT
+            echo "Detected: Sheet Mode"
+          else
+            echo "mode=inline" >> $GITHUB_OUTPUT
+            echo "Detected: Inline Mode"
+          fi
 
       # 🧩 Run the appropriate QA fetcher (inline or sheet)
       - name: Fetch QA test cases
