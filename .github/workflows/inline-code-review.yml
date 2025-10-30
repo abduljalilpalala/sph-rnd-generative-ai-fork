@@ -16,7 +16,8 @@ jobs:
     if: |
       github.event.issue.pull_request &&
       contains(github.event.comment.body, '@inline-code-review')
-    runs-on: [self-hosted, claude-code-review]
+    # runs-on: [self-hosted, claude-code-review]
+    runs-on: ubuntu-latest
     steps:
       - name: Add 👀 reaction to comment
         uses: actions/github-script@v7
