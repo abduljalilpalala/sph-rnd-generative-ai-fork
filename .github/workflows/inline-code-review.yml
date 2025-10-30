@@ -68,6 +68,8 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_INLINE_CODE_REVIEW }}
           # track_progress: true
+          additional_permissions: |
+            actions: read
           prompt: |
             Please review this pull request and provide inline feedback that is highly actionable, concise, and aligned with best practices.
 
