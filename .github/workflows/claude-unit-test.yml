@@ -124,45 +124,6 @@ jobs:
 
             2. Run: `gh pr diff ${{ steps.pr-info.outputs.number }}` to see what files changed
 
-            3. Based on which files changed, read the appropriate documentation:
-               - If backend files changed (`test-projects/test-backend/**`): Read `CLAUDE-BE.md`
-               - If frontend files changed (`test-projects/test-frontend/**`): Read `CLAUDE-FE.md`
-               - If both changed: Read both files
-
-            These documentation files contain ALL the information you need:
-            - Project architecture and folder structure
-            - Testing frameworks and patterns
-            - File naming conventions (`.spec.ts` vs `.test.ts`/`.test.tsx`)
-            - What files need tests and where to place them
-            - Specific testing examples and best practices
-            - Mocking patterns and common utilities
-
-            ### Step 2: Analyze What Changed
-
-            Review the PR diff you fetched earlier and identify:
-            - Backend files that need tests (controllers, services)
-            - Frontend files that need tests (components, hooks, utilities)
-            - Which specific testing patterns apply from the docs
-
-            ### Step 3: Generate Tests
-
-            For each testable file in the PR diff:
-
-            **Backend Files** (if CLAUDE-BE.md was read):
-            - `.controller.ts` → create `.controller.spec.ts` in same directory
-            - `.service.ts` → create `.service.spec.ts` in same directory
-            - Follow NestJS + Jest patterns from CLAUDE-BE.md
-            - Mock PrismaService and dependencies
-            - Test all public methods, success/error/edge cases
-
-            **Frontend Files** (if CLAUDE-FE.md was read):
-            - Component `.tsx` → create `.test.tsx` in same directory
-            - Hook `use*.ts` → create `.test.ts` in same directory
-            - Utility `.ts` → create `.test.ts` in same directory
-            - Follow React Testing Library patterns from CLAUDE-FE.md
-            - Mock Next.js router, RTK Query, and API calls
-            - Test rendering, interactions, and behavior
-
             ## Critical Rules
 
             - ✅ **DO**: Create test files in the SAME directory as source files
@@ -177,19 +138,7 @@ jobs:
             - ❌ **DO NOT**: Commit files (just create them)
             - ❌ **DO NOT**: Skip reading the documentation files
             - ❌ **DO NOT**: Make up your own testing patterns - use the docs
-
-            ## Example Workflow
-
-            ```bash
-            # 1. Read documentation
-            cat CLAUDE.md
-            gh pr diff ${{ steps.pr-info.outputs.number }}
-            cat CLAUDE-BE.md  # if backend changes
-            cat CLAUDE-FE.md  # if frontend changes
-
-            # 2. Create test files based on what you learned
-            # Follow the exact patterns from the documentation
-            ```
+            - ❌ **DO NOT**: Create tests files for node_modules or third-party libraries
 
             Remember: The documentation files (CLAUDE-BE.md and CLAUDE-FE.md) are your source of truth. 
             They contain all the patterns, examples, and requirements you need. Read them carefully!
@@ -258,8 +207,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Get committed test files
-          CHANGED_FILES=$(git diff --name-only HEAD~1 2>/dev/null | grep -E "\.(spec\.ts|test\.ts|test\.tsx)$" || echo "")
+          # Get only the files that were actually committed (changed files)
+          CHANGED_FILES=$(git diff --name-only HEAD~1 2>/dev/null | grep ".spec.ts" || echo "")
 
           if [ -z "$CHANGED_FILES" ]; then
             echo "No test files were changed or committed"
@@ -267,49 +216,35 @@ jobs:
               --method PATCH \
               -H "Accept: application/vnd.github+json" \
               "/repos/${{ github.repository }}/issues/comments/${{ steps.initial-comment.outputs.comment_id }}" \
-              -f body="⚠️ No unit test files were generated. Possible reasons:
-          - No testable code changes detected in the PR
-          - Changes don't require unit tests (configs, docs, etc.)
-          - Claude couldn't identify appropriate test patterns
-
-          Review the PR changes to determine if tests are needed."
+              -f body="⚠️ No unit test files were generated. This may be because the changes don't require tests or Claude couldn't identify testable code."
             exit 0
           fi
 
           echo "Changed test files:"
           echo "$CHANGED_FILES"
 
-          # Count by type
-          BACKEND_COUNT=$(echo "$CHANGED_FILES" | grep "\.spec\.ts$" | wc -l)
-          FRONTEND_COUNT=$(echo "$CHANGED_FILES" | grep -E "\.(test\.ts|test\.tsx)$" | wc -l)
+          echo -e "\nPushing branch to remote..."
 
-          # Push the branch
-          echo -e "\n=== Pushing branch to remote ==="
+          # Push the branch using token authentication
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ steps.create-branch.outputs.branch }}
 
-          # Create PR comparison URL
+          # Get the repository URL
           REPO_URL="https://github.com/${{ github.repository }}"
           BRANCH_NAME="${{ steps.create-branch.outputs.branch }}"
           PR_HEAD_BRANCH="${{ steps.pr-branch.outputs.head_branch }}"
+
+          # Create comparison URL pointing to the PR's branch, not main
           PR_CREATE_URL="$REPO_URL/compare/$PR_HEAD_BRANCH...$BRANCH_NAME?expand=1"
 
-          # Build summary
-          SUMMARY=""
-          if [ "$BACKEND_COUNT" -gt 0 ]; then
-            SUMMARY="${SUMMARY}\n- **Backend**: $BACKEND_COUNT test file(s) (\`.spec.ts\`)"
-          fi
-          if [ "$FRONTEND_COUNT" -gt 0 ]; then
-            SUMMARY="${SUMMARY}\n- **Frontend**: $FRONTEND_COUNT test file(s) (\`.test.ts\`/\`.test.tsx\`)"
-          fi
+          # Count only the changed test files
+          TEST_FILE_COUNT=$(echo "$CHANGED_FILES" | wc -l)
 
-          # Update comment with success
+          # Update the initial comment with success message and instructions
           gh api \
             --method PATCH \
             -H "Accept: application/vnd.github+json" \
             "/repos/${{ github.repository }}/issues/comments/${{ steps.initial-comment.outputs.comment_id }}" \
             -f body="✅ Unit tests have been generated and pushed to branch \`$BRANCH_NAME\`
-
-          **Tests generated:**$SUMMARY
 
           **Next steps:**
           1. Review the generated tests locally:
@@ -318,26 +253,17 @@ jobs:
              git checkout $BRANCH_NAME
              \`\`\`
 
-          2. Run the tests to verify they work:
-             - Backend: \`cd test-projects/test-backend && yarn test\`
-             - Frontend: \`cd test-projects/test-frontend && yarn test\`
+          2. Once reviewed, create a PR using this link:
+             $PR_CREATE_URL
 
-          3. Once reviewed and tests pass, create a PR:
-             [$PR_CREATE_URL]($PR_CREATE_URL)
+          **Files changed:** $TEST_FILE_COUNT test file(s) created
 
           <details>
-          <summary>📋 View all generated test files</summary>
+          <summary>View changed files</summary>
 
           \`\`\`
           $CHANGED_FILES
           \`\`\`
-          </details>
-
-          <details>
-          <summary>📚 Testing guidelines</summary>
-
-          - **Backend tests**: See [CLAUDE-BE.md](https://github.com/${{ github.repository }}/blob/main/CLAUDE-BE.md#unit-testing-guidelines)
-          - **Frontend tests**: See [CLAUDE-FE.md](https://github.com/${{ github.repository }}/blob/main/CLAUDE-FE.md#unit-testing-guidelines)
           </details>"
 
       - name: Add completion reaction
