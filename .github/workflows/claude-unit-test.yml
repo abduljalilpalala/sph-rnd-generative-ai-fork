@@ -1,4 +1,4 @@
-name: Claude Unified Unit Test Generator
+name: Claude Unified Unit Test Generator v3
 
 on:
   issue_comment:
@@ -88,6 +88,28 @@ jobs:
             core.setOutput('comment_id', comment.id);
             return comment.id;
 
+      - name: Pre-flight check - Verify docs exist
+        run: |
+          echo "=== Checking for documentation files ==="
+
+          if [ ! -f "CLAUDE.md" ]; then
+            echo "⚠️  WARNING: CLAUDE.md not found in repository root"
+          else
+            echo "✅ CLAUDE.md found"
+          fi
+
+          if [ ! -f "CLAUDE-BE.md" ]; then
+            echo "⚠️  WARNING: CLAUDE-BE.md not found"
+          else
+            echo "✅ CLAUDE-BE.md found"
+          fi
+
+          if [ ! -f "CLAUDE-FE.md" ]; then
+            echo "⚠️  WARNING: CLAUDE-FE.md not found"
+          else
+            echo "✅ CLAUDE-FE.md found"
+          fi
+
       - name: Create branch for unit tests
         id: create-branch
         run: |
@@ -105,146 +127,197 @@ jobs:
         id: claude-tests
         uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_UNIT_TEST }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          show_full_output: true
           additional_permissions: |
             actions: read
           prompt: |
-            You are tasked with generating comprehensive unit tests for PR #${{ steps.pr-info.outputs.number }}.
+            Generate comprehensive unit tests for PR #${{ steps.pr-info.outputs.number }}.
 
-            ## CRITICAL: Follow This Process
+            STEP 1 - READ DOCUMENTATION:
+            ```bash
+            cat CLAUDE.md
+            cat CLAUDE-BE.md
+            cat CLAUDE-FE.md
+            ```
 
-            ### Step 1: Read Project Documentation
+            STEP 2 - ANALYZE PR CHANGES:
+            ```bash
+            gh pr diff ${{ steps.pr-info.outputs.number }}
+            ```
 
-            **MANDATORY**: Read these files in order to understand the project structure and testing requirements:
+            STEP 3 - IDENTIFY FILES THAT NEED TESTS:
 
-            1. First, read `CLAUDE.md` to understand:
-               - Overall project structure (monorepo layout)
-               - Which sub-projects exist (backend/frontend)
-               - High-level organization
+            From the PR diff, identify files that need tests:
 
-            2. Run: `gh pr diff ${{ steps.pr-info.outputs.number }}` to see what files changed
+            **Backend files (test-projects/test-backend/src/):**
+            - ✅ Include: .controller.ts files (e.g., user.controller.ts)
+            - ✅ Include: .service.ts files (e.g., user.service.ts)
+            - ❌ Exclude: .dto.ts files (DTOs don't need unit tests)
+            - ❌ Exclude: .entity.ts files (entities don't need unit tests)
+            - ❌ Exclude: .module.ts files (modules don't need unit tests)
+            - ❌ Exclude: files in node_modules/
 
-            ## Critical Rules
+            **Frontend files (test-projects/test-frontend/):**
+            - ✅ Include: Component .tsx files in components/ directory
+            - ✅ Include: Hook files (use*.ts) in hooks/ directory
+            - ✅ Include: Utility .ts files in lib/ directory (except configs)
+            - ❌ Exclude: Page files in app/ directory
+            - ❌ Exclude: Config files (.config.ts, .config.js)
+            - ❌ Exclude: Type definition files (.d.ts)
+            - ❌ Exclude: files in node_modules/
 
-            - ✅ **DO**: Create test files in the SAME directory as source files
-            - ✅ **DO**: Follow naming conventions from the docs (.spec.ts vs .test.ts/.test.tsx)
-            - ✅ **DO**: Include all necessary imports and mocks
-            - ✅ **DO**: Write descriptive test names
-            - ✅ **DO**: Cover success, error, and edge cases
-            - ✅ **DO**: Follow the exact patterns shown in CLAUDE-BE.md and CLAUDE-FE.md
+            STEP 4 - CREATE TEST FILES:
 
-            - ❌ **DO NOT**: Create output.txt or summary files
-            - ❌ **DO NOT**: Create any markdown files or documentation
-            - ❌ **DO NOT**: Commit files (just create them)
-            - ❌ **DO NOT**: Skip reading the documentation files
-            - ❌ **DO NOT**: Make up your own testing patterns - use the docs
-            - ❌ **DO NOT**: Create tests files for node_modules or third-party libraries
+            For each identified file, create a test file IN THE SAME DIRECTORY:
 
-            Remember: The documentation files (CLAUDE-BE.md and CLAUDE-FE.md) are your source of truth. 
-            They contain all the patterns, examples, and requirements you need. Read them carefully!
+            Backend examples:
+            - src/user/user.controller.ts → src/user/user.controller.spec.ts
+            - src/product/product.service.ts → src/product/product.service.spec.ts
+
+            Frontend examples:
+            - components/atoms/Button.tsx → components/atoms/Button.test.tsx
+            - hooks/useUsers.ts → hooks/useUsers.test.ts
+
+            Follow the patterns in CLAUDE-BE.md and CLAUDE-FE.md exactly.
+
+            CRITICAL RULES:
+            - ✅ DO: Create tests only in test-projects/ directories
+            - ✅ DO: Follow naming conventions (.spec.ts or .test.ts/.test.tsx)
+            - ✅ DO: Use patterns from documentation
+            - ❌ DO NOT: Create any files in node_modules/
+            - ❌ DO NOT: Create tests for DTOs, entities, modules, configs
+            - ❌ DO NOT: Create output.txt or markdown files
+            - ❌ DO NOT: Commit files
+
+            Start by reading the docs and PR diff.
           claude_args: '--allowed-tools "Bash(gh pr diff:*),Bash(gh pr view:*),Bash(cat:*),Bash(ls:*),Bash(find:*),Bash(grep:*)" --dangerously-skip-permissions'
 
       - name: Debug - Check what Claude created
+        if: always()
         run: |
-          echo "=== Workspace contents ==="
-          ls -la
+          echo "=== All new TypeScript test files (excluding node_modules) ==="
+          find test-projects -type f \( -name "*.spec.ts" -o -name "*.test.ts" -o -name "*.test.tsx" \) \
+            -not -path "*/node_modules/*" 2>/dev/null || echo "No test files found"
 
-          echo -e "\n=== Backend test files ==="
-          find test-projects/test-backend -name "*.spec.ts" -type f 2>/dev/null || echo "No backend test files found"
-
-          echo -e "\n=== Frontend test files ==="
-          find test-projects/test-frontend -name "*.test.ts" -o -name "*.test.tsx" -type f 2>/dev/null || echo "No frontend test files found"
+          echo -e "\n=== Files in node_modules (should be empty) ==="
+          find test-projects -type f \( -name "*.spec.ts" -o -name "*.test.ts" -o -name "*.test.tsx" \) \
+            -path "*/node_modules/*" 2>/dev/null || echo "✅ No test files in node_modules"
 
           echo -e "\n=== Git status ==="
           git status
 
-          echo -e "\n=== Untracked files ==="
-          git ls-files --others --exclude-standard
+      - name: Clean up any files in node_modules
+        run: |
+          echo "=== Removing any test files accidentally created in node_modules ==="
+          find test-projects -type f \( -name "*.spec.ts" -o -name "*.test.ts" -o -name "*.test.tsx" \) \
+            -path "*/node_modules/*" -delete 2>/dev/null || echo "No files to clean"
+
+          echo "=== Verifying cleanup ==="
+          REMAINING=$(find test-projects -type f \( -name "*.spec.ts" -o -name "*.test.ts" -o -name "*.test.tsx" \) \
+            -path "*/node_modules/*" 2>/dev/null | wc -l)
+
+          if [ "$REMAINING" -gt 0 ]; then
+            echo "⚠️ Warning: $REMAINING test files still in node_modules"
+          else
+            echo "✅ All test files outside node_modules"
+          fi
 
       - name: Check for test files and commit
+        id: commit-tests
+        continue-on-error: true
         run: |
-          echo "=== Checking for test files ==="
+          echo "=== Checking for valid test files (excluding node_modules) ==="
 
-          # Find all test files (both backend and frontend)
-          BACKEND_TESTS=$(find test-projects/test-backend -name "*.spec.ts" -type f 2>/dev/null || echo "")
-          FRONTEND_TESTS=$(find test-projects/test-frontend \( -name "*.test.ts" -o -name "*.test.tsx" \) -type f 2>/dev/null || echo "")
+          # Find test files, excluding node_modules
+          BACKEND_TESTS=$(find test-projects/test-backend/src -type f -name "*.spec.ts" \
+            -not -path "*/node_modules/*" 2>/dev/null || echo "")
+
+          FRONTEND_TESTS=$(find test-projects/test-frontend -type f \( -name "*.test.ts" -o -name "*.test.tsx" \) \
+            -not -path "*/node_modules/*" \
+            -not -path "*/app/*" 2>/dev/null || echo "")
 
           ALL_TESTS="${BACKEND_TESTS}${FRONTEND_TESTS}"
 
           if [ -z "$ALL_TESTS" ]; then
-            echo "No test files found"
+            echo "No valid test files found"
+            echo "tests_found=false" >> $GITHUB_OUTPUT
             exit 1
           fi
 
+          echo "tests_found=true" >> $GITHUB_OUTPUT
           echo "Found test files:"
           [ -n "$BACKEND_TESTS" ] && echo "Backend:" && echo "$BACKEND_TESTS"
           [ -n "$FRONTEND_TESTS" ] && echo "Frontend:" && echo "$FRONTEND_TESTS"
 
-          echo -e "\n=== Git status ==="
-          git status
-
-          # Add and commit test files
+          # Add and commit test files (excluding node_modules)
           if [[ -n $(git status -s) ]]; then
             echo -e "\n=== Adding test files ==="
             
-            # Add backend tests
-            [ -n "$BACKEND_TESTS" ] && find test-projects/test-backend -name "*.spec.ts" -type f -exec git add -f {} \;
+            # Add backend tests (excluding node_modules)
+            if [ -n "$BACKEND_TESTS" ]; then
+              find test-projects/test-backend/src -type f -name "*.spec.ts" \
+                -not -path "*/node_modules/*" -exec git add -f {} \;
+            fi
             
-            # Add frontend tests
-            [ -n "$FRONTEND_TESTS" ] && find test-projects/test-frontend \( -name "*.test.ts" -o -name "*.test.tsx" \) -type f -exec git add -f {} \;
+            # Add frontend tests (excluding node_modules and app/)
+            if [ -n "$FRONTEND_TESTS" ]; then
+              find test-projects/test-frontend -type f \( -name "*.test.ts" -o -name "*.test.tsx" \) \
+                -not -path "*/node_modules/*" \
+                -not -path "*/app/*" -exec git add -f {} \;
+            fi
             
             echo -e "\n=== Committing changes ==="
             PR_BRANCH="${{ steps.pr-branch.outputs.head_branch }}"
             git commit -m "Add unit tests for ${PR_BRANCH}" || echo "Nothing new to commit"
-          else
-            echo -e "\n=== All changes already committed ==="
           fi
 
           echo -e "\n=== Final git status ==="
           git status
 
-      - name: Push branch and update comment
+      - name: Push branch and update comment (Success)
+        if: steps.commit-tests.outputs.tests_found == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Get only the files that were actually committed (changed files)
-          CHANGED_FILES=$(git diff --name-only HEAD~1 2>/dev/null | grep ".spec.ts" || echo "")
+          # Get committed test files
+          CHANGED_FILES=$(git diff --name-only HEAD~1 2>/dev/null | grep -E "\.(spec\.ts|test\.ts|test\.tsx)$" || echo "")
 
           if [ -z "$CHANGED_FILES" ]; then
-            echo "No test files were changed or committed"
-            gh api \
-              --method PATCH \
-              -H "Accept: application/vnd.github+json" \
-              "/repos/${{ github.repository }}/issues/comments/${{ steps.initial-comment.outputs.comment_id }}" \
-              -f body="⚠️ No unit test files were generated. This may be because the changes don't require tests or Claude couldn't identify testable code."
-            exit 0
+            echo "No test files were committed"
+            exit 1
           fi
 
-          echo "Changed test files:"
-          echo "$CHANGED_FILES"
+          # Count by type
+          BACKEND_COUNT=$(echo "$CHANGED_FILES" | grep "\.spec\.ts$" | wc -l)
+          FRONTEND_COUNT=$(echo "$CHANGED_FILES" | grep -E "\.(test\.ts|test\.tsx)$" | wc -l)
 
-          echo -e "\nPushing branch to remote..."
-
-          # Push the branch using token authentication
+          # Push the branch
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ steps.create-branch.outputs.branch }}
 
-          # Get the repository URL
+          # Create PR comparison URL
           REPO_URL="https://github.com/${{ github.repository }}"
           BRANCH_NAME="${{ steps.create-branch.outputs.branch }}"
           PR_HEAD_BRANCH="${{ steps.pr-branch.outputs.head_branch }}"
-
-          # Create comparison URL pointing to the PR's branch, not main
           PR_CREATE_URL="$REPO_URL/compare/$PR_HEAD_BRANCH...$BRANCH_NAME?expand=1"
 
-          # Count only the changed test files
-          TEST_FILE_COUNT=$(echo "$CHANGED_FILES" | wc -l)
+          # Build summary
+          SUMMARY=""
+          if [ "$BACKEND_COUNT" -gt 0 ]; then
+            SUMMARY="${SUMMARY}\n- **Backend**: $BACKEND_COUNT test file(s) (\`.spec.ts\`)"
+          fi
+          if [ "$FRONTEND_COUNT" -gt 0 ]; then
+            SUMMARY="${SUMMARY}\n- **Frontend**: $FRONTEND_COUNT test file(s) (\`.test.ts\`/\`.test.tsx\`)"
+          fi
 
-          # Update the initial comment with success message and instructions
+          # Update comment with success
           gh api \
             --method PATCH \
             -H "Accept: application/vnd.github+json" \
             "/repos/${{ github.repository }}/issues/comments/${{ steps.initial-comment.outputs.comment_id }}" \
             -f body="✅ Unit tests have been generated and pushed to branch \`$BRANCH_NAME\`
+
+          **Tests generated:**$SUMMARY
 
           **Next steps:**
           1. Review the generated tests locally:
@@ -253,18 +326,58 @@ jobs:
              git checkout $BRANCH_NAME
              \`\`\`
 
-          2. Once reviewed, create a PR using this link:
-             $PR_CREATE_URL
+          2. Run the tests to verify they work:
+             - Backend: \`cd test-projects/test-backend && yarn test\`
+             - Frontend: \`cd test-projects/test-frontend && yarn test\`
 
-          **Files changed:** $TEST_FILE_COUNT test file(s) created
+          3. Once reviewed and tests pass, create a PR:
+             [$PR_CREATE_URL]($PR_CREATE_URL)
 
           <details>
-          <summary>View changed files</summary>
+          <summary>📋 View all generated test files</summary>
 
           \`\`\`
           $CHANGED_FILES
           \`\`\`
+          </details>
+
+          <details>
+          <summary>📚 Testing guidelines</summary>
+
+          - **Backend tests**: See [CLAUDE-BE.md](https://github.com/${{ github.repository }}/blob/main/CLAUDE-BE.md#unit-testing-guidelines)
+          - **Frontend tests**: See [CLAUDE-FE.md](https://github.com/${{ github.repository }}/blob/main/CLAUDE-FE.md#unit-testing-guidelines)
           </details>"
+
+      - name: Update comment (No tests generated)
+        if: steps.commit-tests.outputs.tests_found != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          CHANGED_FILES=$(gh pr diff ${{ steps.pr-info.outputs.number }} --name-only)
+
+          gh api \
+            --method PATCH \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${{ github.repository }}/issues/comments/${{ steps.initial-comment.outputs.comment_id }}" \
+            -f body="⚠️ No unit test files were generated.
+
+          **Possible reasons:**
+          - No testable code changes (only DTOs, configs, or docs changed)
+          - Changes are in excluded directories (node_modules, app/ pages)
+          - Documentation files may be missing
+
+          **Changed files in PR:**
+          \`\`\`
+          $CHANGED_FILES
+          \`\`\`
+
+          **Note:** We don't generate tests for:
+          - DTOs (.dto.ts files)
+          - Entities (.entity.ts)
+          - Modules (.module.ts)
+          - Config files
+          - Page components (app/ directory)
+          - Files in node_modules/"
 
       - name: Add completion reaction
         if: success() && github.event_name == 'issue_comment'
@@ -299,5 +412,5 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: ${{ steps.pr-info.outputs.number }},
-              body: '❌ Unit test generation failed. Please check the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.'
+              body: '❌ Unit test generation workflow failed. Please check the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.\n\n**Common issues:**\n- Missing ANTHROPIC_API_KEY secret\n- Missing documentation files (CLAUDE.md, CLAUDE-BE.md, CLAUDE-FE.md)\n- Insufficient GitHub permissions'
             });

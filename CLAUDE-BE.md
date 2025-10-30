@@ -116,10 +116,33 @@ This project uses Jest and NestJS testing utilities for comprehensive unit testi
 
 #### Files That Need Tests
 Create a `.spec.ts` file for:
-- **All controllers** (`.controller.ts` files)
-- **All services** (`.service.ts` files)
-- **Complex business logic** in other TypeScript files
-- **Utility functions** and helpers
+- ✅ **All controllers** (`.controller.ts` files) - Test HTTP endpoints and request/response handling
+- ✅ **All services** (`.service.ts` files) - Test business logic and data operations
+- ✅ **Complex business logic** in other TypeScript files
+- ✅ **Utility functions** and helpers
+
+#### Files That DON'T Need Tests
+DO NOT create test files for:
+- ❌ **DTOs** (`.dto.ts` files) - Data transfer objects with validation decorators only
+- ❌ **Entities** (`.entity.ts` files) - Database entity definitions
+- ❌ **Modules** (`.module.ts` files) - Dependency injection configuration
+- ❌ **Interfaces** and type definitions
+- ❌ **Configuration files** (`.config.ts`)
+- ❌ **Migration files** in `prisma/migrations/`
+- ❌ **Files in node_modules/** - NEVER create tests here
+
+**Example of what to test:**
+```
+src/user/
+├── user.controller.ts     ✅ Test this → user.controller.spec.ts
+├── user.service.ts        ✅ Test this → user.service.spec.ts
+├── user.module.ts         ❌ Skip - module config
+├── dto/
+│   ├── create-user.dto.ts ❌ Skip - just validation decorators
+│   └── update-user.dto.ts ❌ Skip - just validation decorators
+└── entities/
+    └── user.entity.ts     ❌ Skip - entity definition
+```
 
 ### Testing Framework Setup
 
