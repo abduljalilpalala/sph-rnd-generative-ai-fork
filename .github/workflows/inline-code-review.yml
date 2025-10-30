@@ -52,20 +52,20 @@ jobs:
       - name: Checkout PR branch
         uses: actions/checkout@v4
         with:
-          # token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           ref: refs/pull/${{ github.event.issue.number }}/head
           fetch-depth: 1
 
-      # - name: Fetch base branch
-      #   run: |
-      #     git fetch origin ${{ github.event.pull_request.base.ref }}
+      - name: Fetch base branch
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }}
 
       - name: Run Claude Inline Code Review
         id: claude-review
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.RND_INLINE_REVIEW }}
-          track_progress: true
+          # track_progress: true
           prompt: |
             Please review this pull request and provide inline feedback that is highly actionable, concise, and aligned with best practices.
 
