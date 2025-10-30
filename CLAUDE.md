@@ -8,11 +8,12 @@ This is a monorepo containing both frontend and backend applications:
 
 ```
 rnd/
-├── test-projects/test-backend/          # NestJS + Prisma backend
-├── test-projects/test-frontend/         # Next.js + RTK Query frontend
-├── CLAUDE-BE.md          # Backend-specific guidance
-├── CLAUDE-FE.md          # Frontend-specific guidance
-└── CLAUDE.md             # This file (routing guidance)
+├── test-projects/
+│   ├── test-backend/          # NestJS + Prisma backend
+│   └── test-frontend/         # Next.js + RTK Query frontend
+├── CLAUDE-BE.md               # Backend-specific guidance
+├── CLAUDE-FE.md               # Frontend-specific guidance
+└── CLAUDE.md                  # This file (routing guidance)
 ```
 
 ## Context-Aware Guidelines
@@ -63,6 +64,22 @@ cd test-projects/test-backend
 cd test-projects/test-frontend
 # See CLAUDE-FE.md for commands
 ```
+
+## Unit Testing
+
+Both backend and frontend have comprehensive unit testing guidelines:
+
+### Backend Unit Tests
+- **Framework**: Jest + NestJS Testing utilities
+- **File extension**: `.spec.ts`
+- **Coverage**: Controllers, Services, Business Logic
+- **See**: [CLAUDE-BE.md](CLAUDE-BE.md) - Unit Testing Guidelines section
+
+### Frontend Unit Tests
+- **Framework**: Jest + React Testing Library
+- **File extension**: `.test.ts` / `.test.tsx`
+- **Coverage**: Components, Hooks, Utilities
+- **See**: [CLAUDE-FE.md](CLAUDE-FE.md) - Unit Testing Guidelines section
 
 ## Code Review Guidelines
 

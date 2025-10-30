@@ -31,6 +31,14 @@ npm run lint             # Run ESLint
 npm run format          # Format code with Prettier
 yarn lint
 yarn format
+
+# Testing
+npm run test            # Run unit tests
+npm run test:watch     # Run tests in watch mode
+npm run test:coverage  # Run tests with coverage
+yarn test
+yarn test:watch
+yarn test:coverage
 ```
 
 ## Folder Structure
@@ -397,3 +405,388 @@ Use arrow functions consistently throughout the codebase following these guideli
   ```
 
 **Reference**: [MDN Arrow Functions](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions)
+
+## Unit Testing Guidelines
+
+### Overview
+This project uses Jest and React Testing Library for comprehensive frontend unit testing. Following these guidelines ensures high-quality, maintainable tests that verify component behavior and user interactions.
+
+### Test File Requirements
+
+#### File Naming and Location
+- Create test files in the **SAME directory** as the source file
+- Use `.test.ts` or `.test.tsx` extension for all test files
+- Examples:
+  - `components/atoms/Button.tsx` → `components/atoms/Button.test.tsx`
+  - `components/organisms/UserForm.tsx` → `components/organisms/UserForm.test.tsx`
+  - `hooks/useUsers.ts` → `hooks/useUsers.test.ts`
+  - `lib/utils.ts` → `lib/utils.test.ts`
+
+#### Files That Need Tests
+Create test files for:
+- ✅ **React components** (`.tsx` files) - atoms, molecules, organisms, templates
+- ✅ **Custom hooks** (files starting with `use` prefix)
+- ✅ **Utility functions** and helpers
+- ✅ **API helpers** and services
+- ❌ **Pages** (`app/` directory) - test the components and hooks they use instead
+- ❌ **Type definitions** and interfaces
+- ❌ **Configuration files**
+
+### Testing Framework Setup
+
+#### Basic Component Test Structure
+```typescript
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import { Button } from '@/components/atoms/Button';
+
+describe('Button', () => {
+  it('renders with correct text', () => {
+    render(<Button>Click me</Button>);
+    expect(screen.getByRole('button', { name: /click me/i })).toBeInTheDocument();
+  });
+
+  it('calls onClick handler when clicked', () => {
+    const handleClick = jest.fn();
+    render(<Button onClick={handleClick}>Click me</Button>);
+    
+    fireEvent.click(screen.getByRole('button'));
+    expect(handleClick).toHaveBeenCalledTimes(1);
+  });
+});
+```
+
+#### Hook Test Structure
+```typescript
+import { renderHook, waitFor } from '@testing-library/react';
+import { useUsers } from '@/hooks/useUsers';
+import { useGetUsersQuery, useDeleteUserMutation } from '@/lib/services/userApi';
+
+// Mock RTK Query hooks
+jest.mock('@/lib/services/userApi');
+
+describe('useUsers', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('fetches users successfully', async () => {
+    const mockUsers = [{ id: 1, email: 'test@example.com', name: 'Test' }];
+    (useGetUsersQuery as jest.Mock).mockReturnValue({
+      data: mockUsers,
+      isLoading: false,
+      error: null,
+    });
+
+    const { result } = renderHook(() => useUsers());
+    
+    expect(result.current.users).toEqual(mockUsers);
+    expect(result.current.isLoading).toBe(false);
+  });
+});
+```
+
+### Testing Patterns
+
+#### Component Testing Best Practices
+
+**1. Test User Interactions**
+```typescript
+describe('UserForm', () => {
+  it('submits form with valid data', async () => {
+    const onSubmit = jest.fn();
+    render(<UserForm onSubmit={onSubmit} />);
+
+    // Fill form
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: 'test@example.com' }
+    });
+    fireEvent.change(screen.getByLabelText(/name/i), {
+      target: { value: 'Test User' }
+    });
+
+    // Submit
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith({
+        email: 'test@example.com',
+        name: 'Test User'
+      });
+    });
+  });
+});
+```
+
+**2. Test Different Props/States**
+```typescript
+describe('Alert', () => {
+  it('renders success variant', () => {
+    render(<Alert variant="success">Success message</Alert>);
+    expect(screen.getByText(/success message/i)).toHaveClass('bg-green-100');
+  });
+
+  it('renders error variant', () => {
+    render(<Alert variant="error">Error message</Alert>);
+    expect(screen.getByText(/error message/i)).toHaveClass('bg-red-100');
+  });
+});
+```
+
+**3. Test Conditional Rendering**
+```typescript
+describe('UserList', () => {
+  it('shows empty state when no users', () => {
+    render(<UserList users={[]} onDelete={jest.fn()} />);
+    expect(screen.getByText(/no users found/i)).toBeInTheDocument();
+  });
+
+  it('renders users when provided', () => {
+    const users = [{ id: 1, email: 'test@example.com', name: 'Test' }];
+    render(<UserList users={users} onDelete={jest.fn()} />);
+    expect(screen.getByText('test@example.com')).toBeInTheDocument();
+  });
+});
+```
+
+#### Mocking Patterns
+
+**1. Mock Next.js Router**
+```typescript
+import { useRouter } from 'next/navigation';
+
+jest.mock('next/navigation', () => ({
+  useRouter: jest.fn(),
+}));
+
+describe('Component with routing', () => {
+  it('navigates on button click', () => {
+    const push = jest.fn();
+    (useRouter as jest.Mock).mockReturnValue({ push });
+
+    render(<Component />);
+    fireEvent.click(screen.getByRole('button', { name: /go back/i }));
+    
+    expect(push).toHaveBeenCalledWith('/users');
+  });
+});
+```
+
+**2. Mock RTK Query Hooks**
+```typescript
+import * as userApi from '@/lib/services/userApi';
+
+jest.mock('@/lib/services/userApi');
+
+describe('useUsers hook', () => {
+  it('handles loading state', () => {
+    jest.spyOn(userApi, 'useGetUsersQuery').mockReturnValue({
+      data: undefined,
+      isLoading: true,
+      error: null,
+    } as any);
+
+    const { result } = renderHook(() => useUsers());
+    expect(result.current.isLoading).toBe(true);
+  });
+});
+```
+
+**3. Mock API Calls with MSW (Mock Service Worker)**
+```typescript
+import { rest } from 'msw';
+import { setupServer } from 'msw/node';
+
+const server = setupServer(
+  rest.get('http://localhost:3000/user', (req, res, ctx) => {
+    return res(ctx.json([{ id: 1, email: 'test@example.com' }]));
+  })
+);
+
+beforeAll(() => server.listen());
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());
+```
+
+### Test Coverage Requirements
+
+#### What to Test
+- ✅ **Component rendering** with different props
+- ✅ **User interactions** (clicks, inputs, form submissions)
+- ✅ **Conditional rendering** based on props/state
+- ✅ **Error states** and error handling
+- ✅ **Loading states**
+- ✅ **Form validation**
+- ✅ **Event handlers** are called correctly
+- ✅ **Hook return values** and side effects
+- ✅ **Edge cases** (empty data, null values)
+
+#### What NOT to Test
+- ❌ Implementation details (internal state, private methods)
+- ❌ Third-party library internals
+- ❌ Styles and CSS (unless critical to functionality)
+- ❌ Exact HTML structure (test behavior instead)
+
+### Query Priority (React Testing Library)
+
+Follow this priority order when selecting elements:
+1. **Accessible queries** (preferred):
+   - `getByRole` - e.g., `getByRole('button', { name: /submit/i })`
+   - `getByLabelText` - e.g., `getByLabelText(/email/i)`
+   - `getByPlaceholderText`
+   - `getByText` - e.g., `getByText(/welcome/i)`
+2. **Semantic queries**:
+   - `getByAltText` (for images)
+   - `getByTitle`
+3. **Test IDs** (last resort):
+   - `getByTestId` - only when no other option works
+
+### Best Practices
+
+1. **Write tests like a user would interact**
+   ```typescript
+   // ✅ Good - tests behavior
+   fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+   
+   // ❌ Bad - tests implementation
+   fireEvent.click(screen.getByTestId('submit-button'));
+   ```
+
+2. **Use descriptive test names**
+   ```typescript
+   it('displays error message when email is invalid')
+   it('disables submit button while form is submitting')
+   it('redirects to user list after successful creation')
+   ```
+
+3. **Follow Arrange-Act-Assert pattern**
+   ```typescript
+   it('creates a user successfully', async () => {
+     // Arrange
+     const onSubmit = jest.fn();
+     render(<UserForm onSubmit={onSubmit} />);
+
+     // Act
+     fireEvent.change(screen.getByLabelText(/email/i), {
+       target: { value: 'test@example.com' }
+     });
+     fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+
+     // Assert
+     await waitFor(() => {
+       expect(onSubmit).toHaveBeenCalledWith({ email: 'test@example.com' });
+     });
+   });
+   ```
+
+4. **Avoid testing implementation details**
+   ```typescript
+   // ✅ Good - tests behavior
+   expect(screen.getByText(/welcome/i)).toBeInTheDocument();
+   
+   // ❌ Bad - tests implementation
+   expect(component.state.message).toBe('welcome');
+   ```
+
+5. **Use waitFor for async operations**
+   ```typescript
+   it('fetches and displays users', async () => {
+     render(<UserList />);
+     
+     await waitFor(() => {
+       expect(screen.getByText('test@example.com')).toBeInTheDocument();
+     });
+   });
+   ```
+
+### Common Testing Utilities
+
+#### Setup Files
+Create `setupTests.ts` for global test configuration:
+```typescript
+import '@testing-library/jest-dom';
+import { cleanup } from '@testing-library/react';
+
+afterEach(() => {
+  cleanup();
+  jest.clearAllMocks();
+});
+```
+
+#### Custom Render with Providers
+```typescript
+import { render, RenderOptions } from '@testing-library/react';
+import { Provider } from 'react-redux';
+import { store } from '@/lib/store';
+
+const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
+  return <Provider store={store}>{children}</Provider>;
+};
+
+export const renderWithProviders = (
+  ui: React.ReactElement,
+  options?: RenderOptions
+) => {
+  return render(ui, { wrapper: AllTheProviders, ...options });
+};
+```
+
+### Running Tests
+
+```bash
+# Run all tests
+npm run test
+yarn test
+
+# Run tests in watch mode
+npm run test:watch
+yarn test:watch
+
+# Run tests with coverage
+npm run test:coverage
+yarn test:coverage
+
+# Run specific test file
+npm run test Button.test.tsx
+yarn test Button.test.tsx
+```
+
+### Automated Test Generation (GitHub Actions)
+
+Frontend unit tests can be automatically generated for PRs using the `@claude-create-unit-test` workflow:
+
+1. **Trigger via comment**: Comment `@claude-create-unit-test` on any PR
+2. **Trigger via label**: Add the `claude-create-unit-test` label to a PR
+
+The workflow will:
+- Analyze all changed `.tsx` and `.ts` files (components, hooks, utilities)
+- Generate corresponding `.test.tsx` or `.test.ts` files following these guidelines
+- Push tests to a new branch `{pr-branch}-unit-test`
+- Provide instructions for review and merging
+
+### Checklist for PR Test Files
+
+When creating unit tests for a PR, ensure:
+- [ ] Every component (`.tsx`) has a corresponding `.test.tsx` file
+- [ ] Every custom hook (`use*.ts`) has a corresponding `.test.ts` file
+- [ ] Every utility function has tests
+- [ ] Component rendering is tested with different props
+- [ ] User interactions are tested (clicks, inputs, form submissions)
+- [ ] Success cases are covered
+- [ ] Error cases are covered
+- [ ] Edge cases are handled (empty data, null values)
+- [ ] External dependencies are properly mocked (API, router, contexts)
+- [ ] Tests use React Testing Library best practices (query by role/text)
+- [ ] Tests focus on behavior, not implementation details
+- [ ] Test names are descriptive and clear
+
+### Tips for Writing Good Tests
+
+1. **Test behavior, not implementation**: Focus on what the component does, not how it does it
+2. **Think like a user**: Write tests that simulate how users interact with your app
+3. **Keep tests simple**: One concept per test when possible
+4. **Use accessible queries**: Prefer `getByRole` and `getByLabelText` over `getByTestId`
+5. **Mock at the boundaries**: Mock external dependencies, not internal logic
+6. **Test edge cases**: Empty inputs, null values, error states
+7. **Use async utilities**: `waitFor`, `findBy` queries for async operations
+8. **Don't over-mock**: Only mock what's necessary for the test

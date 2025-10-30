@@ -1,4 +1,4 @@
-# CLAUDE.md
+# CLAUDE-BE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -99,4 +99,320 @@ test-projects/test-backend/
 - All models auto-generate TypeScript types via Prisma Client
 - DATABASE_URL environment variable required for Prisma connection
 
-- Unit test can be optional and not required on PRs
+## Unit Testing Guidelines
+
+### Overview
+This project uses Jest and NestJS testing utilities for comprehensive unit testing. While unit tests are optional for PRs, following these guidelines ensures high-quality test coverage when tests are written.
+
+### Test File Requirements
+
+#### File Naming and Location
+- Create test files in the **SAME directory** as the source file
+- Use `.spec.ts` extension for all test files
+- Examples:
+  - `src/user/user.controller.ts` → `src/user/user.controller.spec.ts`
+  - `src/user/user.service.ts` → `src/user/user.service.spec.ts`
+  - `src/product/product.controller.ts` → `src/product/product.controller.spec.ts`
+
+#### Files That Need Tests
+Create a `.spec.ts` file for:
+- **All controllers** (`.controller.ts` files)
+- **All services** (`.service.ts` files)
+- **Complex business logic** in other TypeScript files
+- **Utility functions** and helpers
+
+### Testing Framework Setup
+
+```typescript
+import { Test, TestingModule } from '@nestjs/testing';
+import { PrismaService } from '../prisma/prisma.service';
+
+describe('UserService', () => {
+  let service: UserService;
+  let prisma: PrismaService;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        UserService,
+        {
+          provide: PrismaService,
+          useValue: {
+            user: {
+              findMany: jest.fn(),
+              findUnique: jest.fn(),
+              create: jest.fn(),
+              update: jest.fn(),
+              delete: jest.fn(),
+            },
+          },
+        },
+      ],
+    }).compile();
+
+    service = module.get<UserService>(UserService);
+    prisma = module.get<PrismaService>(PrismaService);
+  });
+
+  // Tests here...
+});
+```
+
+### Testing Patterns
+
+#### Controller Tests
+- Test all HTTP endpoints (GET, POST, PATCH, DELETE)
+- Mock injected services
+- Verify correct service methods are called
+- Test response formatting
+- Test error handling
+
+```typescript
+describe('UserController', () => {
+  let controller: UserController;
+  let service: UserService;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [UserController],
+      providers: [
+        {
+          provide: UserService,
+          useValue: {
+            findAll: jest.fn(),
+            findOne: jest.fn(),
+            create: jest.fn(),
+            update: jest.fn(),
+            remove: jest.fn(),
+          },
+        },
+      ],
+    }).compile();
+
+    controller = module.get<UserController>(UserController);
+    service = module.get<UserService>(UserService);
+  });
+
+  describe('findAll', () => {
+    it('should return an array of users', async () => {
+      const result = [{ id: 1, email: 'test@example.com', name: 'Test' }];
+      jest.spyOn(service, 'findAll').mockResolvedValue(result);
+
+      expect(await controller.findAll()).toBe(result);
+    });
+  });
+
+  describe('create', () => {
+    it('should create a user', async () => {
+      const createDto = { email: 'test@example.com', name: 'Test' };
+      const result = { id: 1, ...createDto };
+      jest.spyOn(service, 'create').mockResolvedValue(result);
+
+      expect(await controller.create(createDto)).toBe(result);
+    });
+  });
+});
+```
+
+#### Service Tests
+- Test all public methods
+- Mock Prisma client methods
+- Test business logic thoroughly
+- Test data transformations
+- Test error cases
+
+```typescript
+describe('UserService', () => {
+  let service: UserService;
+  let prisma: PrismaService;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        UserService,
+        {
+          provide: PrismaService,
+          useValue: {
+            user: {
+              findMany: jest.fn(),
+              findUnique: jest.fn(),
+              create: jest.fn(),
+              update: jest.fn(),
+              delete: jest.fn(),
+            },
+          },
+        },
+      ],
+    }).compile();
+
+    service = module.get<UserService>(UserService);
+    prisma = module.get<PrismaService>(PrismaService);
+  });
+
+  describe('findAll', () => {
+    it('should return all users', async () => {
+      const users = [{ id: 1, email: 'test@example.com', name: 'Test' }];
+      (prisma.user.findMany as jest.Mock).mockResolvedValue(users);
+
+      const result = await service.findAll();
+      expect(result).toEqual(users);
+      expect(prisma.user.findMany).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('create', () => {
+    it('should create a user', async () => {
+      const createDto = { email: 'test@example.com', name: 'Test' };
+      const user = { id: 1, ...createDto };
+      (prisma.user.create as jest.Mock).mockResolvedValue(user);
+
+      const result = await service.create(createDto);
+      expect(result).toEqual(user);
+      expect(prisma.user.create).toHaveBeenCalledWith({ data: createDto });
+    });
+
+    it('should throw error if user already exists', async () => {
+      const createDto = { email: 'test@example.com', name: 'Test' };
+      (prisma.user.create as jest.Mock).mockRejectedValue(new Error('Unique constraint'));
+
+      await expect(service.create(createDto)).rejects.toThrow();
+    });
+  });
+});
+```
+
+### Test Coverage Requirements
+
+#### What to Test
+- ✅ **Success cases**: Normal operation with valid inputs
+- ✅ **Error cases**: Invalid inputs, database errors, constraint violations
+- ✅ **Edge cases**: Empty arrays, null values, boundary conditions
+- ✅ **Business logic**: All conditional branches and calculations
+- ✅ **Data transformations**: Input validation, output formatting
+
+#### Mock Guidelines
+- **Always mock**:
+  - `PrismaService` and all database operations
+  - External services and APIs
+  - File system operations
+  - Environment variables if needed
+- **Never mock**: The class/service being tested
+
+### Best Practices
+
+1. **Descriptive Test Names**: Use clear, action-oriented descriptions
+   ```typescript
+   it('should return user by id')
+   it('should throw error when user not found')
+   it('should update user email successfully')
+   ```
+
+2. **Arrange-Act-Assert Pattern**:
+   ```typescript
+   it('should create a user', async () => {
+     // Arrange
+     const createDto = { email: 'test@example.com', name: 'Test' };
+     (prisma.user.create as jest.Mock).mockResolvedValue({ id: 1, ...createDto });
+
+     // Act
+     const result = await service.create(createDto);
+
+     // Assert
+     expect(result).toEqual({ id: 1, ...createDto });
+     expect(prisma.user.create).toHaveBeenCalledWith({ data: createDto });
+   });
+   ```
+
+3. **Isolated Tests**: Each test should be independent
+   - Use `beforeEach` for setup
+   - Reset mocks between tests
+   - Don't rely on test execution order
+
+4. **Type Safety**: Use proper TypeScript types
+   ```typescript
+   const mockPrismaService = {
+     user: {
+       findMany: jest.fn<Promise<User[]>, []>(),
+       findUnique: jest.fn<Promise<User | null>, [any]>(),
+     },
+   };
+   ```
+
+### Common Mocking Patterns
+
+#### Mock Prisma Service
+```typescript
+const mockPrismaService = {
+  user: {
+    findMany: jest.fn(),
+    findUnique: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+  },
+};
+```
+
+#### Mock External Services
+```typescript
+const mockEmailService = {
+  sendEmail: jest.fn().mockResolvedValue(true),
+};
+```
+
+### Running Tests
+
+```bash
+# Run all tests
+yarn test
+
+# Run tests in watch mode
+yarn test:watch
+
+# Run tests with coverage
+yarn test:cov
+
+# Run specific test file
+yarn test user.service.spec.ts
+
+# Run E2E tests
+yarn test:e2e
+```
+
+### Automated Test Generation (GitHub Actions)
+
+Unit tests can be automatically generated for PRs using the `@claude-create-unit-test` workflow:
+
+1. **Trigger via comment**: Comment `@claude-create-unit-test` on any PR
+2. **Trigger via label**: Add the `claude-create-unit-test` label to a PR
+
+The workflow will:
+- Analyze all changed `.controller.ts` and `.service.ts` files
+- Generate corresponding `.spec.ts` files following these guidelines
+- Push tests to a new branch `{pr-branch}-unit-test`
+- Provide instructions for review and merging
+
+### Checklist for PR Test Files
+
+When creating unit tests for a PR, ensure:
+- [ ] Every `.controller.ts` file has a corresponding `.spec.ts` file
+- [ ] Every `.service.ts` file has a corresponding `.spec.ts` file
+- [ ] All public methods are tested
+- [ ] Success cases are covered
+- [ ] Error cases are covered
+- [ ] Edge cases are handled
+- [ ] All dependencies are properly mocked
+- [ ] Tests follow NestJS testing patterns
+- [ ] Test names are descriptive
+- [ ] Tests are isolated and independent
+
+### Tips for Writing Good Tests
+
+1. **Start with the happy path**: Test successful operations first
+2. **Then add error cases**: Test what happens when things go wrong
+3. **Don't test implementation details**: Focus on behavior, not internal workings
+4. **Keep tests simple**: One assertion per test when possible
+5. **Use descriptive names**: Test names should explain what they verify
+6. **Mock at the boundary**: Mock external dependencies, not internal logic
+7. **Test edge cases**: Empty inputs, null values, boundary conditions
+8. **Follow AAA pattern**: Arrange, Act, Assert for clarity

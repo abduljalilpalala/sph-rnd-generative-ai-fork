@@ -1,4 +1,4 @@
-name: Framework Agnostic Claude Unit Test Generator v1.1
+name: Claude Unified Unit Test Generator (Claude.md dependent)
 
 on:
   issue_comment:
@@ -46,8 +46,23 @@ jobs:
             echo "number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
           fi
 
+      - name: Get PR branch info
+        id: pr-branch
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: ${{ steps.pr-info.outputs.number }}
+            });
+
+            core.setOutput('head_branch', pr.data.head.ref);
+            core.setOutput('base_branch', pr.data.base.ref);
+            return pr.data;
+
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/github-script@v7
         with:
           ref: ${{ github.event_name == 'issue_comment' && format('refs/pull/{0}/head', github.event.issue.number) || github.event.pull_request.head.ref }}
           fetch-depth: 0
@@ -58,150 +73,248 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
+      - name: Detect project type from PR changes
+        id: detect-type
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get changed files in the PR
+          CHANGED_FILES=$(gh pr diff ${{ steps.pr-info.outputs.number }} --name-only)
+
+          echo "Changed files in PR:"
+          echo "$CHANGED_FILES"
+
+          # Save changed files to a temporary file for Claude to analyze
+          echo "$CHANGED_FILES" > /tmp/pr_changed_files.txt
+
+          echo "Saved changed files to /tmp/pr_changed_files.txt"
+          echo "Claude will analyze the project structure and determine what type of changes were made."
+
       - name: Post initial comment
         id: initial-comment
         uses: actions/github-script@v7
         with:
           script: |
+            const type = '${{ steps.detect-type.outputs.type }}';
+            let message = '';
+
+            if (type === 'both') {
+              message = '🔄 Generating unit tests for both backend and frontend changes... This may take a few minutes.';
+            } else if (type === 'backend') {
+              message = '🔄 Generating backend unit tests... This may take a few minutes.';
+            } else if (type === 'frontend') {
+              message = '🔄 Generating frontend unit tests... This may take a few minutes.';
+            } else {
+              message = '⚠️ No testable code changes detected. Skipping test generation.';
+            }
+
             const { data: comment } = await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: ${{ steps.pr-info.outputs.number }},
-              body: '🔄 Generating unit tests for this PR... This may take a few minutes.'
+              body: message
             });
             core.setOutput('comment_id', comment.id);
-
-      - name: Detect Framework and Load Instructions
-        id: load-instructions
-        run: |
-          TEMPLATE_REPO="https://raw.githubusercontent.com/ragg09-sunasterisk/rnd-unit-test-templates/main"
-          INSTRUCTIONS=""
-          FRAMEWORK="unknown"
-          USE_CLAUDE_MD=false
-          FRAMEWORK_SOURCE="none"
-
-          echo "📋 Checking for project guidance files..."
-
-          # Step 1: Check for claude.md and extract framework
-          if [ -f "claude.md" ]; then
-            echo "✓ Found claude.md in project"
-            EXTRACTED_FRAMEWORK=$(grep -iE "framework:\s*(\w+)|this is a (\w+) (project|application|app)|(\w+)\s*\+\s*prisma|(\w+)\s*backend|(\w+)\s*frontend|using\s+(\w+)|(\w+)\s*\+" claude.md | grep -oiE "(nestjs|nextjs|next\.js|next|react|express|laravel|rails|vue|django|flask|fastapi|angular|svelte|remix|astro|solid|qwik|nuxt|fastify|koa|symfony|sinatra|gin|echo|spring-boot|springboot)" | head -1 | tr '[:upper:]' '[:lower:]' | sed 's/next\.js/nextjs/g' | sed 's/^next$/nextjs/' || echo "")
-
-            if [ -n "$EXTRACTED_FRAMEWORK" ]; then
-              FRAMEWORK="$EXTRACTED_FRAMEWORK"
-              FRAMEWORK_SOURCE="claude.md"
-              echo "✓ Extracted framework from claude.md: $FRAMEWORK"
-            fi
-
-            if grep -qiE "unit.*test|test.*instruction|testing.*guide|## test" claude.md; then
-              echo "✓ Found unit test instructions section in claude.md"
-              INSTRUCTIONS=$(cat claude.md)
-              USE_CLAUDE_MD=true
-              FRAMEWORK_SOURCE="claude.md (with test instructions)"
-            else
-              echo "→ claude.md found but no dedicated test instructions section"
-              echo "→ Will fetch test instructions from template repo for framework: $FRAMEWORK"
-            fi
-          fi
-
-          # Step 2: Auto-detect framework if unknown
-          if [ "$FRAMEWORK" = "unknown" ]; then
-            echo "📦 Auto-detecting framework from project structure..."
-            if [ -f "nest-cli.json" ] || grep -q "@nestjs/core" package.json 2>/dev/null; then
-              FRAMEWORK="nestjs"
-              FRAMEWORK_SOURCE="auto-detection"
-            elif grep -q "\"next\":" package.json 2>/dev/null || [ -f "next.config.js" ]; then
-              FRAMEWORK="nextjs"
-              FRAMEWORK_SOURCE="auto-detection"
-            elif [ -f "artisan" ] && grep -q "laravel/framework" composer.json 2>/dev/null; then
-              FRAMEWORK="laravel"
-              FRAMEWORK_SOURCE="auto-detection"
-            else
-              FRAMEWORK="generic"
-              FRAMEWORK_SOURCE="fallback"
-            fi
-            echo "✓ Framework detected: $FRAMEWORK"
-          fi
-
-          # Step 3: Fetch test instructions
-          if [ -z "$INSTRUCTIONS" ]; then
-            echo "📥 Fetching test instructions for '$FRAMEWORK'..."
-            INSTRUCTIONS_URL="$TEMPLATE_REPO/$FRAMEWORK/instructions.md"
-            HTTP_CODE=$(curl -s -o /tmp/fetched-instructions.txt -w "%{http_code}" "$INSTRUCTIONS_URL")
-
-            if [ "$HTTP_CODE" = "200" ]; then
-              INSTRUCTIONS=$(cat /tmp/fetched-instructions.txt)
-              echo "✓ Loaded framework instructions"
-            else
-              echo "⚠ Could not fetch instructions (HTTP $HTTP_CODE)"
-              INSTRUCTIONS="Generate comprehensive unit tests following the project's conventions."
-            fi
-          fi
-
-          echo "$INSTRUCTIONS" > /tmp/test-instructions.txt
-          echo "framework=$FRAMEWORK" >> $GITHUB_OUTPUT
-          echo "use_claude_md=$USE_CLAUDE_MD" >> $GITHUB_OUTPUT
-          echo "framework_source=$FRAMEWORK_SOURCE" >> $GITHUB_OUTPUT
+            return comment.id;
 
       - name: Create branch for unit tests
+        if: steps.detect-type.outputs.type != 'none'
         id: create-branch
         run: |
-          BRANCH_NAME="unit-tests/pr-${{ steps.pr-info.outputs.number }}-$(date +%s)"
+          PR_BRANCH="${{ steps.pr-branch.outputs.head_branch }}"
+          BRANCH_NAME="${PR_BRANCH}-unit-test"
           echo "branch=$BRANCH_NAME" >> $GITHUB_OUTPUT
+
+          # Delete the remote branch if it exists
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git --delete "$BRANCH_NAME" 2>/dev/null || echo "Branch doesn't exist remotely, continuing..."
+
+          # Create and checkout the new branch
           git checkout -b "$BRANCH_NAME"
 
       - name: Generate Unit Tests with Claude
+        if: steps.detect-type.outputs.type != 'none'
         id: claude-tests
         uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_UNIT_TEST }}
           additional_permissions: |
             actions: read
           prompt: |
-            Generate comprehensive unit tests for PR #${{ steps.pr-info.outputs.number }}.
+            You are tasked with generating comprehensive unit tests for PR #${{ steps.pr-info.outputs.number }}.
 
-            **Framework:** ${{ steps.load-instructions.outputs.framework }}
-            **Source:** ${{ steps.load-instructions.outputs.framework_source }}
+            ## Step 1: Read Project Documentation
 
-            ## Testing Instructions
-            $(cat /tmp/test-instructions.txt)
+            **CRITICAL**: Before doing anything else, read the following files to understand the project structure and testing requirements:
 
-            Follow framework-specific test conventions and ensure full coverage.
+            1. `cat CLAUDE.md` - Understand the overall project structure and which sub-projects exist
+            2. Based on the project type detected below, read the appropriate context file(s):
+               - Backend changes: `cat CLAUDE-BE.md`
+               - Frontend changes: `cat CLAUDE-FE.md`
+               - Both: Read both files
 
-          claude_args: '--allowed-tools "Bash(gh pr diff:*),Bash(cat:*),Bash(find:*),Bash(grep:*)" --dangerously-skip-permissions'
+            These files contain ALL the information you need about:
+            - Project architecture and folder structure
+            - Testing frameworks and patterns to use
+            - File naming conventions for test files
+            - What to test and how to test it
+            - Examples and best practices
 
-      - name: Push branch and create PR
+            ## Step 2: Analyze PR Changes
+
+            Run: `gh pr diff ${{ steps.pr-info.outputs.number }}`
+
+            This will show you all the files that changed in this PR.
+
+            ## Step 3: Generate Tests
+
+            **Project Type Detected**: ${{ steps.detect-type.outputs.type }}
+
+            Follow the unit testing guidelines from the CLAUDE-*.md files you read in Step 1. The documentation will tell you:
+            - Which files need test files
+            - Where to place test files
+            - What naming convention to use
+            - What testing libraries and patterns to use
+            - How to structure your tests
+
+            ## Critical Rules:
+
+            - **Follow the documentation**: All testing requirements are in CLAUDE-BE.md and CLAUDE-FE.md
+            - **DO NOT create output.txt or any summary files**
+            - **DO NOT create any markdown files or documentation**
+            - **ONLY create test files** (follow naming conventions from the docs)
+            - **DO NOT commit the files** - just create them
+            - Create tests for ALL testable files found in the PR diff
+          claude_args: '--allowed-tools "Bash(gh pr diff:*),Bash(gh pr view:*),Bash(cat:*),Bash(ls:*),Bash(find:*),Bash(grep:*)" --dangerously-skip-permissions'
+
+      - name: Debug - Check what Claude created
+        if: steps.detect-type.outputs.type != 'none'
+        run: |
+          echo "=== Workspace contents ==="
+          ls -la
+
+          echo -e "\n=== Backend test files ==="
+          find test-projects/test-backend -name "*.spec.ts" -type f 2>/dev/null || echo "No backend test files found"
+
+          echo -e "\n=== Frontend test files ==="
+          find test-projects/test-frontend -name "*.test.ts" -o -name "*.test.tsx" -type f 2>/dev/null || echo "No frontend test files found"
+
+          echo -e "\n=== Git status ==="
+          git status
+
+          echo -e "\n=== Untracked files ==="
+          git ls-files --others --exclude-standard
+
+      - name: Check for test files and commit
+        if: steps.detect-type.outputs.type != 'none'
+        run: |
+          echo "=== Checking for test files ==="
+
+          # Find all test files
+          ALL_TESTS=$(find test-projects -name "*.spec.ts" -o -name "*.test.ts" -o -name "*.test.tsx" -type f 2>/dev/null || echo "")
+
+          if [ -z "$ALL_TESTS" ]; then
+            echo "No test files found"
+            exit 1
+          fi
+
+          echo "Found test files:"
+          echo "$ALL_TESTS"
+
+          echo -e "\n=== Git status ==="
+          git status
+
+          # Check if there are any uncommitted changes
+          if [[ -n $(git status -s) ]]; then
+            echo -e "\n=== Adding test files ==="
+            find test-projects -name "*.spec.ts" -o -name "*.test.ts" -o -name "*.test.tsx" -type f -exec git add -f {} \;
+            
+            echo -e "\n=== Committing changes ==="
+            PR_BRANCH="${{ steps.pr-branch.outputs.head_branch }}"
+            git commit -m "${PR_BRANCH} Unit Tests" || echo "Nothing new to commit"
+          else
+            echo -e "\n=== All changes already committed ==="
+          fi
+
+          echo -e "\n=== Final git status ==="
+          git status
+
+      - name: Push branch and update comment
+        if: steps.detect-type.outputs.type != 'none'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [[ -n $(git status -s) ]]; then
-            git add .
-            git commit -m "Add unit tests for PR #${{ steps.pr-info.outputs.number }}" || true
-            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ steps.create-branch.outputs.branch }}
+          # Get only the files that were actually committed
+          CHANGED_FILES=$(git diff --name-only HEAD~1 2>/dev/null | grep -E "\.(spec\.ts|test\.ts|test\.tsx)$" || echo "")
 
-            PR_URL=$(gh pr create \
-              --title "Unit Tests for PR #${{ steps.pr-info.outputs.number }}" \
-              --body "This PR adds unit tests for the changes in #${{ steps.pr-info.outputs.number }}.
-
-            **Framework:** ${{ steps.load-instructions.outputs.framework }}
-            **Detection:** ${{ steps.load-instructions.outputs.framework_source }}
-
-            Generated by Claude Code in response to @claude-create-unit-test comment." \
-              --base ${{ github.event.repository.default_branch }} \
-              --head ${{ steps.create-branch.outputs.branch }})
-
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No test files were changed or committed"
             gh api \
               --method PATCH \
               -H "Accept: application/vnd.github+json" \
               "/repos/${{ github.repository }}/issues/comments/${{ steps.initial-comment.outputs.comment_id }}" \
-              -f body="✅ Unit tests have been generated and submitted in a new PR: $PR_URL"
-          else
-            gh api \
-              --method PATCH \
-              -H "Accept: application/vnd.github+json" \
-              "/repos/${{ github.repository }}/issues/comments/${{ steps.initial-comment.outputs.comment_id }}" \
-              -f body="⚠️ No unit test files were generated. Please check if testable code exists or if claude.md needs update."
+              -f body="⚠️ No unit test files were generated. This may be because the changes don't require tests or Claude couldn't identify testable code."
+            exit 0
           fi
+
+          echo "Changed test files:"
+          echo "$CHANGED_FILES"
+
+          # Count by type
+          BACKEND_COUNT=$(echo "$CHANGED_FILES" | grep "\.spec\.ts$" | wc -l || echo "0")
+          FRONTEND_COUNT=$(echo "$CHANGED_FILES" | grep -E "\.(test\.ts|test\.tsx)$" | wc -l || echo "0")
+
+          echo -e "\nPushing branch to remote..."
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ steps.create-branch.outputs.branch }}
+
+          # Create PR comparison URL
+          REPO_URL="https://github.com/${{ github.repository }}"
+          BRANCH_NAME="${{ steps.create-branch.outputs.branch }}"
+          PR_HEAD_BRANCH="${{ steps.pr-branch.outputs.head_branch }}"
+          PR_CREATE_URL="$REPO_URL/compare/$PR_HEAD_BRANCH...$BRANCH_NAME?expand=1"
+
+          # Build summary message
+          SUMMARY=""
+          if [ "$BACKEND_COUNT" -gt 0 ]; then
+            SUMMARY="${SUMMARY}\n- **Backend tests**: $BACKEND_COUNT file(s) (.spec.ts)"
+          fi
+          if [ "$FRONTEND_COUNT" -gt 0 ]; then
+            SUMMARY="${SUMMARY}\n- **Frontend tests**: $FRONTEND_COUNT file(s) (.test.ts/.test.tsx)"
+          fi
+
+          # Update comment with success message
+          gh api \
+            --method PATCH \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${{ github.repository }}/issues/comments/${{ steps.initial-comment.outputs.comment_id }}" \
+            -f body="✅ Unit tests have been generated and pushed to branch \`$BRANCH_NAME\`
+
+          **Tests generated:**$SUMMARY
+
+          **Next steps:**
+          1. Review the generated tests locally:
+             \`\`\`bash
+             git fetch origin
+             git checkout $BRANCH_NAME
+             \`\`\`
+
+          2. Once reviewed, create a PR using this link:
+             $PR_CREATE_URL
+
+          <details>
+          <summary>View all changed files</summary>
+
+          \`\`\`
+          $CHANGED_FILES
+          \`\`\`
+          </details>"
+
+      - name: Handle no testable changes
+        if: steps.detect-type.outputs.type == 'none'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "No testable code changes detected in this PR"
+          exit 0
 
       - name: Add completion reaction
         if: success() && github.event_name == 'issue_comment'
@@ -213,7 +326,7 @@ jobs:
               repo: context.repo.repo,
               comment_id: context.payload.comment.id,
               content: 'rocket'
-            });
+            })
 
       - name: Add failure reaction
         if: failure() && github.event_name == 'issue_comment'
@@ -225,4 +338,4 @@ jobs:
               repo: context.repo.repo,
               comment_id: context.payload.comment.id,
               content: 'confused'
-            });
+            })
