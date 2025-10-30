@@ -127,7 +127,7 @@ jobs:
         id: claude-tests
         uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_UNIT_TEST }}
           show_full_output: true
           additional_permissions: |
             actions: read
@@ -412,5 +412,5 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: ${{ steps.pr-info.outputs.number }},
-              body: '❌ Unit test generation workflow failed. Please check the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.\n\n**Common issues:**\n- Missing ANTHROPIC_API_KEY secret\n- Missing documentation files (CLAUDE.md, CLAUDE-BE.md, CLAUDE-FE.md)\n- Insufficient GitHub permissions'
+              body: '❌ Unit test generation workflow failed. Please check the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.\n\n**Common issues:**\n- Missing ANTHROPIC_API_KEY_UNIT_TEST secret\n- Missing documentation files (CLAUDE.md, CLAUDE-BE.md, CLAUDE-FE.md)\n- Insufficient GitHub permissions'
             });
