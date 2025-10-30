@@ -63,6 +63,17 @@ jobs:
           ref: refs/pull/${{ github.event.issue.number }}/head
           fetch-depth: 1
 
+      - name: Load CLAUDE.md context
+        id: claude-context
+        run: |
+          if [ -f CLAUDE.md ]; then
+            echo "context<<EOF" >> $GITHUB_OUTPUT
+            cat CLAUDE.md >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "context=CLAUDE.md not found." >> $GITHUB_OUTPUT
+          fi
+
       # - name: Fetch base branch
       #   run: |
       #     git fetch origin ${{ github.event.pull_request.base.ref }}
@@ -81,8 +92,10 @@ jobs:
             Please review this pull request and provide inline feedback that is highly actionable, concise, and aligned with best practices.
 
             PROJECT CONTEXT:
-            Please use the content of CLAUDE.md, which outlines the project architecture and conventions.
+            Below is the content of CLAUDE.md, which outlines the project architecture and conventions.
             Use it to ensure your review aligns with the intended design and coding standards.
+
+            ${{ steps.claude-context.outputs.context }}
 
             IMPORTANT:
               Before suggesting any inline comment:
