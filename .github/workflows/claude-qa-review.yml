@@ -112,21 +112,7 @@ jobs:
           QA_CONTENT=$(base64 -w 0 qa.md || echo "W10=") # W10= is base64 for []
           echo "qa_b64=$QA_CONTENT" >> $GITHUB_OUTPUT
 
-      - name: Log QA file content
-        if: always()
-        run: |
-          echo ""
-          echo "================ QA.MD CONTENT START ================"
-          if [ -f qa.md ]; then
-            cat qa.md
-          else
-            echo "(qa.md not found or empty)"
-          fi
-          echo "================ QA.MD CONTENT END =================="
-          echo ""
-
       - name: Debug event info
-        if: false
         run: |
           echo "Event Name: ${{ github.event_name }}"
           echo "PR Number: ${{ github.event.issue.number }}"
@@ -135,7 +121,6 @@ jobs:
           echo "Branch Ref: ${{ github.ref }}"
 
       - name: Run Claude Test Review
-        if: false
         id: claude-review
         uses: anthropics/claude-code-action@v1
         with:
@@ -314,7 +299,6 @@ jobs:
                             mcp__github__create_issue_comment"
 
       - name: Submit Claude Review Result
-        if: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
