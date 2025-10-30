@@ -82,7 +82,7 @@ jobs:
           fi
 
       # 🧩 Run the appropriate QA fetcher (inline or sheet)
-      - name: Fetch QA test cases
+      - name: Fetch QA test cases2
         id: qa-sheet
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -93,10 +93,15 @@ jobs:
         run: |
           if [ "${{ steps.detect-mode.outputs.mode }}" = "sheet" ]; then
             echo "📄 Running Claude Sheet Review"
-            node .github/scripts/claudeSheetReview.mjs > qa.md
+            node .github/scripts/claudeSheetReview.mjs > qa.md || echo "[]" > qa.md
           else
             echo "📝 Running Claude Inline Review"
-            node .github/scripts/claudeInlineReview.mjs > qa.md
+            node .github/scripts/claudeInlineReview.mjs > qa.md || echo "[]" > qa.md
+          fi
+      
+          # Ensure qa.md always exists and is valid JSON
+          if [ ! -s qa.md ]; then
+            echo "[]" > qa.md
           fi
       
           echo "qa<<GITHUB_MULTI_LINE_DELIM" >> $GITHUB_OUTPUT
