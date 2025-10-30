@@ -4,6 +4,10 @@ import fs from "fs";
 
 export async function getQATestCases(spreadsheetUrl, ids = [], excludeIds = [], GOOGLE_SERVICE_ACCOUNT_JSON) {
   try {
+    if (!spreadsheetUrl) {
+      return [];
+    }
+
     const auth = new google.auth.GoogleAuth({
       credentials: JSON.parse(GOOGLE_SERVICE_ACCOUNT_JSON),
       scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
@@ -38,7 +42,13 @@ export async function getQATestCases(spreadsheetUrl, ids = [], excludeIds = [], 
     const rows = res.data.values || [];
     if (!rows.length) await exitWith(`❌ No data found in range '${sheetName}!${range}'`);
 
-    const dataRows = rows.filter((r) => /^\d+$/.test(r[0]));
+    // Include rows with numeric ID or empty ID, skip fully blank ones
+    const dataRows = rows.filter((r) => {
+      const id = (r[0] || "").trim();
+      const hasData = r.some((cell) => (cell || "").trim() !== "");
+      return hasData && (id === "" || /^\d+$/.test(id));
+    });
+
     let filtered = [];
 
     const validIds = (ids || []).map((i) => String(i).trim()).filter(Boolean);
@@ -56,9 +66,21 @@ export async function getQATestCases(spreadsheetUrl, ids = [], excludeIds = [], 
       return [];
     }
 
-    // 🧩 Map to clean JSON structure
-    const mapped = filtered.map((r) => {
-      const TEST_CASE_ID = String(r[0]).trim();
+    // Map to clean JSON structure
+    const mapped = filtered.map((r, i) => {
+      const rawId = String(r[0] || "").trim();
+
+      // ID handling:
+      // - If numeric ID → SHEET-n
+      // - If empty → SHEET-AUTO-n
+      // - If text → preserve as-is
+      const TEST_CASE_ID =
+        rawId === ""
+          ? `SHEET-AUTO-${i + 1}`
+          : /^\d+$/.test(rawId)
+          ? `SHEET-${rawId}`
+          : rawId;
+
       const rawDescParts = r.slice(1, -1).map((c) => (c ? String(c) : ""));
       const DETAILS = rawDescParts
         .join(" | ")
@@ -74,13 +96,13 @@ export async function getQATestCases(spreadsheetUrl, ids = [], excludeIds = [], 
 
     const jsonOutput = JSON.stringify(mapped, null, 2);
 
-    // 🔹 Optionally write to file (useful for debugging)
+    // Optionally write to file (useful for debugging)
     fs.writeFileSync("previous.json", jsonOutput, "utf8");
 
-    return jsonOutput
+    return jsonOutput;
   } catch (error) {
     const svc = JSON.parse(GOOGLE_SERVICE_ACCOUNT_JSON || "{}");
-    if (svc?.client_email) console.log(`👤 Service account: ${svc.client_email}`);
+    if (svc?.client_email) console.log(`Service account: ${svc.client_email}`);
     await exitWith(`❌ Error in getQATestCases: ${error.message}`);
   }
 }

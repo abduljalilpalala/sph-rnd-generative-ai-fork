@@ -22,8 +22,8 @@ import { exitWith, parseComment } from './_helpers.mjs';
   const testCases = await getQATestCases(sheetUrl, finalIds, finalExceptIds, GOOGLE_SERVICE_ACCOUNT_JSON);
 
   if (!testCases.length) {
-    exitWith('❌ No test cases detected. Kindly make sure your selected range covers only from the "Test Case ID" column up to the "Expected Result" column.');
+    console.log('none');
+  } else {
+    console.log(testCases);
   }
-
-  console.log(testCases);
 })();
