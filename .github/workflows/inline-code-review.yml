@@ -97,10 +97,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_INLINE_CODE_REVIEW }}
-          # track_progress: true
-          additional_permissions: |
-            actions: read
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_QA_REVIEW }}
+          track_progress: true
           prompt: |
             Please copy the content of the latest comment in this PR.
             Submit a new comment for it.
