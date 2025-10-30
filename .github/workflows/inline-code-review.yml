@@ -81,7 +81,7 @@ jobs:
             Please review this pull request and provide inline feedback that is highly actionable, concise, and aligned with best practices.
 
             PROJECT CONTEXT:
-            Below is the content of CLAUDE.md, which outlines the project architecture and conventions.
+            Please use the content of CLAUDE.md, which outlines the project architecture and conventions.
             Use it to ensure your review aligns with the intended design and coding standards.
 
             IMPORTANT:
