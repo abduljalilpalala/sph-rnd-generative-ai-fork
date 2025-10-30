@@ -98,9 +98,10 @@ jobs:
             echo "📝 Running Claude Inline Review"
             node .github/scripts/claudeInlineReview.mjs > qa.md
           fi
-          echo "qa<<EOF" >> $GITHUB_OUTPUT
+      
+          echo "qa<<GITHUB_MULTI_LINE_DELIM" >> $GITHUB_OUTPUT
           cat qa.md >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "GITHUB_MULTI_LINE_DELIM" >> $GITHUB_OUTPUT
 
       - name: Log QA file content
         if: always()
