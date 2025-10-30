@@ -102,7 +102,21 @@ jobs:
           cat qa.md >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
+      - name: Log QA file content
+        if: always()
+        run: |
+          echo ""
+          echo "================ QA.MD CONTENT START ================"
+          if [ -f qa.md ]; then
+            cat qa.md
+          else
+            echo "(qa.md not found or empty)"
+          fi
+          echo "================ QA.MD CONTENT END =================="
+          echo ""
+
       - name: Debug event info
+        if: false
         run: |
           echo "Event Name: ${{ github.event_name }}"
           echo "PR Number: ${{ github.event.issue.number }}"
@@ -111,6 +125,7 @@ jobs:
           echo "Branch Ref: ${{ github.ref }}"
 
       - name: Run Claude Test Review
+        if: false
         id: claude-review
         uses: anthropics/claude-code-action@v1
         with:
@@ -289,6 +304,7 @@ jobs:
                             mcp__github__create_issue_comment"
 
       - name: Submit Claude Review Result
+        if: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
