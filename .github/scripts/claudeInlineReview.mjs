@@ -49,7 +49,6 @@ import { exitWith } from "./_helpers.mjs";
     const mapped = rawCases.map((test, i) => ({
       TEST_CASE_ID: `INLINE-${i + 1}`,
       EXPECTED_RESULT: test,
-      DETAILS: test, // same as expected for inline
     }));
 
     const jsonOutput = JSON.stringify(mapped, null, 2);
