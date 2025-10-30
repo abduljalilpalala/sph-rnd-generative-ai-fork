@@ -82,7 +82,7 @@ jobs:
           fi
 
       # 🧩 Run the appropriate QA fetcher (inline or sheet)
-      - name: Fetch QA test cases2
+      - name: Fetch QA test cases
         id: qa-sheet
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -99,14 +99,14 @@ jobs:
             node .github/scripts/claudeInlineReview.mjs > qa.md || echo "[]" > qa.md
           fi
       
-          # Ensure qa.md always exists and is valid JSON
+          # Ensure file exists and not empty
           if [ ! -s qa.md ]; then
             echo "[]" > qa.md
           fi
       
-          echo "qa<<GITHUB_MULTI_LINE_DELIM" >> $GITHUB_OUTPUT
-          cat qa.md >> $GITHUB_OUTPUT
-          echo "GITHUB_MULTI_LINE_DELIM" >> $GITHUB_OUTPUT
+          # Encode file safely for GitHub output
+          QA_CONTENT=$(base64 -w 0 qa.md || echo "W10=") # W10= is base64 for []
+          echo "qa_b64=$QA_CONTENT" >> $GITHUB_OUTPUT
 
       - name: Log QA file content
         if: always()
