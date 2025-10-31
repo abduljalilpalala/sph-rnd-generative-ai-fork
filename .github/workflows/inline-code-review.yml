@@ -104,7 +104,7 @@ jobs:
       #   run: gh pr comment 57 --body "Hello World"
 
       - name: Run Claude Code Review to post Hello World
-        uses: anthropic/claude-code-review@v1
+        uses: anthropics/claude-code-review@v1
         with:
           prompt: |
             Please post a comment "Hello World" to PR #57 using:
