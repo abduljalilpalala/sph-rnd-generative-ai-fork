@@ -34,14 +34,6 @@ jobs:
         id: pr-number
         run: echo "number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
 
-      - name: Check GitHub Token Scope
-        run: |
-          echo "Checking token permissions..."
-          curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
-               -H "Accept: application/vnd.github+json" \
-               https://api.github.com/repos/${{ github.repository }} > repo_info.json
-          cat repo_info.json
-
       - name: Debug event info
         run: |
           echo "Event Name: ${{ github.event_name }}"
@@ -80,13 +72,13 @@ jobs:
         env:
           PR_NUMBER: ${{ steps.pr-number.outputs.number }}
 
-      - name: Checkout PR branch
-        uses: actions/checkout@v4
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          ref: ${{ github.event_name == 'issue_comment' && format('refs/pull/{0}/head', github.event.issue.number) || github.event.pull_request.head.ref }}
-          fetch-depth: 1
+      # - name: Checkout PR branch
+      #   uses: actions/checkout@v4
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     ref: ${{ github.event_name == 'issue_comment' && format('refs/pull/{0}/head', github.event.issue.number) || github.event.pull_request.head.ref }}
+      #     fetch-depth: 1
 
       # - name: Load CLAUDE.md context
       #   id: claude-context
@@ -105,32 +97,39 @@ jobs:
       #   run: |
       #     git fetch origin ${{ github.event.pull_request.base.ref }}
 
-      - name: Run Claude Inline Code Review
-        id: claude-review
-        uses: anthropics/claude-code-action@v1
-        with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_INLINE_CODE_REVIEW }}
-          # track_progress: true
-          prompt: |
-            Submit a comment with a Hello World text on it.
+      - name: Authenticate GitHub CLI
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
 
-            CONTEXT:
-            PR #: ${{ steps.pr-number.outputs.number }}
-            Repository: ${{ github.repository }}
-            Owner: ${{ github.repository_owner }}
+      - name: Post Hello World Comment
+        run: gh pr comment 57 --body "Hello World"
 
-          claude_args: |
-            --allowedTools "mcp__github__get_pull_request,
-                            mcp__github__get_issue_comments,
-                            mcp__github__comment_on_pull_request,
-                            mcp__github__get_pull_request_files,
-                            mcp__github__get_pull_request_diff,
-                            mcp__github__create_pending_pull_request_review,
-                            mcp__github__add_comment_to_pending_review,
-                            mcp__github__submit_pending_pull_request_review,
-                            mcp__github_inline_comment__create_inline_comment,
-                            mcp__github__add_issue_comment,
-                            mcp__github__get_pull_request_comments,
-                            mcp__github__get_pull_request_reviews,
-                            mcp__github__resolve_pull_request_conversation,
-                            mcp__github__create_issue_comment"
+
+      # - name: Run Claude Inline Code Review
+      #   id: claude-review
+      #   uses: anthropics/claude-code-action@v1
+      #   with:
+      #     anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_INLINE_CODE_REVIEW }}
+      #     # track_progress: true
+      #     prompt: |
+      #       Submit a comment with a Hello World text on it.
+
+      #       CONTEXT:
+      #       PR #: ${{ steps.pr-number.outputs.number }}
+      #       Repository: ${{ github.repository }}
+      #       Owner: ${{ github.repository_owner }}
+
+      #     claude_args: |
+      #       --allowedTools "mcp__github__get_pull_request,
+      #                       mcp__github__get_issue_comments,
+      #                       mcp__github__comment_on_pull_request,
+      #                       mcp__github__get_pull_request_files,
+      #                       mcp__github__get_pull_request_diff,
+      #                       mcp__github__create_pending_pull_request_review,
+      #                       mcp__github__add_comment_to_pending_review,
+      #                       mcp__github__submit_pending_pull_request_review,
+      #                       mcp__github_inline_comment__create_inline_comment,
+      #                       mcp__github__add_issue_comment,
+      #                       mcp__github__get_pull_request_comments,
+      #                       mcp__github__get_pull_request_reviews,
+      #                       mcp__github__resolve_pull_request_conversation,
+      #                       mcp__github__create_issue_comment"
