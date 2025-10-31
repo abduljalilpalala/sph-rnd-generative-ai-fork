@@ -50,6 +50,20 @@ jobs:
           echo "Branch Ref: ${{ github.ref }}"
           echo "GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}"
 
+
+      - name: Debug Environment
+        run: |
+          echo "GitHub context:"
+          echo "Actor: $GITHUB_ACTOR"
+          echo "Repository: $GITHUB_REPOSITORY"
+          echo "Event: $GITHUB_EVENT_NAME"
+          echo "Runner: $RUNNER_NAME"
+          echo "Token available: ${{ secrets.GITHUB_TOKEN != '' }}"
+          gh auth status || echo "Not logged in"
+          gh --version
+          pwd
+          ls -la
+
       - name: Add Claude Code Review Label
         uses: actions/github-script@v7
         with:
