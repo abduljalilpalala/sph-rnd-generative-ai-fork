@@ -139,6 +139,7 @@ jobs:
 
           claude_args: |
             --allowedTools "mcp__github__get_pull_request,
+                            mcp__github__comment_on_pull_request,
                             mcp__github__get_pull_request_files,
                             mcp__github__get_pull_request_diff,
                             mcp__github__create_pending_pull_request_review,
