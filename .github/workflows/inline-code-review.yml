@@ -88,17 +88,6 @@ jobs:
           ref: ${{ github.event_name == 'issue_comment' && format('refs/pull/{0}/head', github.event.issue.number) || github.event.pull_request.head.ref }}
           fetch-depth: 1
 
-      - name: Fetch latest PR comment
-        id: latest-comment
-        run: |
-          echo "Fetching latest comment from PR #${{ steps.pr-number.outputs.number }}"
-          gh pr view ${{ steps.pr-number.outputs.number }} --json comments -q '.comments[-1].body' > latest_comment.txt
-          echo "LATEST_COMMENT<<EOF" >> $GITHUB_OUTPUT
-          cat latest_comment.txt >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-
       # - name: Load CLAUDE.md context
       #   id: claude-context
       #   env:
