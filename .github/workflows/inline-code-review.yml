@@ -123,6 +123,8 @@ jobs:
 
             CONTEXT:
             PR #: ${{ steps.pr-number.outputs.number }}
+            Repository: ${{ github.repository }}
+            Owner: ${{ github.repository_owner }}
 
           claude_args: |
             --allowedTools "mcp__github__get_pull_request,
