@@ -16,8 +16,8 @@ jobs:
     if: |
       github.event.issue.pull_request &&
       contains(github.event.comment.body, '@inline-code-review')
-    runs-on: [self-hosted, claude-code-review]
-    # runs-on: ubuntu-latest
+    # runs-on: [self-hosted, claude-code-review]
+    runs-on: ubuntu-latest
     steps:
       - name: Add 👀 reaction to comment
         uses: actions/github-script@v7
@@ -143,7 +143,6 @@ jobs:
             Owner: ${{ github.repository_owner }}
 
           claude_args: |
-            --useGitHubAPI true
             --allowedTools "mcp__github__get_pull_request,
                             mcp__github__comment_on_pull_request,
                             mcp__github__get_pull_request_files,
