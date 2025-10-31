@@ -105,10 +105,6 @@ jobs:
       #   run: |
       #     git fetch origin ${{ github.event.pull_request.base.ref }}
 
-
-      - name: Authenticate GitHub CLI
-        run: echo "${{ secrets.GH_AJ_CLI_TOKEN }}" | gh auth login --with-token
-
       - name: Run Claude Inline Code Review
         id: claude-review
         uses: anthropics/claude-code-action@v1
