@@ -121,12 +121,6 @@ jobs:
             Please copy the content of the latest comment in this PR.
             Submit a new comment for it.
 
-            CONTEXT:
-            PR #: ${{ steps.pr-number.outputs.number }}
-            Diff URL: https://github.com/${{ github.repository }}/pull/${{ steps.pr-number.outputs.number }}.diff
-            Repository: ${{ github.repository }}
-            Assignee/Creator: @${{ steps.pr-meta.outputs.assignee }}
-
           claude_args: |
             --allowedTools "mcp__github__get_pull_request,
                             mcp__github__get_pull_request_files,
