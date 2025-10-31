@@ -112,16 +112,11 @@ jobs:
       - name: Run Claude Inline Code Review
         id: claude-review
         uses: anthropics/claude-code-action@v1
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_INLINE_CODE_REVIEW }}
           # track_progress: true
           prompt: |
-            Task:
-            1. Retrieve the latest comment from PR #${{ steps.pr-number.outputs.number }}.
-            2. Copy its content exactly.
-            3. Submit that same text as a new comment to the same PR.
+            Submit a comment with a Hello World text on it.
 
             CONTEXT:
             PR #: ${{ steps.pr-number.outputs.number }}
