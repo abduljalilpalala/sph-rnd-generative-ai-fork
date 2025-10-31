@@ -143,6 +143,7 @@ jobs:
             Owner: ${{ github.repository_owner }}
 
           claude_args: |
+            --useGitHubAPI true
             --allowedTools "mcp__github__get_pull_request,
                             mcp__github__comment_on_pull_request,
                             mcp__github__get_pull_request_files,
