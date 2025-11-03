@@ -122,6 +122,14 @@ jobs:
             Please post a comment "Hello World" to PR #57 using:
             gh pr comment 57 --body "Hello World"
 
+          claude_args: |
+                --allowedTools "mcp__github__get_pull_request,
+                mcp__github__get_issue_comments,
+                mcp__github__comment_on_pull_request,
+                mcp__github__get_pull_request_files,
+                mcp__github__get_pull_request_diff,
+                mcp__github__add_issue_comment"
+
 
       # - name: Run Claude Inline Code Review
       #   id: claude-review
