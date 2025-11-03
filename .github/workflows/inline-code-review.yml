@@ -42,6 +42,12 @@ jobs:
           echo "Branch Ref: ${{ github.ref }}"
           echo "GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}"
 
+      - name: Environment info
+        run: |
+          node -v
+          npm -v
+          env | sort
+          uname -a
 
       - name: Debug Environment
         run: |
