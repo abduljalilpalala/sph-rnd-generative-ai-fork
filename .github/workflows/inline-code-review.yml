@@ -4,12 +4,7 @@ on:
   issue_comment:
     types: [created]
 
-permissions:
-  contents: write
-  pull-requests: write
-  issues: write
-  id-token: write
-  actions: read
+
 
 jobs:
   inline-code-review:
@@ -20,6 +15,13 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GH_AJ_CLI_TOKEN }}
     # runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+  
     steps:
       - name: Add 👀 reaction to comment
         uses: actions/github-script@v7
