@@ -120,7 +120,7 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_INLINE_CODE_REVIEW }}
           prompt: |
-            Please use the MCP tool `mcp__github__add_issue_comment` to post a comment "Hello World" to PR #57.
+            Please use the MCP tool `mcp__github__add_issue_comment` to post a comment "Hello World" to PR #4.
 
           claude_args: |
             --allowedTools "mcp__github__get_pull_request,
