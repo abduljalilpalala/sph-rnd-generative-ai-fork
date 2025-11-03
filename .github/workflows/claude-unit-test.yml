@@ -1,4 +1,4 @@
-name: Claude Unified Unit Test Generator v3
+name: Claude Unit Test Generator v1
 
 on:
   issue_comment:
