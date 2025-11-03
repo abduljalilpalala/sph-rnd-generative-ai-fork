@@ -5,7 +5,7 @@ on:
     types: [created]
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
   issues: write
   id-token: write
@@ -17,7 +17,6 @@ jobs:
       github.event.issue.pull_request &&
       contains(github.event.comment.body, '@inline-code-review')
     runs-on: [self-hosted, claude-code-review]
-
     env:
       GITHUB_TOKEN: ${{ secrets.GH_AJ_CLI_TOKEN }}
     # runs-on: ubuntu-latest
@@ -25,6 +24,7 @@ jobs:
       - name: Add 👀 reaction to comment
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GH_AJ_CLI_TOKEN }}
           script: |
             await github.rest.reactions.createForIssueComment({
               owner: context.repo.owner,
@@ -68,6 +68,7 @@ jobs:
       - name: Add Claude Code Review Label
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GH_AJ_CLI_TOKEN }}
           script: |
             const issue_number = Number(process.env.PR_NUMBER);
 
@@ -114,7 +115,7 @@ jobs:
 
       - name: Run Claude Code Review to post Hello World
         env:
-            GITHUB_TOKEN: ${{ secrets.GH_AJ_CLI_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_AJ_CLI_TOKEN }}
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_INLINE_CODE_REVIEW }}
@@ -123,13 +124,12 @@ jobs:
             gh pr comment 57 --body "Hello World"
 
           claude_args: |
-                --allowedTools "mcp__github__get_pull_request,
-                mcp__github__get_issue_comments,
-                mcp__github__comment_on_pull_request,
-                mcp__github__get_pull_request_files,
-                mcp__github__get_pull_request_diff,
-                mcp__github__add_issue_comment"
-
+            --allowedTools "mcp__github__get_pull_request,
+            mcp__github__get_issue_comments,
+            mcp__github__comment_on_pull_request,
+            mcp__github__get_pull_request_files,
+            mcp__github__get_pull_request_diff,
+            mcp__github__add_issue_comment"
 
       # - name: Run Claude Inline Code Review
       #   id: claude-review
