@@ -1,80 +1,161 @@
-name: Claude Review Actions
+name: Inline Code Review
 
 on:
   issue_comment:
     types: [created]
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
   issues: write
   id-token: write
   actions: read
 
 jobs:
-  claude-review:
+  inline-code-review:
     if: |
       github.event.issue.pull_request &&
-      (contains(github.event.comment.body, '@claude-approve') ||
-       contains(github.event.comment.body, '@claude-disapprove'))
-    runs-on: ubuntu-latest
+      contains(github.event.comment.body, '@test-inline-code-review')
+    runs-on: [self-hosted, claude-code-review]
+    env:
+      GITHUB_TOKEN: ${{ secrets.GH_AJ_CLI_TOKEN }}
+    # runs-on: ubuntu-latest
     steps:
-      - name: Add reaction to comment
+      - name: Add 👀 reaction to comment
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GH_AJ_CLI_TOKEN }}
           script: |
-            const body = context.payload.comment.body
-            const reaction = body.includes('@claude-approve') ? '+1' : '-1'
             await github.rest.reactions.createForIssueComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               comment_id: context.payload.comment.id,
-              content: reaction
+              content: 'eyes'
             })
-
-      - name: Checkout repository
-        uses: actions/checkout@v4
 
       - name: Set PR number
         id: pr-number
         run: echo "number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
 
-      - name: Debug info
+      - name: Debug event info
         run: |
-          echo "Event: ${{ github.event_name }}"
-          echo "PR #: ${{ github.event.issue.number }}"
-          echo "Comment: '${{ github.event.comment.body }}'"
+          echo "Event Name: ${{ github.event_name }}"
+          echo "PR Number: ${{ github.event.issue.number }}"
+          echo "Comment Body: '${{ github.event.comment.body }}'"
+          echo "Branch Ref: ${{ github.ref }}"
+          echo "GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}"
 
-      - name: Run Claude Review Action
-        id: claude-review
+      - name: Environment info
+        run: |
+          node -v
+          npm -v
+          env | sort
+          uname -a
+
+      - name: Debug Environment
+        run: |
+          echo "GitHub context:"
+          echo "Actor: $GITHUB_ACTOR"
+          echo "Repository: $GITHUB_REPOSITORY"
+          echo "Event: $GITHUB_EVENT_NAME"
+          echo "Runner: $RUNNER_NAME"
+          echo "Token available: ${{ secrets.GITHUB_TOKEN != '' }}"
+          gh auth status || echo "Not logged in"
+          gh --version
+          pwd
+          ls -la
+
+      - name: Add Claude Code Review Label
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GH_AJ_CLI_TOKEN }}
+          script: |
+            const issue_number = Number(process.env.PR_NUMBER);
+
+            // Make sure we are using the octokit client from github-script
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number,
+              labels: ["Code Review: Claude Code"]
+            });
+        env:
+          PR_NUMBER: ${{ steps.pr-number.outputs.number }}
+
+      # - name: Checkout PR branch
+      #   uses: actions/checkout@v4
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     ref: ${{ github.event_name == 'issue_comment' && format('refs/pull/{0}/head', github.event.issue.number) || github.event.pull_request.head.ref }}
+      #     fetch-depth: 1
+
+      # - name: Load CLAUDE.md context
+      #   id: claude-context
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   run: |
+      #     if [ -f CLAUDE.md ]; then
+      #       echo "context<<EOF" >> $GITHUB_OUTPUT
+      #       cat CLAUDE.md >> $GITHUB_OUTPUT
+      #       echo "EOF" >> $GITHUB_OUTPUT
+      #     else
+      #       echo "context=CLAUDE.md not found." >> $GITHUB_OUTPUT
+      #     fi
+
+      # - name: Fetch base branch
+      #   run: |
+      #     git fetch origin ${{ github.event.pull_request.base.ref }}
+
+      # - name: Authenticate GitHub CLI
+      #   run: echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+
+      # - name: Post Hello World Comment
+      #   run: gh pr comment 57 --body "Hello World"
+
+      - name: Run Claude Code Review to post Hello World
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_AJ_CLI_TOKEN }}
         uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_INLINE_CODE_REVIEW }}
           prompt: |
-            You are Claude, acting as an **AI Code Reviewer Manager**.
-
-            ## Task
-            Depending on the command in the PR comment:
-            - If comment contains `@claude-approve`, **approve the pull request**.
-            - If comment contains `@claude-disapprove`, **request changes**.
-
-            Use the following mapping:
-            | Command | Event Type | Review Body |
-            |----------|-------------|--------------|
-            | @claude-approve | APPROVE | ✅ Approved by Claude AI (Manual Approve Request) |
-            | @claude-disapprove | REQUEST_CHANGES | 🚫 Changes required by Claude AI (Manual Disapprove Request) |
-
-            ## Logic
-            1. Detect which command triggered this workflow.
-            2. Submit a PR review using the MCP tool `mcp__github__create_and_submit_pull_request_review`.
-            3. Include the proper event type and review body from the table above.
-
-            ## Rules
-            - Do not post extra comments.
-            - Do not perform any code analysis.
-            - If no valid command is found, post a short issue comment explaining the valid commands.
+            Please use the MCP tool `mcp__github__add_issue_comment` to post a comment "Hello World" to PR #57.
 
           claude_args: |
-            --allowedTools "mcp__github__create_and_submit_pull_request_review,
-                            mcp__github__get_pull_request,
-                            mcp__github__add_issue_comment"
+            --allowedTools "mcp__github__get_pull_request,
+            mcp__github__get_issue_comments,
+            mcp__github__comment_on_pull_request,
+            mcp__github__get_pull_request_files,
+            mcp__github__get_pull_request_diff,
+            mcp__github__add_issue_comment"
+
+      # - name: Run Claude Inline Code Review
+      #   id: claude-review
+      #   uses: anthropics/claude-code-action@v1
+      #   with:
+      #     anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_INLINE_CODE_REVIEW }}
+      #     # track_progress: true
+      #     prompt: |
+      #       Submit a comment with a Hello World text on it.
+
+      #       CONTEXT:
+      #       PR #: ${{ steps.pr-number.outputs.number }}
+      #       Repository: ${{ github.repository }}
+      #       Owner: ${{ github.repository_owner }}
+
+      #     claude_args: |
+      #       --allowedTools "mcp__github__get_pull_request,
+      #                       mcp__github__get_issue_comments,
+      #                       mcp__github__comment_on_pull_request,
+      #                       mcp__github__get_pull_request_files,
+      #                       mcp__github__get_pull_request_diff,
+      #                       mcp__github__create_pending_pull_request_review,
+      #                       mcp__github__add_comment_to_pending_review,
+      #                       mcp__github__submit_pending_pull_request_review,
+      #                       mcp__github_inline_comment__create_inline_comment,
+      #                       mcp__github__add_issue_comment,
+      #                       mcp__github__get_pull_request_comments,
+      #                       mcp__github__get_pull_request_reviews,
+      #                       mcp__github__resolve_pull_request_conversation,
+      #                       mcp__github__create_issue_comment"
