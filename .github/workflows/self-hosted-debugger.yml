@@ -120,6 +120,7 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_INLINE_CODE_REVIEW }}
+          allow_tools: true
           prompt: |
             Please use the MCP tool `mcp__github__add_issue_comment` to post a comment "Hello World" to PR #4.
 
