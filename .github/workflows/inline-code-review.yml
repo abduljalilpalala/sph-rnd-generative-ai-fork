@@ -17,6 +17,9 @@ jobs:
       github.event.issue.pull_request &&
       contains(github.event.comment.body, '@inline-code-review')
     runs-on: [self-hosted, claude-code-review]
+
+    env:
+      GITHUB_TOKEN: ${{ secrets.GH_AJ_CLI_TOKEN }}
     # runs-on: ubuntu-latest
     steps:
       - name: Add 👀 reaction to comment
