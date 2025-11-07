@@ -119,7 +119,6 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_INLINE_CODE_REVIEW }}
-          allow_commands: true
           prompt: |
             Please post a comment "Hello World" to PR #57 using the GitHub MCP tool.
             Use the comment_on_pull_request tool.
