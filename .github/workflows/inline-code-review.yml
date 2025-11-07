@@ -128,8 +128,7 @@ jobs:
             mcp__github__get_issue_comments,
             mcp__github__comment_on_pull_request,
             mcp__github__get_pull_request_files,
-            mcp__github__get_pull_request_diff,
-            mcp__github__add_issue_comment"
+            mcp__github__get_pull_request_diff
 
       # - name: Run Claude Inline Code Review
       #   id: claude-review
