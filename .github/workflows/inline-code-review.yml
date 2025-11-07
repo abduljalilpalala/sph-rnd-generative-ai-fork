@@ -45,6 +45,22 @@ jobs:
           echo "Branch Ref: ${{ github.ref }}"
           echo "GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}"
 
+      - name: Install MCP GitHub Server
+        run: |
+          npm install -g @anthropic-ai/mcp-github-server
+
+      - name: Start MCP GitHub Server
+        run: |
+          echo "Starting MCP GitHub server..."
+          nohup mcp-github-server --port 8080 --token "${{ secrets.GH_AJ_CLI_TOKEN }}" &
+          sleep 5
+          echo "MCP GitHub server started."
+
+      - name: Check MCP Server
+        run: |
+          ps aux | grep mcp || echo "MCP process not found"
+          curl -s http://localhost:8080/health || echo "No response from MCP server"
+
       - name: Environment info
         run: |
           node -v
@@ -120,7 +136,7 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_INLINE_CODE_REVIEW }}
           prompt: |
-            Please use the MCP tool `mcp__github__add_issue_comment` to post a comment "Hello World" to PR #57.
+            Please use the MCP tool `mcp__github__add_issue_comment` to post the comment "Hello World" to PR #${{ steps.pr-number.outputs.number }}.
 
           claude_args: |
             --allowedTools "mcp__github__get_pull_request,
