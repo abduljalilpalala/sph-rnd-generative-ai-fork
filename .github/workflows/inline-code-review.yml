@@ -121,8 +121,8 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_INLINE_CODE_REVIEW }}
           allow_commands: true
           prompt: |
-            Please post a comment "Hello World" to PR #57 using:
-            gh pr comment 57 --body "Hello World"
+            Please post a comment "Hello World" to PR #57 using the GitHub MCP tool.
+            Use the comment_on_pull_request tool.
 
           claude_args: |
             --allowedTools "mcp__github__get_pull_request,
