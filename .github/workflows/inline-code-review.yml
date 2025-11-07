@@ -120,9 +120,8 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_INLINE_CODE_REVIEW }}
           prompt: |
-            Identify which file(s) were modified in PR #${{ steps.pr-number.outputs.number }}.
-            For the first modified file, find a changed line from the PR diff.
-            Then post an inline comment saying "Hello World" on that changed line.
+            Fetch the first modified file from PR #${{ steps.pr-number.outputs.number }}.
+            Post a single inline comment saying "Hello World" on the first changed line.
 
             Use these tools:
               - mcp__github__get_pull_request_files → to get modified files
@@ -135,7 +134,8 @@ jobs:
             mcp__github__comment_on_pull_request,
             mcp__github__get_pull_request_files,
             mcp__github__get_pull_request_diff,
-            mcp__github__add_issue_comment"
+            mcp__github__add_issue_comment,
+            mcp__github_inline_comment__create_inline_comment"
 
       # - name: Run Claude Inline Code Review
       #   id: claude-review
