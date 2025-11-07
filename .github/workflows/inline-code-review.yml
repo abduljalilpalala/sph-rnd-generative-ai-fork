@@ -45,22 +45,6 @@ jobs:
           echo "Branch Ref: ${{ github.ref }}"
           echo "GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}"
 
-      - name: Install MCP GitHub Server
-        run: |
-          npm install -g @anthropic-ai/mcp-github-server
-
-      - name: Start MCP GitHub Server
-        run: |
-          echo "Starting MCP GitHub server..."
-          nohup mcp-github-server --port 8080 --token "${{ secrets.GH_AJ_CLI_TOKEN }}" &
-          sleep 5
-          echo "MCP GitHub server started."
-
-      - name: Check MCP Server
-        run: |
-          ps aux | grep mcp || echo "MCP process not found"
-          curl -s http://localhost:8080/health || echo "No response from MCP server"
-
       - name: Environment info
         run: |
           node -v
