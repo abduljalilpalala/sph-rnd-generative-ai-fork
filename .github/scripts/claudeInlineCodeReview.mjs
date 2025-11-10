@@ -32,55 +32,29 @@ try {
   process.exit(1);
 }
 
-function extractAddedLines(patch) {
-  const lines = [];
-  let oldLine = 0;
-  let newLine = 0;
-
-  if (!patch) return lines;
-
-  const patchLines = patch.split("\n");
-  for (const line of patchLines) {
-    const hunkMatch = /^@@ -(\d+),\d+ \+(\d+),\d+ @@/.exec(line);
-    if (hunkMatch) {
-      oldLine = parseInt(hunkMatch[1], 10);
-      newLine = parseInt(hunkMatch[2], 10) - 1; // start line for this hunk
-      continue;
-    }
-    if (line.startsWith("+") && !line.startsWith("++")) {
-      lines.push(newLine + 1);
-      newLine++;
-    } else if (!line.startsWith("-")) {
-      newLine++;
-    }
-  }
-  return lines;
-}
-
-
 // 🔹 Ask Claude
 async function compareWithClaude() {
-  const filesSummary = changedFiles.map(f => {
-    const added = extractAddedLines(f.patch);
-    return `📄 ${f.filename} [${f.status}]
-  Added lines: ${added.join(", ")}
-  Patch preview: ${f.patch?.substring(0, 500) || "(no patch)"}\n`;
-  }).join("\n---\n");
+  const filesSummary = changedFiles
+    .map(
+      f => `📄 ${f.filename} [${f.status}]\n${f.patch?.substring(0, 500) || "(no patch)"}`
+    )
+    .join("\n---\n");
 
   const userPrompt = `
-    I have the following changed files in PR #${prNumber}:
-    ${filesSummary}
+  I have the following changed files from PR #${prNumber}:
+  ${filesSummary}
 
-    Please generate a code review comment for each added line. 
-    Respond ONLY in a JSON array with objects like:
-    [
-      {"path": "file.tsx", "line": 10, "body": "Your review comment here"}
-    ]
+  Respond ONLY with a valid JSON array (no other text). Each comment should have:
+  - "path": the exact filename from above
+  - "line": a line number from the diff
+  - "body": your review comment
 
-    Each comment's "line" must match the added lines listed above.
-    Do not include any extra text outside the JSON.
+  Example format:
+  [
+    {"path": "src/file.js", "line": 5, "body": "Consider adding error handling here"}
+  ]
   `;
-
+  
   console.log("🧠 Asking Claude...");
   const response = await client.messages.create({
     model: "claude-sonnet-4-5-20250929",
@@ -100,12 +74,12 @@ async function compareWithClaude() {
 
   let comments;
   try {
-    comments = JSON.parse(text); // parse the actual Claude response
+    comments = JSON.parse(match[0]);
   } catch {
     console.error("❌ Failed to parse JSON from Claude.");
     process.exit(1);
   }
-  
+
   // 🔹 Post comments
   for (const c of comments) {
     try {
