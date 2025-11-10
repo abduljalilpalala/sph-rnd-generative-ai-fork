@@ -54,19 +54,20 @@ If unsure, return at least one comment on each file with line 1.
 
   console.log("🧠 Asking Claude...");
   const response = await client.messages.create({
+    model: "claude-3",
     max_tokens: 500,
     messages: [{ role: "user", content: userPrompt }],
   });
 
-  const text = response.content[0]?.text || "";
-  console.log("🤖 Claude response:\n", text);
+  // const text = response.content[0]?.text || "";
+  // console.log("🤖 Claude response:\n", text);
 
-  // 🔹 Try to extract JSON array from Claude output
-  const match = text.match(/\[([\s\S]*)\]/);
-  if (!match) {
-    console.error("❌ No JSON found in response.");
-    process.exit(1);
-  }
+  // // 🔹 Try to extract JSON array from Claude output
+  // const match = text.match(/\[([\s\S]*)\]/);
+  // if (!match) {
+  //   console.error("❌ No JSON found in response.");
+  //   process.exit(1);
+  // }
 
   let comments;
   try {
