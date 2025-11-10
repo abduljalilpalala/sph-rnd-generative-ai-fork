@@ -15,7 +15,7 @@ jobs:
   inline-code-review:
     if: |
       github.event.issue.pull_request &&
-      contains(github.event.comment.body, '@inline-code-review-v2')
+      contains(github.event.comment.body, '@claude-inline-code-review')
     runs-on: [self-hosted, claude-code-review]
     steps:
       - name: Add 👀 reaction to comment
