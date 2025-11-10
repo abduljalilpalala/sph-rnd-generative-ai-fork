@@ -2,7 +2,7 @@ import fs from "fs";
 import Anthropic from "@anthropic-ai/sdk";
 import { Octokit } from "@octokit/rest";
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const client = new Anthropic({ apiKey: process.env.anthropic_api_key });
 const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
 
 // 🔹 Detect repo + PR info

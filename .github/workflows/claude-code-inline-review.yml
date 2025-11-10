@@ -108,7 +108,7 @@ jobs:
       - name: Run Claude Inline Code Comparison
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_INLINE_CODE_REVIEW }}
           MAX_INPUT_CHARS: ${{ secrets.MAX_INPUT_CHARS }}
           MAX_OUTPUT_CHARS: ${{ secrets.MAX_OUTPUT_CHARS }}
         run: node .github/scripts/claudeInlineCodeReview.mjs
