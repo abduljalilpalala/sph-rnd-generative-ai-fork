@@ -54,7 +54,7 @@ If unsure, return at least one comment on each file with line 1.
 
   console.log("🧠 Asking Claude...");
   const response = await client.messages.create({
-    model: "claude-3-100k",
+    model: "claude-3",
     max_tokens: 500,
     messages: [{ role: "user", content: userPrompt }],
   });
