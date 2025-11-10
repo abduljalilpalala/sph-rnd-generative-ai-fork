@@ -32,25 +32,54 @@ try {
   process.exit(1);
 }
 
+function extractAddedLines(patch) {
+  const lines = [];
+  let oldLine = 0;
+  let newLine = 0;
+
+  if (!patch) return lines;
+
+  const patchLines = patch.split("\n");
+  for (const line of patchLines) {
+    const hunkMatch = /^@@ -(\d+),\d+ \+(\d+),\d+ @@/.exec(line);
+    if (hunkMatch) {
+      oldLine = parseInt(hunkMatch[1], 10);
+      newLine = parseInt(hunkMatch[2], 10) - 1; // start line for this hunk
+      continue;
+    }
+    if (line.startsWith("+") && !line.startsWith("++")) {
+      lines.push(newLine + 1);
+      newLine++;
+    } else if (!line.startsWith("-")) {
+      newLine++;
+    }
+  }
+  return lines;
+}
+
+
 // 🔹 Ask Claude
 async function compareWithClaude() {
-  const filesSummary = changedFiles
-    .map(
-      f => `📄 ${f.filename} [${f.status}]\n${f.patch?.substring(0, 500) || "(no patch)"}`
-    )
-    .join("\n---\n");
+  const filesSummary = changedFiles.map(f => {
+    const added = extractAddedLines(f.patch);
+    return `📄 ${f.filename} [${f.status}]
+  Added lines: ${added.join(", ")}
+  Patch preview: ${f.patch?.substring(0, 500) || "(no patch)"}\n`;
+  }).join("\n---\n");
 
   const userPrompt = `
-I have the following changed files from PR #${prNumber}:
-${filesSummary}
+    I have the following changed files in PR #${prNumber}:
+    ${filesSummary}
 
-Please respond with a JSON list of comments, each with:
-[
-  {"path": "filename", "line": number, "body": "hello world"}
-]
-Use the file and line context from the diff above.
-If unsure, return at least one comment on each file with line 1.
-`;
+    Please generate a code review comment for each added line. 
+    Respond ONLY in a JSON array with objects like:
+    [
+      {"path": "file.tsx", "line": 10, "body": "Your review comment here"}
+    ]
+
+    Each comment's "line" must match the added lines listed above.
+    Do not include any extra text outside the JSON.
+  `;
 
   console.log("🧠 Asking Claude...");
   const response = await client.messages.create({
@@ -59,24 +88,24 @@ If unsure, return at least one comment on each file with line 1.
     messages: [{ role: "user", content: userPrompt }],
   });
 
-  // const text = response.content[0]?.text || "";
-  // console.log("🤖 Claude response:\n", text);
+  const text = response.content[0]?.text || "";
+  console.log("🤖 Claude response:\n", text);
 
-  // // 🔹 Try to extract JSON array from Claude output
-  // const match = text.match(/\[([\s\S]*)\]/);
-  // if (!match) {
-  //   console.error("❌ No JSON found in response.");
-  //   process.exit(1);
-  // }
+  // 🔹 Try to extract JSON array from Claude output
+  const match = text.match(/\[([\s\S]*)\]/);
+  if (!match) {
+    console.error("❌ No JSON found in response.");
+    process.exit(1);
+  }
 
   let comments;
   try {
-    comments = JSON.parse(match[0]);
+    comments = JSON.parse(text); // parse the actual Claude response
   } catch {
     console.error("❌ Failed to parse JSON from Claude.");
     process.exit(1);
   }
-
+  
   // 🔹 Post comments
   for (const c of comments) {
     try {
