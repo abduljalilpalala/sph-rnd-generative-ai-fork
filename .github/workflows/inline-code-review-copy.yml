@@ -63,7 +63,7 @@ jobs:
         id: claude-review
         uses: anthropics/claude-code-action@v1
         env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_INLINE_CODE_REVIEW }}
           track_progress: true
