@@ -28,7 +28,11 @@ jobs:
               comment_id: context.payload.comment.id,
               content: 'eyes'
             })
-
+            
+      - name: Setup MCP GitHub Server
+        run: |
+          npm install -g @modelcontextprotocol/server-github
+            
       - name: Set PR number
         id: pr-number
         run: echo "number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
