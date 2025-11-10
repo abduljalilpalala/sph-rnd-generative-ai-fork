@@ -1,20 +1,7 @@
 import fs from "fs";
 import Anthropic from "@anthropic-ai/sdk";
-import { Octokit } from "@octokit/rest";
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
-
-const repoOwner = process.env.GITHUB_REPOSITORY.split("/")[0];
-const repoName = process.env.GITHUB_REPOSITORY.split("/")[1];
-const prNumber =
-  process.env.PR_NUMBER ||
-  (process.env.GITHUB_REF?.match(/refs\/pull\/(\d+)\/merge/) || [])[1];
-
-if (!prNumber) {
-  console.error("❌ Could not determine PR number. Check workflow context.");
-  process.exit(1);
-}
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 // 🔹 Load PR files JSON (generated in workflow)
 let changedFiles = [];
@@ -56,10 +43,9 @@ ${f.patch ? f.patch.substring(0, 1000) + (f.patch.length > 1000 ? "\n...(truncat
   }).join("\n---\n");
 
   const userPrompt = `
-I have the following changed files in PR #${prNumber}:
-${filesSummary}
+I have the following changed files ${filesSummary}
 
-Please put hello world on that file`;
+Please put comment "hello world" on that file`;
 
   try {
     const MAX_INPUT_CHARS = parseInt(process.env.MAX_INPUT_CHARS || "800000", 10);
@@ -86,12 +72,6 @@ Please put hello world on that file`;
       console.error("🛑 Please reduce test case or diff content before retrying.");
       process.exit(1);
     }
-
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-5-20250929",
-      max_tokens: MAX_OUTPUT_TOKENS,
-      messages: [{ role: "user", content: userPrompt }],
-    });
   } catch (err) {
     console.error("❌ Claude API call failed:", err.message);
     process.exit(1);
