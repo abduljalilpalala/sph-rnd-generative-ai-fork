@@ -105,41 +105,6 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Extract and validate ticket ID from PR title
-        id: extract
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            PR_NUMBER=${{ github.event.pull_request.number }}
-          elif [[ "${{ github.event_name }}" == "issue_comment" ]]; then
-            PR_NUMBER=${{ github.event.issue.number }}
-          else
-            echo "❌ No PR number found."
-            exit 1
-          fi
-
-          echo "🔎 Detected PR Number: $PR_NUMBER"
-          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
-
-          PR_TITLE=$(curl -s \
-            -H "Authorization: Bearer $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER | jq -r '.title')
-
-          echo "PR TITLE: $PR_TITLE"
-
-          if [[ "$PR_TITLE" =~ ([A-Z]+)-([0-9]+) ]]; then
-            PREFIX="${BASH_REMATCH[1]}"
-            TICKET_ID="${BASH_REMATCH[2]}"
-            echo "🧾 Extracted Ticket ID: $TICKET_ID"
-            echo "PREFIX=$PREFIX" >> $GITHUB_ENV
-            echo "TICKET_ID=$TICKET_ID" >> $GITHUB_ENV
-          else
-            echo "❌ Invalid or missing ticket ID in PR title."
-            exit 1
-          fi
-
       - name: Run Claude Inline Code Comparison
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
