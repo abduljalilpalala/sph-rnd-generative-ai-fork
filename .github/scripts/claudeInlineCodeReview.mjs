@@ -1,81 +1,102 @@
 import fs from "fs";
 import Anthropic from "@anthropic-ai/sdk";
+import { Octokit } from "@octokit/rest";
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
 
-// 🔹 Load PR files JSON (generated in workflow)
+// 🔹 Detect repo + PR info
+const [owner, repo] = process.env.GITHUB_REPOSITORY.split("/");
+const prNumber =
+  process.env.PR_NUMBER ||
+  (process.env.GITHUB_REF?.match(/refs\/pull\/(\d+)\/merge/) || [])[1];
+
+if (!prNumber) {
+  console.error("❌ Could not determine PR number. Check workflow context.");
+  process.exit(1);
+}
+
+// 🔹 Load PR files
 let changedFiles = [];
 try {
-  let filesData;
-  try {
-    filesData = JSON.parse(fs.readFileSync("pr-files.json", "utf-8"));
-  } catch (err) {
-    console.error("❌ Failed to parse pr-files.json:", err.message);
-    process.exit(1);
-  }
-
-  if (!Array.isArray(filesData)) {
-    console.error("❌ Invalid format: pr-files.json is not an array.");
-    console.error("File content:", JSON.stringify(filesData, null, 2));
-    process.exit(1);
-  }
-
+  const filesData = JSON.parse(fs.readFileSync("pr-files.json", "utf-8"));
+  if (!Array.isArray(filesData)) throw new Error("Invalid format");
   changedFiles = filesData.map(f => ({
     filename: f.filename,
     status: f.status,
     patch: f.patch || ""
   }));
-
-  console.log(`✅ Loaded ${changedFiles.length} changed files from pr-files.json`);
-
-  console.log("✅ Loaded changed files from pr-files.json");
+  console.log(`✅ Loaded ${changedFiles.length} changed files`);
 } catch (err) {
-  console.error("❌ Failed to load pr-files.json:", err.message);
+  console.error("❌ Failed to read pr-files.json:", err.message);
   process.exit(1);
 }
 
-
+// 🔹 Ask Claude
 async function compareWithClaude() {
-  // Format changed files nicely
-  const filesSummary = changedFiles.map(f => {
-    return `📄 ${f.filename} [${f.status}]
-${f.patch ? f.patch.substring(0, 1000) + (f.patch.length > 1000 ? "\n...(truncated)" : "") : "(no patch)"}\n`;
-  }).join("\n---\n");
+  const filesSummary = changedFiles
+    .map(
+      f => `📄 ${f.filename} [${f.status}]\n${f.patch?.substring(0, 500) || "(no patch)"}`
+    )
+    .join("\n---\n");
 
   const userPrompt = `
-I have the following changed files ${filesSummary}
+I have the following changed files from PR #${prNumber}:
+${filesSummary}
 
-Please put comment "hello world" on that file`;
+Please respond with a JSON list of comments, each with:
+[
+  {"path": "filename", "line": number, "body": "hello world"}
+]
+Use the file and line context from the diff above.
+If unsure, return at least one comment on each file with line 1.
+`;
 
-  try {
-    const MAX_INPUT_CHARS = parseInt(process.env.MAX_INPUT_CHARS || "800000", 10);
-    const MAX_OUTPUT_CHARS = parseInt(process.env.MAX_OUTPUT_CHARS || "16000", 10);
+  console.log("🧠 Asking Claude...");
+  const response = await client.messages.create({
+    model: "claude-3-5-sonnet-20241022",
+    max_tokens: 500,
+    messages: [{ role: "user", content: userPrompt }],
+  });
 
-    // 🔹 Convert char → token (rough 4 chars per token)
-    const MAX_INPUT_TOKENS = Math.floor(MAX_INPUT_CHARS / 4);
-    const MAX_OUTPUT_TOKENS = Math.floor(MAX_OUTPUT_CHARS / 4);
+  const text = response.content[0]?.text || "";
+  console.log("🤖 Claude response:\n", text);
 
-    if (isNaN(MAX_INPUT_CHARS) || MAX_INPUT_CHARS <= 0) {
-      console.error("❌ Invalid MAX_INPUT_CHARS value. Please check repo secret.");
-      process.exit(1);
-    }
-    if (isNaN(MAX_OUTPUT_CHARS) || MAX_OUTPUT_CHARS <= 0) {
-      console.error("❌ Invalid MAX_OUTPUT_CHARS value. Please check repo secret.");
-      process.exit(1);
-    }
-
-    console.log(`💬 Input limit: ${MAX_INPUT_CHARS} chars (~${MAX_INPUT_TOKENS} tokens)`);
-    console.log(`💬 Output limit: ${MAX_OUTPUT_CHARS} chars (~${MAX_OUTPUT_TOKENS} tokens)`);
-
-    if (userPrompt.length > MAX_INPUT_CHARS) {
-      console.error(`❌ userPrompt too long: ${userPrompt.length} chars (limit: ${MAX_INPUT_CHARS}).`);
-      console.error("🛑 Please reduce test case or diff content before retrying.");
-      process.exit(1);
-    }
-  } catch (err) {
-    console.error("❌ Claude API call failed:", err.message);
+  // 🔹 Try to extract JSON array from Claude output
+  const match = text.match(/\[([\s\S]*)\]/);
+  if (!match) {
+    console.error("❌ No JSON found in response.");
     process.exit(1);
+  }
+
+  let comments;
+  try {
+    comments = JSON.parse(match[0]);
+  } catch {
+    console.error("❌ Failed to parse JSON from Claude.");
+    process.exit(1);
+  }
+
+  // 🔹 Post comments
+  for (const c of comments) {
+    try {
+      await octokit.rest.pulls.createReviewComment({
+        owner,
+        repo,
+        pull_number: prNumber,
+        path: c.path,
+        line: c.line,
+        body: c.body || "hello world",
+        side: "RIGHT",
+      });
+      console.log(`💬 Commented on ${c.path}:${c.line}`);
+    } catch (err) {
+      console.error(`⚠️ Failed to comment on ${c.path}:`, err.message);
+    }
   }
 }
 
-compareWithClaude();
+compareWithClaude().catch(err => {
+  console.error("❌ Fatal error:", err);
+  process.exit(1);
+});
