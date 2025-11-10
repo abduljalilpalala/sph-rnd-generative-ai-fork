@@ -120,15 +120,24 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_INLINE_CODE_REVIEW }}
           prompt: |
-            Please post a comment "Hello World" to PR #57 using the GitHub MCP tool.
-            Use the comment_on_pull_request tool.
+            Please post a comment "Hello World" to PR #57.
+
+          # claude_args: |
+          #   --allowedTools "mcp__github__get_pull_request,
+          #   mcp__github__get_issue_comments,
+          #   mcp__github__comment_on_pull_request,
+          #   mcp__github__get_pull_request_files,
+          #   mcp__github__get_pull_request_diff
 
           claude_args: |
-            --allowedTools "mcp__github__get_pull_request,
-            mcp__github__get_issue_comments,
-            mcp__github__comment_on_pull_request,
-            mcp__github__get_pull_request_files,
-            mcp__github__get_pull_request_diff
+              --allowedCommands "
+                gh pr view,
+                gh pr diff,
+                gh pr comment,
+                gh issue view,
+                gh issue comment,
+                gh api
+              "
 
       # - name: Run Claude Inline Code Review
       #   id: claude-review
