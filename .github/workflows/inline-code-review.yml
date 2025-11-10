@@ -130,14 +130,17 @@ jobs:
           #   mcp__github__get_pull_request_diff
 
           claude_args: |
-              --allowedCommands "
-                gh pr view,
-                gh pr diff,
-                gh pr comment,
-                gh issue view,
-                gh issue comment,
-                gh api
-              "
+            --allowed-tools "
+              Bash(gh pr view:*),
+              Bash(gh pr diff:*),
+              Bash(gh pr comment:*),
+              Bash(gh pr list:*),
+              Bash(gh issue view:*),
+              Bash(gh issue comment:*),
+              Bash(gh issue list:*),
+              Bash(gh search:*),
+              Bash(gh api:*)
+            "
 
       # - name: Run Claude Inline Code Review
       #   id: claude-review
