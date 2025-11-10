@@ -1,0 +1,150 @@
+name: Claude Code Inline Review
+
+on:
+  workflow_dispatch:
+  issue_comment:
+    types: [created]
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  claude-code-inline-review:
+    if: |
+      (github.event_name == 'workflow_dispatch') ||
+      (github.event_name == 'pull_request' ||
+      (github.event_name == 'issue_comment' &&
+       github.event.issue.pull_request &&
+       contains(github.event.comment.body, '@claude-code-inline-review'))
+    runs-on: self-hosted
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Debug event info
+        run: |
+          echo "Event Name: ${{ github.event_name }}"
+          echo "PR Number (pull_request): ${{ github.event.pull_request.number || 'N/A' }}"
+          echo "PR Number (issue_comment): ${{ github.event.issue.number || 'N/A' }}"
+          echo "Comment Body: '${{ github.event.comment.body || 'N/A' }}'"
+          echo "Branch Ref: ${{ github.ref }}"
+          echo "Head Ref (PR): ${{ github.event.pull_request.head.ref || 'N/A' }}"
+
+      - name: Add 👀 reaction (only for comments)
+        if: github.event_name == 'issue_comment'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'eyes'
+            })
+
+      - name: Get PR file changes
+        id: files
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # determine PR number for both triggers
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            PR_NUMBER=${{ github.event.pull_request.number }}
+          elif [ "${{ github.event_name }}" = "issue_comment" ]; then
+            # comment on a PR: use issue.number (issue == PR)
+            PR_NUMBER=${{ github.event.issue.number }}
+          else
+            echo "::error::Unsupported event: ${{ github.event_name }}. Exiting."
+            exit 1
+          fi
+
+          echo "🔎 Fetching changed files for PR #$PR_NUMBER"
+          if [ -z "$PR_NUMBER" ]; then
+            echo "::error::PR_NUMBER is empty — cannot fetch PR files."
+            exit 1
+          fi
+
+          # create/ensure file path
+          mkdir -p .
+
+          # fetch changed files
+          curl -s \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER/files" \
+            > pr-files.json
+
+          # basic check: if API returned an object with "message", fail early with readable message
+          if jq -e 'type == "array"' pr-files.json >/dev/null 2>&1; then
+            echo "✅ Saved PR file list to pr-files.json (array length: $(jq length pr-files.json))"
+          else
+            echo "::error::Failed to fetch PR files; API response:"
+            jq -r '.message // "no message" + " / raw response saved to pr-files.json"' pr-files.json || true
+            exit 1
+          fi
+
+          # export PR_NUMBER for later steps / node script
+          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Extract and validate ticket ID from PR title
+        id: extract
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            PR_NUMBER=${{ github.event.pull_request.number }}
+          elif [[ "${{ github.event_name }}" == "issue_comment" ]]; then
+            PR_NUMBER=${{ github.event.issue.number }}
+          else
+            echo "❌ No PR number found."
+            exit 1
+          fi
+
+          echo "🔎 Detected PR Number: $PR_NUMBER"
+          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+
+          PR_TITLE=$(curl -s \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER | jq -r '.title')
+
+          echo "PR TITLE: $PR_TITLE"
+
+          if [[ "$PR_TITLE" =~ ([A-Z]+)-([0-9]+) ]]; then
+            PREFIX="${BASH_REMATCH[1]}"
+            TICKET_ID="${BASH_REMATCH[2]}"
+            echo "🧾 Extracted Ticket ID: $TICKET_ID"
+            echo "PREFIX=$PREFIX" >> $GITHUB_ENV
+            echo "TICKET_ID=$TICKET_ID" >> $GITHUB_ENV
+          else
+            echo "❌ Invalid or missing ticket ID in PR title."
+            exit 1
+          fi
+
+      - name: Run Claude Inline Code Comparison
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          MAX_INPUT_CHARS: ${{ secrets.MAX_INPUT_CHARS }}
+          MAX_OUTPUT_CHARS: ${{ secrets.MAX_OUTPUT_CHARS }}
+        run: node .github/scripts/claudeInlineCodeReview.mjs
