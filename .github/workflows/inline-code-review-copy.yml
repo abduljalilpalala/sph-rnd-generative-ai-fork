@@ -29,9 +29,26 @@ jobs:
               content: 'eyes'
             })
             
-      - name: Setup MCP GitHub Server
+      # - name: Setup MCP GitHub Server
+      #   run: |
+      #     npm install -g @modelcontextprotocol/server-github
+
+      - name: Debug MCP GitHub Access
         run: |
-          npm install -g @modelcontextprotocol/server-github
+          echo "=== Checking MCP CLI version ==="
+          mcp --version || echo "MCP not installed"
+      
+          echo "=== Checking MCP GitHub authentication ==="
+          mcp github status || echo "MCP not authenticated"
+      
+          echo "=== Test fetching PR info ==="
+          mcp__github__get_pull_request 57 || echo "Failed to fetch PR"
+      
+          echo "=== Test listing PR files ==="
+          mcp__github__get_pull_request_files 57 || echo "Failed to fetch PR files"
+      
+          echo "=== Test posting a dry-run comment ==="
+          mcp__github__add_issue_comment 57 "Test comment from workflow (dry-run)" || echo "Failed to add comment"
             
       - name: Set PR number
         id: pr-number
