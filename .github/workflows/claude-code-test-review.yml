@@ -124,7 +124,7 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_INLINE_CODE_REVIEW }}
-          # track_progress: true
+          track_progress: true
           prompt: |
 
             🧩 What to Do (run in order asynchronous)
