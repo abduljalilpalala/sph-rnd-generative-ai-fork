@@ -62,3 +62,5 @@ Follow the patterns in CLAUDE-BE.md and CLAUDE-FE.md exactly.
 - ❌ DO NOT: Commit files
 
 Start by reading the docs and PR diff.
+
+After creating each test file, run the tests to verify they pass. Fix any failures before committing.
