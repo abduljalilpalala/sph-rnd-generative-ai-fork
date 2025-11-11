@@ -51,73 +51,73 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Check if commit already reviewed
-        id: commit-check
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node .github/scripts/checkLatestCommit.mjs
+      # - name: Check if commit already reviewed
+      #   id: commit-check
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   run: node .github/scripts/checkLatestCommit.mjs
 
-      - name: Fetch previous comment test cases
-        id: previous-test-case
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          node .github/scripts/getPreviousCases.mjs > previous.md
-          echo "previous_context<<EOF" >> $GITHUB_OUTPUT
-          cat previous.md >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+      # - name: Fetch previous comment test cases
+      #   id: previous-test-case
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   run: |
+      #     node .github/scripts/getPreviousCases.mjs > previous.md
+      #     echo "previous_context<<EOF" >> $GITHUB_OUTPUT
+      #     cat previous.md >> $GITHUB_OUTPUT
+      #     echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Detect Review Mode
-        id: detect-mode
-        shell: bash
-        run: |
-          # Read entire comment body safely (multi-line, special chars, quotes)
-          COMMENT_BODY=$(cat <<'EOF'
-          ${{ github.event.comment.body }}
-          EOF
-          )
-          if echo "$COMMENT_BODY" | grep -Eiq 'testcase:\s*https:\/\/docs\.google\.com\/spreadsheets\/d\/'; then
-            echo "mode=sheet" >> $GITHUB_OUTPUT
-            echo "Detected: Sheet Mode"
-          else
-            echo "mode=inline" >> $GITHUB_OUTPUT
-            echo "Detected: Inline Mode"
-          fi
+      # - name: Detect Review Mode
+      #   id: detect-mode
+      #   shell: bash
+      #   run: |
+      #     # Read entire comment body safely (multi-line, special chars, quotes)
+      #     COMMENT_BODY=$(cat <<'EOF'
+      #     ${{ github.event.comment.body }}
+      #     EOF
+      #     )
+      #     if echo "$COMMENT_BODY" | grep -Eiq 'testcase:\s*https:\/\/docs\.google\.com\/spreadsheets\/d\/'; then
+      #       echo "mode=sheet" >> $GITHUB_OUTPUT
+      #       echo "Detected: Sheet Mode"
+      #     else
+      #       echo "mode=inline" >> $GITHUB_OUTPUT
+      #       echo "Detected: Inline Mode"
+      #     fi
 
-      # 🧩 Run the appropriate QA fetcher (inline or sheet)
-      - name: Fetch QA test cases
-        id: qa-sheet
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_INLINE_CODE_REVIEW }}
-          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
-          MAX_INPUT_CHARS: ${{ secrets.MAX_INPUT_CHARS }}
-          MAX_OUTPUT_CHARS: ${{ secrets.MAX_OUTPUT_CHARS }}
-        run: |
-          if [ "${{ steps.detect-mode.outputs.mode }}" = "sheet" ]; then
-            echo "📄 Running Claude Sheet Review"
-            node .github/scripts/claudeSheetReview.mjs > qa.md || echo "[]" > qa.md
-          else
-            echo "📝 Running Claude Inline Review"
-            node .github/scripts/claudeInlineReview.mjs > qa.md || echo "[]" > qa.md
-          fi
+      # # 🧩 Run the appropriate QA fetcher (inline or sheet)
+      # - name: Fetch QA test cases
+      #   id: qa-sheet
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_INLINE_CODE_REVIEW }}
+      #     GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+      #     MAX_INPUT_CHARS: ${{ secrets.MAX_INPUT_CHARS }}
+      #     MAX_OUTPUT_CHARS: ${{ secrets.MAX_OUTPUT_CHARS }}
+      #   run: |
+      #     if [ "${{ steps.detect-mode.outputs.mode }}" = "sheet" ]; then
+      #       echo "📄 Running Claude Sheet Review"
+      #       node .github/scripts/claudeSheetReview.mjs > qa.md || echo "[]" > qa.md
+      #     else
+      #       echo "📝 Running Claude Inline Review"
+      #       node .github/scripts/claudeInlineReview.mjs > qa.md || echo "[]" > qa.md
+      #     fi
 
-          # Ensure file exists and not empty
-          if [ ! -s qa.md ]; then
-            echo "[]" > qa.md
-          fi
+      #     # Ensure file exists and not empty
+      #     if [ ! -s qa.md ]; then
+      #       echo "[]" > qa.md
+      #     fi
 
-          # Encode file safely for GitHub output
-          QA_CONTENT=$(base64 -w 0 qa.md || echo "W10=") # W10= is base64 for []
-          echo "qa_b64=$QA_CONTENT" >> $GITHUB_OUTPUT
+      #     # Encode file safely for GitHub output
+      #     QA_CONTENT=$(base64 -w 0 qa.md || echo "W10=") # W10= is base64 for []
+      #     echo "qa_b64=$QA_CONTENT" >> $GITHUB_OUTPUT
 
-      - name: Debug event info
-        run: |
-          echo "Event Name: ${{ github.event_name }}"
-          echo "PR Number: ${{ github.event.issue.number }}"
-          echo "Comment Body: '${{ github.event.comment.body }}'"
-          echo "Detected Mode: ${{ steps.detect-mode.outputs.mode }}"
-          echo "Branch Ref: ${{ github.ref }}"
+      # - name: Debug event info
+      #   run: |
+      #     echo "Event Name: ${{ github.event_name }}"
+      #     echo "PR Number: ${{ github.event.issue.number }}"
+      #     echo "Comment Body: '${{ github.event.comment.body }}'"
+      #     echo "Detected Mode: ${{ steps.detect-mode.outputs.mode }}"
+      #     echo "Branch Ref: ${{ github.ref }}"
 
       - name: Run Claude Test Review
         id: claude-review
