@@ -176,18 +176,17 @@ jobs:
           prompt: |
       
             🧩 What to Do (run in order asynchronous)
-            1. Read PR diff, CLAUDE.md, and metadata.
-            2. Fetch all existing PR comments and review threads.
-            3. Compare issues found against historical comments:
+            1. Read PR diff, and CLAUDE.md.
+            2. Compare issues found against historical comments:
                - Avoid duplicates.
                - Re-comment only if still unresolved.
-            4. Perform a full review aligned with project architecture and conventions.
-            5. For each issue, prepare:
+            3. Perform a full review aligned with project architecture and conventions.
+            4. For each issue, prepare:
                - Issue
                - Suggested Fix (with code block)
                - Explanation
-            6. Submit inline comments directly on changed lines.
-            7. Submit a final review summary comment using the required structure.
+            5. Submit inline comments directly on changed lines.
+            6. Submit a final review summary comment using the required structure.
       
             ---
       
