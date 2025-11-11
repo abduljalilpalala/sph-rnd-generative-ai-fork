@@ -28,7 +28,7 @@ jobs:
               comment_id: context.payload.comment.id,
               content: 'eyes'
             })
-            
+
       # - name: Setup MCP GitHub Server
       #   run: |
       #     npm install -g @modelcontextprotocol/server-github
@@ -37,19 +37,19 @@ jobs:
         run: |
           echo "=== Checking MCP CLI version ==="
           mcp --version || echo "MCP not installed"
-      
+
           echo "=== Checking MCP GitHub authentication ==="
           mcp github status || echo "MCP not authenticated"
-      
+
           echo "=== Test fetching PR info ==="
           mcp__github__get_pull_request 57 || echo "Failed to fetch PR"
-      
+
           echo "=== Test listing PR files ==="
           mcp__github__get_pull_request_files 57 || echo "Failed to fetch PR files"
-      
+
           echo "=== Test posting a dry-run comment ==="
           mcp__github__add_issue_comment 57 "Test comment from workflow (dry-run)" || echo "Failed to add comment"
-            
+
       - name: Set PR number
         id: pr-number
         run: echo "number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
@@ -84,9 +84,9 @@ jobs:
         id: claude-review
         uses: anthropics/claude-code-action@v1
         env:
-            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_INLINE_CODE_REVIEW }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_INLINE_CODE_REVIEW }}
           # track_progress: true
           prompt: |
             Please review this pull request and provide inline feedback that is highly actionable, concise, and aligned with best practices.

@@ -17,7 +17,6 @@ jobs:
       github.event.issue.pull_request &&
       contains(github.event.comment.body, '@claude-code-test-review')
     runs-on: [self-hosted, claude-code-review]
-
     steps:
       - name: Add 👀 reaction to comment
         uses: actions/github-script@v7
@@ -43,7 +42,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Clean workspace before installing
         run: |
@@ -102,12 +101,12 @@ jobs:
             echo "📝 Running Claude Inline Review"
             node .github/scripts/claudeInlineReview.mjs > qa.md || echo "[]" > qa.md
           fi
-      
+
           # Ensure file exists and not empty
           if [ ! -s qa.md ]; then
             echo "[]" > qa.md
           fi
-      
+
           # Encode file safely for GitHub output
           QA_CONTENT=$(base64 -w 0 qa.md || echo "W10=") # W10= is base64 for []
           echo "qa_b64=$QA_CONTENT" >> $GITHUB_OUTPUT
@@ -124,7 +123,7 @@ jobs:
         id: claude-review
         uses: anthropics/claude-code-action@v1
         with:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_INLINE_CODE_REVIEW }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_INLINE_CODE_REVIEW }}
           # track_progress: true
           prompt: |
 
