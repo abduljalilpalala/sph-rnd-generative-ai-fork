@@ -5,57 +5,41 @@ import { exitWith } from "./_helpers.mjs";
   try {
     const { owner, repo, prNumber } = repoInfo;
 
-    console.log(`🔍 Checking if latest commit already reviewed on PR #${prNumber}...`);
+    console.log(`🔍 Checking latest commit time for PR #${prNumber}...`);
 
     // 1️⃣ Fetch PR info to get current head SHA
-    const { data: pr } = await octokit.rest.pulls.get({ owner, repo, pull_number: prNumber });
+    const { data: pr } = await octokit.rest.pulls.get({
+      owner,
+      repo,
+      pull_number: prNumber,
+    });
+
     const currentSha = pr.head.sha.substring(0, 7);
     console.log(`Current PR commit: ${currentSha}`);
 
-    // 2️⃣ Fetch all PR comments
-    const { data: comments } = await octokit.rest.issues.listComments({
+    // 2️⃣ Fetch commit details to get commit date
+    const { data: commitData } = await octokit.rest.repos.getCommit({
       owner,
       repo,
-      issue_number: prNumber,
-      per_page: 100,
+      ref: pr.head.sha,
     });
 
-    if (!comments?.length) {
-      console.log("⚠️ No comments found. Proceeding...");
-      return;
-    }
+    const commitDate = new Date(commitData.commit.committer.date);
+    const now = new Date();
+    const diffMinutes = (now - commitDate) / (1000 * 60);
 
-    // 3️⃣ Find the most recent Claude QA Summary comment
-    const claudeComments = comments
-      .filter((c) => c.body?.includes("## 📄 Claude QA Summary"))
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    console.log(`🕒 Commit pushed at: ${commitDate.toISOString()}`);
+    console.log(`⏱️ Time since commit: ${diffMinutes.toFixed(2)} minutes`);
 
-    if (!claudeComments.length) {
-      console.log("⚠️ No Claude QA Summary comments found. Proceeding...");
-      return;
-    }
+    // 3️⃣ Check if within cooldown window
+    const COOLDOWN_MINUTES = 10;
+    if (diffMinutes <= COOLDOWN_MINUTES) {
+      console.log(`⏹️ Commit is too recent (< ${COOLDOWN_MINUTES} mins). Skipping workflow.`);
 
-    const latest = claudeComments[0];
-    const body = latest.body || "";
-
-    // 4️⃣ Extract the "latest commit" line
-    const match = body.match(/latest commit:\s*([a-f0-9]{7,40})/i);
-    if (!match) {
-      console.log("⚠️ No commit hash found in last summary. Proceeding...");
-      return;
-    }
-
-    const lastCommit = match[1].substring(0, 7);
-    console.log(`Last reviewed commit: ${lastCommit}`);
-
-    // 5️⃣ Compare commits
-    if (currentSha === lastCommit) {
-      console.log("⏹️ Same commit detected. Skipping workflow.");
-
-      // Post a PR comment before exiting
+      // 4️⃣ Post a comment on PR before exiting
       const message = [
-        `No change since from the last commit (${lastCommit}).`,
-        `Please check [📄 Claude QA Summary Link](${latest.html_url}). Skipping workflow.`,
+        `⏳ The latest commit (${currentSha}) was pushed **${diffMinutes.toFixed(1)} minutes ago**.`,
+        `Please wait at least **${COOLDOWN_MINUTES} minutes** before triggering another review.`,
       ].join("\n");
 
       await octokit.rest.issues.createComment({
@@ -65,10 +49,12 @@ import { exitWith } from "./_helpers.mjs";
         body: message,
       });
 
-      exitWith('📝 Posted skip comment to PR.');
-    } else {
-      console.log("✅ New commit detected. Proceeding...");
+      await exitWith("📝 Posted skip comment due to recent commit.");
+      return;
     }
+
+    // 5️⃣ Proceed normally
+    console.log("✅ Commit is older than cooldown window. Proceeding...");
   } catch (err) {
     exitWith("❌ Error during commit check:", err);
   }
