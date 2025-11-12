@@ -7,7 +7,7 @@ import fs from "fs";
     const { excludeIds } = await parseComment(GITHUB_EVENT_PATH);
 
     if (!excludeIds?.length) {
-      fs.writeFileSync("ignored.md", "none");
+      fs.writeFileSync("ignored.md", "none\n");
       return;
     }
 
