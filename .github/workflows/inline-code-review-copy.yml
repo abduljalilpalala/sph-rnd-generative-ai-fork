@@ -111,7 +111,7 @@ jobs:
       
             [Inline Comment Format]
               **Issue:** <short, specific title>  
-              **Severity:** <Critical / Moderate / Minor>  
+              **Severity:** 🟥 Critical / 🟧 Moderate / 🟨 Minor    
               **Suggested Fix:**  
               ```suggestion
                 // Minimal, relevant code fix only
@@ -141,9 +141,9 @@ jobs:
                 | ⚠️ Minor Concern / Warning| Minor    | n |
       
               ## 💡 Feedback Highlights
-              - [Critical] Short description of critical issue
-              - [Moderate] Short description of moderate issue
-              - [Minor] Short description of minor issue
+              - [🟥 Critical] Short description of critical issue
+              - [🟧 Moderate] Short description of moderate issue
+              - [🟨 Minor] Short description of minor issue
       
               ## 🏁 Next Steps
               - Address critical issues immediately.
@@ -167,9 +167,9 @@ jobs:
               | ⚠️ Minor Concern / Warning| Minor    | 1 |
       
               ## 💡 Feedback Highlights
-              - [Critical] Fix runtime error in controller logic  
-              - [Moderate] Align validation with schema definitions  
-              - [Minor] Simplify redundant service functions  
+              - [🟥 Critical] Fix runtime error in controller logic  
+              - [🟧 Moderate] Align validation with schema definitions  
+              - [🟨 Minor] Simplify redundant service functions  
       
               ## 🏁 Next Steps
               - Address critical issues immediately.
