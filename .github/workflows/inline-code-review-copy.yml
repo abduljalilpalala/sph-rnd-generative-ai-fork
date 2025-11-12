@@ -190,7 +190,7 @@ jobs:
       
             [Git Config]
               CONTEXT:
-              PR #: ${{ steps.pr-number.outputs.number }}
+              PR : ${{ steps.pr-number.outputs.number }}
               Diff URL: https://github.com/${{ github.repository }}/pull/${{ steps.pr-number.outputs.number }}.diff
               Repository: ${{ github.repository }}
               Assignee/Creator: @${{ steps.pr-meta.outputs.assignee }}
