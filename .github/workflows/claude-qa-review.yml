@@ -68,6 +68,17 @@ jobs:
           cat previous.md >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
+      - name: Get Ignored Test Cases
+        id: ignored-test-cases
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🧩 Collecting ignored test cases..."
+          node .github/scripts/getIgnoredCases.mjs > ignored.md
+          echo "ignored_context<<EOF" >> $GITHUB_OUTPUT
+          cat ignored.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Detect Review Mode
         id: detect-mode
         shell: bash
@@ -147,6 +158,9 @@ jobs:
             ## 🧾 QA Test Cases
             ${{ steps.qa-sheet.outputs.qa }}
 
+            ## 🧩 Ignored Test Cases
+            ${{ steps.ignored-test-cases.outputs.ignored_context }}
+
             [Behavioral Check Guidelines]
               You are reviewing this as a **Behavioral QA Reviewer and Engineering Manager**.  
               Your goal is to review the changes and check if they affect or break any other functions used throughout the project or repository.
@@ -197,6 +211,7 @@ jobs:
               - ✅ PASS — requirement met  
               - ❌ FAIL — requirement not met or broken  
               - ⚠️ CANNOT VERIFY — not enough context or unrelated change
+              - ⏭️ SKIPPED — test case intentionally ignored or excluded (defined by user)
             [/Verdict legend]
 
             [Inline Comment Format]
