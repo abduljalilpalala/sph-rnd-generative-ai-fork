@@ -51,7 +51,7 @@ import { exitWith } from "./_helpers.mjs";
       console.log(`⏹️ Last QA Summary is too recent (< ${COOLDOWN_MINUTES} mins). Skipping workflow.`);
 
       const message = [
-        `⏳ The last QA Summary was posted **${diffMinutes.toFixed(1)} minutes ago**.`,
+        `⏳ The last QA Review was posted **${diffMinutes.toFixed(1)} minutes ago**.`,
         `Please wait at least **${COOLDOWN_MINUTES} minutes** before triggering another review.`,
         `Last summary: [📄 View Summary](${latest.html_url})`,
       ].join("\n");
