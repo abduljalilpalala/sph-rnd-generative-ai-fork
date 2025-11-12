@@ -29,27 +29,6 @@ jobs:
               content: 'eyes'
             })
 
-      # - name: Setup MCP GitHub Server
-      #   run: |
-      #     npm install -g @modelcontextprotocol/server-github
-
-      - name: Debug MCP GitHub Access
-        run: |
-          echo "=== Checking MCP CLI version ==="
-          mcp --version || echo "MCP not installed"
-
-          echo "=== Checking MCP GitHub authentication ==="
-          mcp github status || echo "MCP not authenticated"
-
-          echo "=== Test fetching PR info ==="
-          mcp__github__get_pull_request 57 || echo "Failed to fetch PR"
-
-          echo "=== Test listing PR files ==="
-          mcp__github__get_pull_request_files 57 || echo "Failed to fetch PR files"
-
-          echo "=== Test posting a dry-run comment ==="
-          mcp__github__add_issue_comment 57 "Test comment from workflow (dry-run)" || echo "Failed to add comment"
-
       - name: Set PR number
         id: pr-number
         run: echo "number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
@@ -98,7 +77,6 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_INLINE_CODE_REVIEW }}
           track_progress: true
           prompt: |
-      
             🧩 What to Do (run in order)
             1. Read the PR diff and CLAUDE.md.
             2. Retrieve all past PR comments and PR reviews.
@@ -108,7 +86,7 @@ jobs:
                - Check if a similar unresolved comment already exists.
                  * If unresolved → re-comment or clarify.
                  * If resolved → skip re-commenting.
-               - Otherwise → post a new inline comment with clear, actionable feedback.
+               - Otherwise → post a new inline comment with clear, actionable feedback and a severity status.
             6. Submit the review and post a summary comment following the Review Summary Rules.
       
             ---
@@ -116,30 +94,24 @@ jobs:
             SYSTEM INSTRUCTION (do not output):
       
             [Code Review Guidelines]
-              You are reviewing this as a **Code Reviewer**.  
-              Your goal is to ensure the pull request follows project conventions, maintains logic integrity, and upholds readability and maintainability.
-      
-              ### 🔍 Focus Areas
-              - Logical or runtime errors that break flow.
-              - Missing validation, error handling, or edge case checks.
-              - Data integrity or business logic issues.
-              - Regressions or unintentional behavior changes.
-              - Security and performance issues.
-              - Code readability and maintainability aligned with project conventions.
-      
-              ### 🚫 Avoid
-              - Minor code style or formatting comments.
-              - Nitpicks about naming or TypeScript-specific patterns.
-              - Generic comments not directly related to functionality or stability.
-      
-              ### ✅ Instead, focus on
-              - Code correctness, clarity, and consistency.
-              - Potential breakages in integrations or dependent functions.
-              - Opportunities to simplify complex or redundant logic.
+              You are reviewing this pull request as a **Code Reviewer**.  
+              Use the **CLAUDE.md** file as the primary reference for the project’s architecture, coding conventions, and best practices.  
+              Ensure the PR follows these standards, maintains logic integrity, and upholds readability and maintainability.
+              Post inline comments only for relevant issues, using severity (Critical / Moderate / Minor) where appropriate.
+            
+              ## Project Context (from CLAUDE.md)
+              ${{ steps.project-context.outputs.claude_md }}
             [/Code Review Guidelines]
+      
+            [Verdict Legend]
+              - ✅ PASS / APPROVED — code follows conventions, no blocking issues
+              - ❌ FAIL / NEEDS CHANGE — issue detected that must be fixed
+              - ⚠️ WARNING / MINOR CONCERN — non-blocking issue or recommendation
+            [/Verdict Legend]
       
             [Inline Comment Format]
               **Issue:** <short, specific title>  
+              **Severity:** <Critical / Moderate / Minor>  
               **Suggested Fix:**  
               ```suggestion
                 // Minimal, relevant code fix only
@@ -157,40 +129,61 @@ jobs:
             [Review Summary Rules]
               After posting inline comments, submit a single summary comment.
       
-              The summary must:
-              1. Tag the PR assignee or creator.
-              2. Summarize how many inline comments were posted.
-              3. Mention the general feedback categories (logic, structure, readability, etc.).
-              4. Provide clear next steps for the developer.
-              5. End with an encouraging note.
+              ## 📄 Claude Code Review Summary
+              - Tag the PR assignee or creator.
+              - Include a metrics table summarizing both verdict and severity:
       
-              ### 🧩 Example Summaries
+                | **Metric** | **Severity** | **Count** |
+                |:--------------------------|:--------:|:------:|
+                | ✅ Approved / Passed      | -        | n |
+                | ❌ Failed / Needs Change  | Critical | n |
+                | ❌ Failed / Needs Change  | Moderate | n |
+                | ⚠️ Minor Concern / Warning| Minor    | n |
       
-              **If Requesting Changes:**
-              "Hey @${{ steps.pr-meta.outputs.assignee }},
+              ## 💡 Feedback Highlights
+              - [Critical] Short description of critical issue
+              - [Moderate] Short description of moderate issue
+              - [Minor] Short description of minor issue
       
-              I've completed reviewing this PR and found **{{n}}** items that need updates before approval.
+              ## 🏁 Next Steps
+              - Address critical issues immediately.
+              - Consider moderate improvements.
+              - Optional: implement minor suggestions.
       
-              **Summary of Feedback:**
-              - Fix data flow issues in controller logic  
-              - Align validation with schema definitions  
-              - Simplify redundant service functions  
+              ## 🌟 Appreciation
+              Great work overall! Once these points are addressed, the PR should be fully ready for approval.
       
-              Once you've addressed these points, please push the updates and re-request a review.  
-              Great work overall—almost there!"
+              ### 🧩 Example Summary
       
-              **If Approving:**
-              "Hey @${{ steps.pr-meta.outputs.assignee }},
+              ```
+              Hey @${{ steps.pr-meta.outputs.assignee }},
       
-              I've reviewed the PR and found no blocking issues.  
-              Everything aligns well with project conventions and best practices.  
+              ## 📄 Claude Code Review Summary
+              | **Metric** | **Severity** | **Count** |
+              |:--------------------------|:--------:|:------:|
+              | ✅ Approved / Passed      | -        | 2 |
+              | ❌ Failed / Needs Change  | Critical | 2 |
+              | ❌ Failed / Needs Change  | Moderate | 1 |
+              | ⚠️ Minor Concern / Warning| Minor    | 1 |
       
-              Excellent work—this PR is **APPROVED!**"
+              ## 💡 Feedback Highlights
+              - [Critical] Fix runtime error in controller logic  
+              - [Moderate] Align validation with schema definitions  
+              - [Minor] Simplify redundant service functions  
+      
+              ## 🏁 Next Steps
+              - Address critical issues immediately.
+              - Consider moderate improvements.
+              - Optional: implement minor suggestions.
+      
+              ## 🌟 Appreciation
+              Great work overall! Once these points are addressed, the PR should be fully ready for approval.
+              ```
             [/Review Summary Rules]
       
             [Git Config]
               CONTEXT:
-              PR : ${{ steps.pr-number.outputs.number }}
+              PR No.: ${{ steps.pr-number.outputs.number }}
               Diff URL: https://github.com/${{ github.repository }}/pull/${{ steps.pr-number.outputs.number }}.diff
               Repository: ${{ github.repository }}
               Assignee/Creator: @${{ steps.pr-meta.outputs.assignee }}
@@ -209,6 +202,7 @@ jobs:
                             mcp__github__get_pull_request_reviews,
                             mcp__github__resolve_pull_request_conversation,
                             mcp__github__create_issue_comment"
+
 
 
 
