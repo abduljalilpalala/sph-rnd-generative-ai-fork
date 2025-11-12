@@ -7,20 +7,17 @@ import fs from "fs";
     const { excludeIds } = await parseComment(GITHUB_EVENT_PATH);
 
     if (!excludeIds?.length) {
-      console.log("none");
-      fs.writeFileSync("ignored.md", "## 🧩 Ignored Test Cases\nnone\n");
+      fs.writeFileSync("ignored.md", "## 🧩 Ignored Test Cases Ids\nnone\n");
       return;
     }
 
     const markdown = [
-      "## 🧩 Ignored Test Cases",
+      "## 🧩 Ignored Test Cases Ids",
       ...excludeIds.map(id => `- ${id}`),
       "",
     ].join("\n");
 
     fs.writeFileSync("ignored.md", markdown);
-
-    console.log(excludeIds)
   } catch (err) {
     console.error("❌ Error writing ignored.md:", err);
     process.exit(1);

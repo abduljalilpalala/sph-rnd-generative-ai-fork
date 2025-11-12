@@ -250,6 +250,7 @@ jobs:
                   | ✅ Passed Test Cases | n |
                   | ❌ Failed Test Cases | n |
                   | ⚠️ Unverified Test Cases | n |
+                  | ⏭️ Skipped Test Cases | n |
 
                   latest commit: <shortened latest commit hash>
 
