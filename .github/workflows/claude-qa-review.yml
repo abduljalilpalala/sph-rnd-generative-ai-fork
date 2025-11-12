@@ -54,7 +54,6 @@ jobs:
 
       - name: Check if commit already reviewed
         id: commit-check
-        if: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node .github/scripts/checkLatestCommit.mjs
