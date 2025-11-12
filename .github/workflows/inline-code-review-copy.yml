@@ -76,6 +76,17 @@ jobs:
           ref: refs/pull/${{ github.event.issue.number }}/head
           fetch-depth: 1
 
+      - name: Load CLAUDE.md context
+        id: claude-context
+        run: |
+          if [ -f CLAUDE.md ]; then
+            echo "context<<EOF" >> $GITHUB_OUTPUT
+            cat CLAUDE.md >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "context=CLAUDE.md not found." >> $GITHUB_OUTPUT
+          fi
+
       - name: Fetch base branch
         run: |
           git fetch origin ${{ github.event.pull_request.base.ref }}
@@ -296,7 +307,7 @@ jobs:
             SYSTEM INSTRUCTION (do not output):
           
             ## Project Context (from CLAUDE.md)
-            ${{ steps.project-context.outputs.claude_md }}
+            ${{ steps.claude-context.outputs.context }}
           
             [Review Rules]
               You must evaluate all changes based on:
