@@ -204,7 +204,8 @@ jobs:
                             mcp__github__get_pull_request_reviews,
                             mcp__github__resolve_pull_request_conversation,
                             mcp__github__create_issue_comment,
-                            Bash(gh pr view:*)"
+                            Bash(gh pr view:*),
+                            Bash(gh pr review:*)"
 
 
 
