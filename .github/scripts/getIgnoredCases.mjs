@@ -7,12 +7,11 @@ import fs from "fs";
     const { excludeIds } = await parseComment(GITHUB_EVENT_PATH);
 
     if (!excludeIds?.length) {
-      fs.writeFileSync("ignored.md", "## 🧩 Ignored Test Cases Ids\nnone\n");
+      fs.writeFileSync("ignored.md", "none");
       return;
     }
 
     const markdown = [
-      "## 🧩 Ignored Test Cases Ids",
       ...excludeIds.map(id => `- ${id}`),
       "",
     ].join("\n");
