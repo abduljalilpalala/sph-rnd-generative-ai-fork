@@ -91,27 +91,25 @@ jobs:
         run: |
           git fetch origin ${{ github.event.pull_request.base.ref }}
 
-      - name: Run Claude Inline Code Review
+      - name: Run Claude Code Review
         id: claude-review
         uses: anthropics/claude-code-action@v1
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_INLINE_CODE_REVIEW }}
           track_progress: true
-  
           prompt: |
       
             🧩 What to Do (run in order)
-            1. Read the PR diff and metadata.
-            2. Retrieve all past PR comments and reviews.
+            1. Read the PR diff and CLAUDE.md.
+            2. Retrieve all past PR comments and PR reviews.
             3. Start a pending pull request review.
             4. Analyze the diff according to project conventions.
             5. For each issue found:
-               - Check if a similar unresolved comment exists.
-                 * If unresolved → repeat or clarify.
-               - Otherwise → post a new inline comment.
-            6. Submit the pending review with summarized findings.
+               - Check if a similar unresolved comment already exists.
+                 * If unresolved → re-comment or clarify.
+                 * If resolved → skip re-commenting.
+               - Otherwise → post a new inline comment with clear, actionable feedback.
+            6. Submit the review and post a summary comment following the Review Summary Rules.
       
             ---
       
@@ -119,25 +117,76 @@ jobs:
       
             [Code Review Guidelines]
               You are reviewing this as a **Code Reviewer**.  
-              Your goal is to analyze the code changes for correctness, maintainability, and impact on existing logic.
+              Your goal is to ensure the pull request follows project conventions, maintains logic integrity, and upholds readability and maintainability.
       
               ### 🔍 Focus Areas
-              - Logical or runtime errors.
-              - Missing validation or error handling.
-              - Regressions that break user flow or data integrity.
-              - Unhandled edge cases or inconsistencies.
-              - Security, performance, or readability issues that could cause bugs later.
+              - Logical or runtime errors that break flow.
+              - Missing validation, error handling, or edge case checks.
+              - Data integrity or business logic issues.
+              - Regressions or unintentional behavior changes.
+              - Security and performance issues.
+              - Code readability and maintainability aligned with project conventions.
       
               ### 🚫 Avoid
-              - Nitpicks on code style or formatting.
-              - Comments about TypeScript types, DTOs, or naming conventions.
-              - Generic advice (“use async/await”, “prefer const”) unless it directly prevents a bug.
+              - Minor code style or formatting comments.
+              - Nitpicks about naming or TypeScript-specific patterns.
+              - Generic comments not directly related to functionality or stability.
       
-              ### ✅ Focus instead on
-              - Whether the code achieves the intended logic safely and clearly.
-              - Whether external integrations or dependencies could break.
-              - Whether new or modified logic introduces side effects.
+              ### ✅ Instead, focus on
+              - Code correctness, clarity, and consistency.
+              - Potential breakages in integrations or dependent functions.
+              - Opportunities to simplify complex or redundant logic.
             [/Code Review Guidelines]
+      
+            [Inline Comment Format]
+              **Issue:** <short, specific title>  
+              **Suggested Fix:**  
+              ```suggestion
+                // Minimal, relevant code fix only
+              ```
+              **Explanation:** <Explain how this fix improves correctness, clarity, or maintainability.>
+            [/Inline Comment Format]
+      
+            [Inline Comment Rules]
+              - Add inline comments only for actionable and meaningful issues.
+              - Avoid duplicates of unresolved comments.
+              - Do not comment on unchanged lines.
+              - Prefer inline code suggestions whenever possible for easier adoption.
+            [/Inline Comment Rules]
+      
+            [Review Summary Rules]
+              After posting inline comments, submit a single summary comment.
+      
+              The summary must:
+              1. Tag the PR assignee or creator.
+              2. Summarize how many inline comments were posted.
+              3. Mention the general feedback categories (logic, structure, readability, etc.).
+              4. Provide clear next steps for the developer.
+              5. End with an encouraging note.
+      
+              ### 🧩 Example Summaries
+      
+              **If Requesting Changes:**
+              "Hey @${{ steps.pr-meta.outputs.assignee }},
+      
+              I've completed reviewing this PR and found **{{n}}** items that need updates before approval.
+      
+              **Summary of Feedback:**
+              - Fix data flow issues in controller logic  
+              - Align validation with schema definitions  
+              - Simplify redundant service functions  
+      
+              Once you've addressed these points, please push the updates and re-request a review.  
+              Great work overall—almost there!"
+      
+              **If Approving:**
+              "Hey @${{ steps.pr-meta.outputs.assignee }},
+      
+              I've reviewed the PR and found no blocking issues.  
+              Everything aligns well with project conventions and best practices.  
+      
+              Excellent work—this PR is **APPROVED!**"
+            [/Review Summary Rules]
       
             [Git Config]
               CONTEXT:
@@ -145,55 +194,7 @@ jobs:
               Diff URL: https://github.com/${{ github.repository }}/pull/${{ steps.pr-number.outputs.number }}.diff
               Repository: ${{ github.repository }}
               Assignee/Creator: @${{ steps.pr-meta.outputs.assignee }}
-              Changed files:
-              ${{ steps.qa-sheet.outputs.files_summary }}
             [/Git Config]
-      
-            [Inline Comment Format]
-              **Issue:** <short title of the issue>  
-              **Observation:** <Describe the logic or flow that causes the issue.>  
-              **Impact:** <Explain what could break or misbehave.>  
-              **Suggestion:** <Provide a clear and minimal code-level fix.>
-      
-              ```suggestion
-                // Minimal, relevant code fix only
-              ```
-            [/Inline Comment Format]
-      
-            [Inline Comment Rules]
-              - Comment only on issues that can impact correctness or stability.
-              - Avoid duplicates of unresolved comments.
-              - Do not comment on unchanged lines.
-              - Each inline comment should correspond to one clear issue.
-            [/Inline Comment Rules]
-      
-            [Review Summary Rules]
-              The final PR comment must include these two sections only:
-              1. `## 🧩 Claude Code Review Summary`
-                  | **Metric** | **Count** |
-                  |:--------------------------|:------:|
-                  | 🧠 **Issues Found** | n |
-                  | ✅ **Resolved (from past)** | n |
-                  | ❌ **New Issues** | n |
-      
-                  latest commit: <shortened commit hash>
-      
-              2. `## 🧩 Detailed Review`
-                  <details>
-                  <summary><strong>[Issue]</strong>: <short description></summary>
-      
-                  **Observation:**  
-                  <Describe the logic or flow that causes the issue.>
-      
-                  **Impact:**  
-                  <Explain what could break or misbehave.>
-      
-                  **Suggestion:**  
-                  <Provide a clear, minimal, and actionable suggestion.>
-      
-                  ---
-                  </details>
-            [/Review Summary Rules]
       
           claude_args: |
             --allowedTools "mcp__github__get_pull_request,
@@ -208,5 +209,6 @@ jobs:
                             mcp__github__get_pull_request_reviews,
                             mcp__github__resolve_pull_request_conversation,
                             mcp__github__create_issue_comment"
+
 
 
