@@ -99,286 +99,114 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_INLINE_CODE_REVIEW }}
           track_progress: true
-      #     prompt: |
-      #       Please review this pull request and provide inline feedback that is highly actionable, concise, and aligned with best practices.
-
-      #       PROJECT CONTEXT:
-      #       Below is the content of CLAUDE.md, which outlines the project architecture and conventions.
-      #       Use it to ensure your review aligns with the intended design and coding standards.
-
-      #       IMPORTANT:
-      #         Before suggesting any inline comment:
-      #         - Fetch all previous PR comments and reviews.
-      #         - If an identical or similar comment already exists for the same file/line:
-      #             - Check whether the issue has been resolved in the latest commit.
-      #             - If the issue remains unresolved, you may re-comment or update the previous feedback for clarity.
-      #             - If the issue has been resolved, skip re-commenting.
-      #         - If the issue is new or newly introduced, comment normally.
-      #         - If all prior issues have been addressed and no new problems are found, clearly indicate APPROVED in the summary.
-
-      #       For each issue you identify:
-      #       - Issue: Briefly describe the problem.
-      #       - Suggested Fix: Provide a corrected code snippet using proper syntax highlighting.
-      #       - Explanation: Explain why the fix improves the code or better follows project standards.
-      #       - Prefer inline code suggestions whenever possible for easier adoption.
-
-      #       If the code follows best practices and no issues are found:
-      #       - Clearly indicate an APPROVE status.
-      #       - Optionally highlight areas that were implemented well (structure, naming, validation, etc.).
-
-      #       REVIEW SUBMISSION RULES:
-      #       - Post inline comments directly on the relevant changed lines for each identified issue.
-      #       - Once all inline comments have been added, submit them together as a single review.
-      #       - After submitting the inline review, create a summary comment (using a normal PR comment)
-      #         summarizing your findings, approval status, and next steps for the developer.
-
-      #       The summary comment must:
-      #       1. Tag the PR assignee (or creator)
-      #       2. Summarize how many inline comments were posted
-      #       3. Mention the general feedback categories (logic, structure, readability, etc.)
-      #       4. Provide next actions for the developer
-      #       5. End with an encouraging or appreciative note
-
-      #       EXAMPLE SUMMARIES:
-
-      #       If Requesting Changes:
-      #       "Hey @{{assignee_or_creator}},
-
-      #       I've completed reviewing this PR and found {{n}} items that need updates before approval.
-
-      #       Summary of Feedback:
-      #       - Fix dependency injection issues in the Service layer
-      #       - Align DTO validation with Prisma schema
-      #       - Simplify redundant controller logic
-
-      #       Once you've addressed these points, please push the updates and re-request a review. Great work overall—almost there!"
-
-      #       If Approving:
-      #       "Hey @{{assignee_or_creator}},
-
-      #       I've reviewed the PR and found no blocking issues.
-      #       Everything aligns well with project conventions and best practices.
-
-      #       Excellent work—this PR is APPROVED!"
-
-      #       CONTEXT:
-      #       PR #: ${{ steps.pr-number.outputs.number }}
-      #       Diff URL: https://github.com/${{ github.repository }}/pull/${{ steps.pr-number.outputs.number }}.diff
-      #       Repository: ${{ github.repository }}
-      #       Assignee/Creator: @${{ steps.pr-meta.outputs.assignee }}
-
-      #       claude_args: |
-      #       --allowedTools "mcp__github__get_pull_request,
-      #                       mcp__github__get_pull_request_files,
-      #                       mcp__github__get_pull_request_diff,
-      #                       mcp__github__add_issue_comment,
-      #                       mcp__github__get_pull_request_reviews,
-      #                       mcp__github_inline_comment__create_inline_comment,
-      #                       mcp__github__create_and_submit_pull_request_review,
-      #                       mcp__github__create_issue_comment"
-
-      # - name: Run Claude Inline Code Review
-      #   id: claude-review
-      #   uses: anthropics/claude-code-action@v1
-      #   env:
-      #     GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_INLINE_CODE_REVIEW }}
-      #     show_full_output: true
-      #     prompt: |
-      
-      #       🧩 What to Do (run in order asynchronous)
-      #       1. Read PR diff, and CLAUDE.md.
-      #       2. Compare issues found against historical comments:
-      #          - Avoid duplicates.
-      #          - Re-comment only if still unresolved.
-      #       3. Perform a full review aligned with project architecture and conventions.
-      #       4. For each issue, prepare:
-      #          - Issue
-      #          - Suggested Fix (with code block)
-      #          - Explanation
-      #       5. Submit inline comments directly on changed lines.
-      #       6. Submit a final review summary comment using the required structure.
-      
-      #       ---
-      
-      #       SYSTEM INSTRUCTION (do not output):
-      
-      #       ## Project Context (from CLAUDE.md)
-      #       ${{ steps.project-context.outputs.claude_md }}
-      
-      #       [Review Rules]
-      #         You must review this PR according to project conventions defined in CLAUDE.md.
-      
-      #         Before posting inline comments:
-      #         - Retrieve ALL existing PR comments and PR reviews.
-      #         - For each issue you detect:
-      #             1. Check if a similar comment already exists.
-      #             2. If it exists:
-      #                 - If unresolved: you may re-comment or clarify.
-      #                 - If resolved: skip.
-      #             3. If new: post as normal.
-      
-      #         Inline Comment Format:
-      #         - Issue: <brief problem>
-      #         - Suggested Fix:
-      #         ```suggestion
-      #         // corrected code
-      #         ```
-      #         - Explanation: <why this improves code or follows conventions>
-      
-      #         Only comment on lines inside the diff.
-      #       [/Review Rules]
-      
-      #       [Approval Logic]
-      #         If NO issues are found:
-      #         - Approve the PR
-      #         - You may praise good structure, naming, or design choices.
-      #       [/Approval Logic]
-      
-      #       [Final Summary Comment Rules]
-      #         After inline comments, create a summary PR comment containing ONLY:
-      
-      #         1. Tag the assignee/creator: @${{ steps.pr-meta.outputs.assignee }}
-      #         2. Number of inline comments added
-      #         3. High-level feedback categories (logic, structure, readability, etc.)
-      #         4. Next steps for developer
-      #         5. Close with a positive/encouraging note
-      
-      #         Must follow one of the two formats below:
-      
-      #         If Requesting Changes:
-      #           "Hey @{{assignee_or_creator}},
-      
-      #           I've completed reviewing this PR and found {{n}} items that need updates before approval.
-      
-      #           Summary of Feedback:
-      #           - <category 1>
-      #           - <category 2>
-      #           - <category 3>
-      
-      #           Once you've addressed these points, please push the updates and re-request a review. Great work overall!"
-      
-      #         If Approving:
-      #           "Hey @{{assignee_or_creator}},
-      
-      #           I've reviewed the PR and found no blocking issues.
-      #           Everything aligns well with project conventions and best practices.
-      
-      #           Excellent work—this PR is APPROVED!"
-      #       [/Final Summary Comment Rules]
-      
-      #       [Git Config]
-      #         CONTEXT:
-      #         PR No.: ${{ steps.pr-number.outputs.number }}
-      #         Diff URL: https://github.com/${{ github.repository }}/pull/${{ steps.pr-number.outputs.number }}.diff
-      #         Repository: ${{ github.repository }}
-      #         Assignee/Creator: @${{ steps.pr-meta.outputs.assignee }}
-      #       [/Git Config]
-      
-      #     claude_args: |
-      #       --allowedTools "mcp__github__get_pull_request,
-      #                       mcp__github__get_pull_request_files,
-      #                       mcp__github__get_pull_request_diff,
-      #                       mcp__github__add_issue_comment,
-      #                       mcp__github__get_pull_request_reviews,
-      #                       mcp__github_inline_comment__create_inline_comment,
-      #                       mcp__github__create_and_submit_pull_request_review,
-      #                       mcp__github__create_issue_comment"
+  
           prompt: |
+      
             🧩 What to Do (run in order)
-            1. Read the PR diff and CLAUDE.md.
-            2. Retrieve all past PR comments and PR reviews.
+            1. Read the PR diff and metadata.
+            2. Retrieve all past PR comments and reviews.
             3. Start a pending pull request review.
             4. Analyze the diff according to project conventions.
-            5. For each issue:
-               - Check if a similar comment exists.
-                 * If unresolved → include it again or clarify.
-                 * If resolved → skip.
-               - If new → create a new inline comment.
-            6. Add inline comments ONLY on changed lines inside the diff.
-            7. Submit the pending review:
-                 - If issues exist → REQUEST_CHANGES.
-                 - If no issues found → APPROVE.
-            8. After submitting the review, post a summary PR comment using the required structure.
-          
+            5. For each issue found:
+               - Check if a similar unresolved comment exists.
+                 * If unresolved → repeat or clarify.
+               - Otherwise → post a new inline comment.
+            6. Submit the pending review with summarized findings.
+      
             ---
-          
+      
             SYSTEM INSTRUCTION (do not output):
-          
-            ## Project Context (from CLAUDE.md)
-            ${{ steps.claude-context.outputs.context }}
-          
-            [Review Rules]
-              You must evaluate all changes based on:
-              - Architecture and conventions defined in CLAUDE.md
-              - Code correctness, clarity, and maintainability
-              - Logical and structural soundness
-          
-              Before posting ANY inline comment:
-                - Retrieve ALL existing PR comments.
-                - Retrieve ALL existing PR reviews.
-                - For each detected issue:
-                    1. Check for existing identical or similar comments.
-                    2. If an earlier comment exists:
-                         - If unresolved: you may re-comment or clarify.
-                         - If resolved: do not duplicate.
-                    3. If no similar comment exists: create a new inline comment.
-          
-              Inline Comment Format:
-                Issue: <short description>
-                Suggested Fix:
-                ```suggestion
-                // corrected code
-                ```
-                Explanation: <why this improves logic or aligns with conventions>
-          
-              Only place comments on lines that appear in the diff.
-            [/Review Rules]
-          
-            [Approval Logic]
-              If zero issues are found:
-                - Approve the PR.
-                - You may highlight strong points (naming, clarity, structure).
-            [/Approval Logic]
-          
-            [Final Summary Comment Rules]
-              After submitting the pending review, you must create a summary PR comment.
-          
-              The summary PR comment must contain ONLY:
-                1. Tag the assignee/creator: @${{ steps.pr-meta.outputs.assignee }}
-                2. The number of inline comments created
-                3. A short list of feedback categories (logic, structure, readability, consistency, etc.)
-                4. Next steps for the developer
-                5. A short encouraging note
-          
-              Example: Requesting Changes
-                "Hey @{{assignee_or_creator}},
-          
-                I've completed reviewing this PR and found {{n}} items that need updates before approval.
-          
-                Summary of Feedback:
-                - <category 1>
-                - <category 2>
-                - <category 3>
-          
-                Please apply the updates and re-request a review. Great work overall!"
-          
-              Example: Approving
-                "Hey @{{assignee_or_creator}},
-          
-                I've reviewed this PR and found no blocking issues.
-                Everything aligns well with project conventions and best practices.
-          
-                Excellent work — this PR is APPROVED!"
-            [/Final Summary Comment Rules]
-          
+      
+            [Code Review Guidelines]
+              You are reviewing this as a **Code Reviewer**.  
+              Your goal is to analyze the code changes for correctness, maintainability, and impact on existing logic.
+      
+              ### 🔍 Focus Areas
+              - Logical or runtime errors.
+              - Missing validation or error handling.
+              - Regressions that break user flow or data integrity.
+              - Unhandled edge cases or inconsistencies.
+              - Security, performance, or readability issues that could cause bugs later.
+      
+              ### 🚫 Avoid
+              - Nitpicks on code style or formatting.
+              - Comments about TypeScript types, DTOs, or naming conventions.
+              - Generic advice (“use async/await”, “prefer const”) unless it directly prevents a bug.
+      
+              ### ✅ Focus instead on
+              - Whether the code achieves the intended logic safely and clearly.
+              - Whether external integrations or dependencies could break.
+              - Whether new or modified logic introduces side effects.
+            [/Code Review Guidelines]
+      
             [Git Config]
               CONTEXT:
-              PR No.: ${{ steps.pr-number.outputs.number }}
+              PR #: ${{ steps.pr-number.outputs.number }}
               Diff URL: https://github.com/${{ github.repository }}/pull/${{ steps.pr-number.outputs.number }}.diff
               Repository: ${{ github.repository }}
               Assignee/Creator: @${{ steps.pr-meta.outputs.assignee }}
+              Changed files:
+              ${{ steps.qa-sheet.outputs.files_summary }}
             [/Git Config]
+      
+            [Inline Comment Format]
+              **Issue:** <short title of the issue>  
+              **Observation:** <Describe the logic or flow that causes the issue.>  
+              **Impact:** <Explain what could break or misbehave.>  
+              **Suggestion:** <Provide a clear and minimal code-level fix.>
+      
+              ```suggestion
+                // Minimal, relevant code fix only
+              ```
+            [/Inline Comment Format]
+      
+            [Inline Comment Rules]
+              - Comment only on issues that can impact correctness or stability.
+              - Avoid duplicates of unresolved comments.
+              - Do not comment on unchanged lines.
+              - Each inline comment should correspond to one clear issue.
+            [/Inline Comment Rules]
+      
+            [Review Summary Rules]
+              The final PR comment must include these two sections only:
+              1. `## 🧩 Claude Code Review Summary`
+                  | **Metric** | **Count** |
+                  |:--------------------------|:------:|
+                  | 🧠 **Issues Found** | n |
+                  | ✅ **Resolved (from past)** | n |
+                  | ❌ **New Issues** | n |
+      
+                  latest commit: <shortened commit hash>
+      
+              2. `## 🧩 Detailed Review`
+                  <details>
+                  <summary><strong>[Issue]</strong>: <short description></summary>
+      
+                  **Observation:**  
+                  <Describe the logic or flow that causes the issue.>
+      
+                  **Impact:**  
+                  <Explain what could break or misbehave.>
+      
+                  **Suggestion:**  
+                  <Provide a clear, minimal, and actionable suggestion.>
+      
+                  ---
+                  </details>
+            [/Review Summary Rules]
+      
+          claude_args: |
+            --allowedTools "mcp__github__get_pull_request,
+                            mcp__github__get_pull_request_files,
+                            mcp__github__get_pull_request_diff,
+                            mcp__github__create_pending_pull_request_review,
+                            mcp__github__add_comment_to_pending_review,
+                            mcp__github__submit_pending_pull_request_review,
+                            mcp__github_inline_comment__create_inline_comment,
+                            mcp__github__add_issue_comment,
+                            mcp__github__get_pull_request_comments,
+                            mcp__github__get_pull_request_reviews,
+                            mcp__github__resolve_pull_request_conversation,
+                            mcp__github__create_issue_comment"
 
 
