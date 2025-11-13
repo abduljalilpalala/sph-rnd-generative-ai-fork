@@ -60,24 +60,17 @@ jobs:
 
       - name: Fetch previous comment test cases
         id: previous-test-case
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           node .github/scripts/getPreviousCases.mjs > previous.md
-          echo "previous_context<<EOF" >> $GITHUB_OUTPUT
-          cat previous.md >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          PREV_B64=$(base64 -w 0 previous.md || echo "")
+          echo "previous_b64=$PREV_B64" >> $GITHUB_OUTPUT
 
       - name: Get Ignored Test Cases
         id: ignored-test-cases
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "🧩 Collecting ignored test cases..."
           node .github/scripts/getIgnoredCases.mjs > ignored.md
-          echo "ignored_context<<EOF" >> $GITHUB_OUTPUT
-          cat ignored.md >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          IGNORED_B64=$(base64 -w 0 ignored.md || echo "")
+          echo "ignored_b64=$IGNORED_B64" >> $GITHUB_OUTPUT
 
       - name: Detect Review Mode
         id: detect-mode
@@ -185,13 +178,13 @@ jobs:
             ${{ steps.changed_files.outputs.files }}
 
             ## Previous Test Cases
-            ${{ steps.previous-test-case.outputs.previous_context }}
+            ${{ steps.previous-test-case.outputs.previous_b64 }}
 
             ## 🧾 QA Test Cases
-            ${{ steps.qa-sheet.outputs.qa }}
+            ${{ steps.qa-sheet.outputs.qa_b64 }}
 
             ## 🧩 Ignored Test Cases
-            ${{ steps.ignored-test-cases.outputs.ignored_context }}
+            ${{ steps.ignored-test-cases.outputs.ignored_b64 }}
 
             [Behavioral Check Guidelines]
               You are reviewing this as a **Behavioral QA Reviewer and Engineering Manager**.  
