@@ -130,6 +130,27 @@ jobs:
           echo "Comment Body: '${{ github.event.comment.body }}'"
           echo "Detected Mode: ${{ steps.detect-mode.outputs.mode }}"
           echo "Branch Ref: ${{ github.ref }}"
+      
+      - name: Get changed files
+        id: changed_files
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          git diff --name-only origin/${{ github.event.pull_request.base.ref }} > changed.txt
+          echo "files<<EOF" >> $GITHUB_OUTPUT
+          cat changed.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Get limited diff
+        id: limited_diff
+        run: |
+          git diff --unified=5 origin/${{ github.event.pull_request.base.ref }} > diff.patch
+
+          # cut diff to max 50k characters
+          head -c 50000 diff.patch > shortdiff.patch
+
+          echo "diff<<EOF" >> $GITHUB_OUTPUT
+          cat shortdiff.patch >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Run Claude Test Review
         id: claude-review
@@ -151,6 +172,9 @@ jobs:
             ---
 
             SYSTEM INSTRUCTION (do not output):
+
+            ## Changed Files
+            ${{ steps.changed_files.outputs.files }}
 
             ## Previous Test Cases
             ${{ steps.previous-test-case.outputs.previous_context }}
@@ -301,18 +325,8 @@ jobs:
             [/Combined Test Cases Rules]
 
           claude_args: |
-            --allowedTools "mcp__github__get_pull_request,
-                            mcp__github__get_pull_request_files,
-                            mcp__github__get_pull_request_diff,
-                            mcp__github__create_pending_pull_request_review,
-                            mcp__github__add_comment_to_pending_review,
-                            mcp__github__submit_pending_pull_request_review,
-                            mcp__github_inline_comment__create_inline_comment,
-                            mcp__github__add_issue_comment,
-                            mcp__github__get_pull_request_comments,
-                            mcp__github__get_pull_request_reviews,
-                            mcp__github__resolve_pull_request_conversation,
-                            mcp__github__create_issue_comment"
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,
+                mcp__github__add_issue_comment"
 
       - name: Submit Claude Review Result
         env:
