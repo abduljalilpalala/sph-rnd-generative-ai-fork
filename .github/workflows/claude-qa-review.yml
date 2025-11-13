@@ -143,11 +143,15 @@ jobs:
       - name: Get limited diff
         id: limited_diff
         run: |
-          git diff --unified=5 origin/${{ github.event.pull_request.base.ref }} > diff.patch
-
-          # cut diff to max 50k characters
+          # Fetch the base branch explicitly
+          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
+      
+          # Generate diff only for this PR
+          git diff --unified=5 FETCH_HEAD...HEAD > diff.patch
+      
+          # Cap at 50k chars
           head -c 50000 diff.patch > shortdiff.patch
-
+      
           echo "diff<<EOF" >> $GITHUB_OUTPUT
           cat shortdiff.patch >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
