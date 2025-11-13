@@ -134,8 +134,12 @@ jobs:
       - name: Get changed files
         id: changed_files
         run: |
-          git fetch origin ${{ github.event.pull_request.base.ref }}
-          git diff --name-only origin/${{ github.event.pull_request.base.ref }} > changed.txt
+          # Fetch base branch commit only
+          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
+      
+          # Show only changed filenames between base and PR head
+          git diff --name-only FETCH_HEAD HEAD > changed.txt
+      
           echo "files<<EOF" >> $GITHUB_OUTPUT
           cat changed.txt >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
