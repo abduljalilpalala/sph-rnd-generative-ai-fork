@@ -29,10 +29,10 @@ jobs:
               content: 'eyes'
             })
       
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
         with:
-          node-version: 20
+          node-version: '20'
 
       - name: Clean workspace before installing
         run: |
