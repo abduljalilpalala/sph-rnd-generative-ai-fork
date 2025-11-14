@@ -188,7 +188,7 @@ jobs:
               4. Run behavioral scan following `.github/claude-rules.md`.
               5. Simplify behavioral results for managers.
               6. Combine all test cases, remove duplicates.
-              7. Generate summary + inline comments (fail cases only).
+              7. Generate summary.
 
               ## Git Config
               PR #: ${{ steps.pr-number.outputs.number }}
@@ -198,7 +198,7 @@ jobs:
               Limited Diff:
               ${{ steps.limited_diff.outputs.diff }}
           claude_args: |
-            --allowedTools "base64_decode, mcp__github_inline_comment__create_inline_comment, mcp__github__add_issue_comment"
+            --allowedTools "base64_decode, mcp__github__add_issue_comment"
 
       - name: Submit Claude Review Result
         env:
