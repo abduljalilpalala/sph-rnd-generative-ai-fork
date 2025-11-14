@@ -29,8 +29,17 @@ jobs:
               content: 'eyes'
             })
       
-      - name: Install Octokit
-        run: npm install @octokit/rest --no-save
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Clean workspace before installing
+        run: |
+          rm -rf node_modules package-lock.json
+
+      - name: Install dependencies
+        run: npm install
 
       - name: Set PR number
         id: pr-number
