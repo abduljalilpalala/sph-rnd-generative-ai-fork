@@ -154,6 +154,12 @@ jobs:
             - DO NOT wrap in code blocks
             - DO NOT add explanations outside JSON
 
+      - name: Debug Claude Raw Output
+        run: |
+          echo "RAW COMPLETION ==="
+          echo "${{ steps.claude-review.outputs.completion }}"
+          echo "=================="
+
       - name: Save Claude Output
         run: echo '${{ steps.claude-review.outputs.completion }}' > claude_output.json
 
