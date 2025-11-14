@@ -28,6 +28,9 @@ jobs:
               comment_id: context.payload.comment.id,
               content: 'eyes'
             })
+      
+      - name: Install Octokit
+        run: npm install @octokit/rest --no-save
 
       - name: Set PR number
         id: pr-number
