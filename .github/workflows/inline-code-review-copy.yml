@@ -182,6 +182,24 @@ jobs:
               Great work overall! Once these points are addressed, the PR should be fully ready for approval.
               ```
             [/Review Summary Rules]
+
+            [Final Review Decision Logic]
+              After generating all inline comments and preparing the review summary:
+            
+              - Always generate the review summary using the exact format specified in [Review Summary Rules].
+              - This summary must always be included in the "body" field when submitting the pending PR review.
+            
+              - If the total number of inline comments is **0**:
+                    Submit the pending review with:
+                    state = "APPROVE"
+                    body = <Review Summary Rules formatted summary>
+            
+              - If the total number of inline comments is **1 or more**:
+                    Submit the pending review with:
+                    state = "REQUEST_CHANGES"
+                    body = <Review Summary Rules formatted summary>
+            
+            [/Final Review Decision Logic]
       
             [Git Config]
               CONTEXT:
