@@ -29,37 +29,17 @@ jobs:
               content: 'eyes'
             })
       
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          node-version: '20'
-
-      - name: Clean workspace before installing
-        run: |
-          rm -rf node_modules package-lock.json
+          node-version: 20
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Set PR number
         id: pr-number
         run: echo "number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
-
-      - name: Add Claude Code Review Label
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const issue_number = Number(process.env.PR_NUMBER);
-
-            // Make sure we are using the octokit client from github-script
-            await github.rest.issues.addLabels({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number,
-              labels: ["Code Review: Claude Code"]
-            });
-        env:
-          PR_NUMBER: ${{ steps.pr-number.outputs.number }}
 
       - name: Checkout PR branch
         uses: actions/checkout@v4
@@ -221,6 +201,6 @@ jobs:
 
       - name: Submit Claude Review Result
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           node .github/scripts/submitClaudeCodeReview.mjs
