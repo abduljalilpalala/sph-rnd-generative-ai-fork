@@ -113,7 +113,7 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_QA_REVIEW }}
-          track_progress: false
+          track_progress: true
           claude_args: |
             --allowedTools ""
           prompt: |
