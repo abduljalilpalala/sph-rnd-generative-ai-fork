@@ -1,9 +1,11 @@
-import { octokit, repoInfo } from './_config.mjs'
+import { repoInfo } from './_config.mjs'
+import { Octokit } from '@octokit/rest'
 import { exitWith } from './_helpers.mjs'
-
 ;(async function main() {
   try {
     const { owner, repo, prNumber } = repoInfo
+
+    const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN })
 
     console.log(
       `🔍 Checking latest Claude Code Review Summary for PR #${prNumber}...`
