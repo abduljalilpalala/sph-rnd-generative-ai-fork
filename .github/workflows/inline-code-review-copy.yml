@@ -90,27 +90,27 @@ jobs:
                  * If resolved → skip re-commenting.
                - Otherwise → post a new inline comment with clear, actionable feedback and a severity status.
             6. Submit the review and post a summary comment following the Review Summary Rules.
-      
+
             ---
-      
+
             SYSTEM INSTRUCTION (do not output):
-      
+
             [Code Review Guidelines]
               You are reviewing this pull request as a **Code Reviewer**.  
               Use the **CLAUDE.md** file as the primary reference for the project’s architecture, coding conventions, and best practices.  
               Ensure the PR follows these standards, maintains logic integrity, and upholds readability and maintainability.
               Post inline comments only for relevant issues, using severity (Critical / Moderate / Minor) where appropriate.
-            
+
               ## Project Context (from CLAUDE.md)
               ${{ steps.project-context.outputs.claude_md }}
             [/Code Review Guidelines]
-      
+
             [Verdict Legend]
               - ✅ PASS / APPROVED — code follows conventions, no blocking issues
               - ❌ FAIL / NEEDS CHANGE — issue detected that must be fixed
               - ⚠️ WARNING / MINOR CONCERN — non-blocking issue or recommendation
             [/Verdict Legend]
-      
+
             [Inline Comment Format]
               **Issue:** <short, specific title>  
               **Severity:** 🟥 Critical / 🟧 Moderate / 🟨 Minor    
@@ -120,46 +120,46 @@ jobs:
               ```
               **Explanation:** <Explain how this fix improves correctness, clarity, or maintainability.>
             [/Inline Comment Format]
-      
+
             [Inline Comment Rules]
               - Add inline comments only for actionable and meaningful issues.
               - Avoid duplicates of unresolved comments.
               - Do not comment on unchanged lines.
               - Prefer inline code suggestions whenever possible for easier adoption.
             [/Inline Comment Rules]
-      
+
             [Review Summary Rules]
               After posting inline comments, submit a single summary comment.
-      
+
               ## 📄 Claude Code Review Summary
               - Tag the PR assignee or creator.
               - Include a metrics table summarizing both verdict and severity:
-      
+
                 | **Metric** | **Severity** | **Count** |
                 |:--------------------------|:--------:|:------:|
                 | ✅ Approved / Passed      | -        | n |
                 | ❌ Failed / Needs Change  | Critical | n |
                 | ❌ Failed / Needs Change  | Moderate | n |
                 | ⚠️ Minor Concern / Warning| Minor    | n |
-      
+
               ## 💡 Feedback Highlights
               - [🟥 Critical] Short description of critical issue
               - [🟧 Moderate] Short description of moderate issue
               - [🟨 Minor] Short description of minor issue
-      
+
               ## 🏁 Next Steps
               - Address critical issues immediately.
               - Consider moderate improvements.
               - Optional: implement minor suggestions.
-      
+
               ## 🌟 Appreciation
               Great work overall! Once these points are addressed, the PR should be fully ready for approval.
-      
+
               ### 🧩 Example Summary
-      
+
               ```
               Hey @${{ steps.pr-meta.outputs.assignee }},
-      
+
               ## 📄 Claude Code Review Summary
               | **Metric** | **Severity** | **Count** |
               |:--------------------------|:--------:|:------:|
@@ -167,40 +167,22 @@ jobs:
               | ❌ Failed / Needs Change  | Critical | 2 |
               | ❌ Failed / Needs Change  | Moderate | 1 |
               | ⚠️ Minor Concern / Warning| Minor    | 1 |
-      
+
               ## 💡 Feedback Highlights
               - [🟥 Critical] Fix runtime error in controller logic  
               - [🟧 Moderate] Align validation with schema definitions  
               - [🟨 Minor] Simplify redundant service functions  
-      
+
               ## 🏁 Next Steps
               - Address critical issues immediately.
               - Consider moderate improvements.
               - Optional: implement minor suggestions.
-      
+
               ## 🌟 Appreciation
               Great work overall! Once these points are addressed, the PR should be fully ready for approval.
               ```
             [/Review Summary Rules]
 
-            [Final Review Decision Logic]
-              After generating all inline comments and preparing the review summary:
-            
-              - Always generate the review summary using the exact format specified in [Review Summary Rules].
-              - This summary must always be included in the "body" field when submitting the pending PR review.
-            
-              - If the total number of inline comments is **0**:
-                    Submit the pending review with:
-                    state = "APPROVE"
-                    body = <Review Summary Rules formatted summary>
-            
-              - If the total number of inline comments is **1 or more**:
-                    Submit the pending review with:
-                    state = "REQUEST_CHANGES"
-                    body = <Review Summary Rules formatted summary>
-            
-            [/Final Review Decision Logic]
-      
             [Git Config]
               CONTEXT:
               PR No.: ${{ steps.pr-number.outputs.number }}
@@ -208,7 +190,7 @@ jobs:
               Repository: ${{ github.repository }}
               Assignee/Creator: @${{ steps.pr-meta.outputs.assignee }}
             [/Git Config]
-      
+
           claude_args: |
             --allowedTools "mcp__github__get_pull_request,
                             mcp__github__get_pull_request_files,
@@ -225,6 +207,8 @@ jobs:
                             Bash(gh pr view:*),
                             Bash(gh pr review:*)"
 
-
-
-
+      - name: Submit Claude Review Result
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node .github/scripts/submitClaudeCodeReview.mjs
