@@ -34,12 +34,10 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Clean workspace before installing
+      - name: Clean and install deps
         run: |
           rm -rf node_modules package-lock.json
-
-      - name: Install dependencies
-        run: npm install
+          npm install
 
       - name: Set PR number
         id: pr-number
@@ -202,9 +200,6 @@ jobs:
                             mcp__github__create_issue_comment,
                             Bash(gh pr view:*),
                             Bash(gh pr review:*)"
-                            
-      - name: 🔍 Verify installed packages
-        run: npm list @octokit/rest
 
       - name: Submit Claude Review Result
         env:
