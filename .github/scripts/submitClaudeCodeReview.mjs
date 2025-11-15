@@ -7,6 +7,7 @@ import { octokit, repoInfo } from "./_config.mjs"
     // const { owner, repo, prNumber } = repoInfo
 
     console.log('Hello World');
+    console.log('repoInfo: ', repoInfo)
     console.log('CWD:', process.cwd())
     console.log('Script path:', import.meta.url)
     console.log('NODE VERSION:', process.version)
