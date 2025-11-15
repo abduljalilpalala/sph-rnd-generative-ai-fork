@@ -65,8 +65,8 @@ jobs:
           git fetch origin ${{ github.event.pull_request.base.ref }}
 
       # 1. Check workspace structure
-      - name: 📂 Show working directory
-        run: pwd
+      # - name: 📂 Show working directory
+      #   run: pwd
 
       # - name: 📄 List repo files
       #   run: ls -la
