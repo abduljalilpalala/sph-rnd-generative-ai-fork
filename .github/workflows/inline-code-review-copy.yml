@@ -202,6 +202,9 @@ jobs:
                             mcp__github__create_issue_comment,
                             Bash(gh pr view:*),
                             Bash(gh pr review:*)"
+                            
+      - name: 🔍 Verify installed packages
+        run: npm list @octokit/rest
 
       - name: Submit Claude Review Result
         env:
