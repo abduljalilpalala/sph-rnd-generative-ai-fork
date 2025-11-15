@@ -1,5 +1,5 @@
-import { octokit, repoInfo } from './_config.mjs'
-import { exitWith } from './_helpers.mjs'
+import { octokit, repoInfo } from "./_config.mjs"
+import { exitWith } from "./_helpers.mjs"
 
 (async function main() {
   try {
@@ -107,6 +107,6 @@ import { exitWith } from './_helpers.mjs'
 
     // console.log(`✅ Code review automation completed.`)
   } catch (err) {
-    exitWith('❌ Error in submitClaudeReview.mjs:', err)
+    exitWith('❌ Error in submitClaudeCodeReview.mjs:', err)
   }
 })()
