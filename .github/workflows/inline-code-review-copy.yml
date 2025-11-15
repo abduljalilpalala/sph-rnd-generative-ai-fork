@@ -79,8 +79,8 @@ jobs:
       #   run: cat package-lock.json || echo "package-lock.json NOT FOUND"
 
       # 3. Install dependencies (very verbose)
-      # - name: 🧪 Install dependencies (verbose)
-      #   run: npm install --verbose
+      - name: 🧪 Install dependencies (verbose)
+        run: npm install --verbose
 
       # 4. Check node_modules
       # - name: 📁 Check node_modules exists
