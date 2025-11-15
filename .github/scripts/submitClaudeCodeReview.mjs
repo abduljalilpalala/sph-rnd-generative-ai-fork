@@ -1,4 +1,4 @@
-import { octokit, repoInfo } from "./_config.mjs"
+// import { octokit, repoInfo } from "./_config.mjs"
 import { exitWith } from "./_helpers.mjs"
 
 (async function main() {
