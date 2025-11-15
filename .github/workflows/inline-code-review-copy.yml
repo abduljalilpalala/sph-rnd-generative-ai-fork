@@ -37,9 +37,7 @@ jobs:
       - name: Clean and install deps
         run: |
           rm -rf node_modules package-lock.json
-          
-      - name: 🧪 Install dependencies (verbose)
-        run: npm install --verbose
+          npm install
 
       - name: Set PR number
         id: pr-number
@@ -65,6 +63,40 @@ jobs:
       - name: Fetch base branch
         run: |
           git fetch origin ${{ github.event.pull_request.base.ref }}
+
+      # 1. Check workspace structure
+      - name: 📂 Show working directory
+        run: pwd
+
+      - name: 📄 List repo files
+        run: ls -la
+
+      # 2. Show package manifests
+      - name: 📦 Show package.json
+        run: cat package.json || echo "package.json NOT FOUND"
+
+      - name: 🔐 Show package-lock.json (optional)
+        run: cat package-lock.json || echo "package-lock.json NOT FOUND"
+
+      # 3. Install dependencies (very verbose)
+      - name: 🧪 Install dependencies (verbose)
+        run: npm install --verbose
+
+      # 4. Check node_modules
+      - name: 📁 Check node_modules exists
+        run: ls -la node_modules || echo "node_modules NOT FOUND"
+
+      # 5. List installed deps
+      - name: 🔍 List ALL installed dependencies
+        run: npm list --all || echo "npm list failed"
+
+      # 6. Check for Octokit specifically
+      - name: 🕵️ Check if @octokit/rest is installed
+        run: npm list @octokit/rest || echo "@octokit/rest NOT FOUND"
+
+      # 7. Show octokit folder if it exists
+      - name: 📁 Show node_modules/@octokit
+        run: ls -la node_modules/@octokit || echo "@octokit directory NOT FOUND"
 
       # - name: Run Claude Code Review
       #   id: claude-review
