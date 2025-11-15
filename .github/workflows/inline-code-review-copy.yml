@@ -37,7 +37,9 @@ jobs:
       - name: Clean and install deps
         run: |
           rm -rf node_modules package-lock.json
-          npm install
+          
+      - name: 🧪 Install dependencies (verbose)
+        run: npm install --verbose
 
       - name: Set PR number
         id: pr-number
