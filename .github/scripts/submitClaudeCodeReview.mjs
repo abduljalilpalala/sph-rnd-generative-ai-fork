@@ -1,13 +1,15 @@
 // import { octokit, repoInfo } from "./_config.mjs"
-import { exitWith } from "./_helpers.mjs"
+// import { exitWith } from "./_helpers.mjs"
 
 (async function main() {
   try {
-    const { owner, repo, prNumber } = repoInfo
+    // const { owner, repo, prNumber } = repoInfo
 
-    console.log(
-      `🔍 Checking latest Claude Code Review Summary for PR #${prNumber}...`
-    )
+    console.log('Hello World');
+
+    // console.log(
+    //   `🔍 Checking latest Claude Code Review Summary for PR #${prNumber}...`
+    // )
 
     // 1️⃣ Fetch all comments
     // const { data: comments } = await octokit.rest.issues.listComments({
