@@ -34,11 +34,6 @@ jobs:
         with:
           node-version: "20"
 
-      # - name: Clean and install deps
-      #   run: |
-      #     rm -rf node_modules package-lock.json
-      #     npm install
-
       - name: Set PR number
         id: pr-number
         run: echo "number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
@@ -64,6 +59,11 @@ jobs:
         run: |
           git fetch origin ${{ github.event.pull_request.base.ref }}
 
+      - name: Clean and install deps
+        run: |
+          rm -rf node_modules package-lock.json
+          npm install
+
       # 1. Check workspace structure
       # - name: 📂 Show working directory
       #   run: pwd
@@ -79,8 +79,8 @@ jobs:
       #   run: cat package-lock.json || echo "package-lock.json NOT FOUND"
 
       # 3. Install dependencies (very verbose)
-      - name: 🧪 Install dependencies (verbose)
-        run: npm install --verbose
+      # - name: 🧪 Install dependencies (verbose)
+      #   run: npm install
 
       # 4. Check node_modules
       # - name: 📁 Check node_modules exists
