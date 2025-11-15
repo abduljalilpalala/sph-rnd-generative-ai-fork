@@ -6,6 +6,8 @@
     // const { owner, repo, prNumber } = repoInfo
 
     console.log('Hello World');
+    console.log('CWD:', process.cwd())
+    console.log('Script path:', import.meta.url)
 
     // console.log(
     //   `🔍 Checking latest Claude Code Review Summary for PR #${prNumber}...`
