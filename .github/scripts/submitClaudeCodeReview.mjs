@@ -8,6 +8,8 @@
     console.log('Hello World');
     console.log('CWD:', process.cwd())
     console.log('Script path:', import.meta.url)
+    console.log('NODE VERSION:', process.version)
+    console.log('NODE EXECUTABLE:', process.execPath)
 
     // console.log(
     //   `🔍 Checking latest Claude Code Review Summary for PR #${prNumber}...`
