@@ -34,10 +34,10 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Clean and install deps
-        run: |
-          rm -rf node_modules package-lock.json
-          npm install
+      # - name: Clean and install deps
+      #   run: |
+      #     rm -rf node_modules package-lock.json
+      #     npm install
 
       - name: Set PR number
         id: pr-number
