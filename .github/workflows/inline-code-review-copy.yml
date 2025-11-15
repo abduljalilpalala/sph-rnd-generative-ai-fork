@@ -64,6 +64,40 @@ jobs:
         run: |
           git fetch origin ${{ github.event.pull_request.base.ref }}
 
+      # 1. Check workspace structure
+      - name: 📂 Show working directory
+        run: pwd
+
+      - name: 📄 List repo files
+        run: ls -la
+
+      # 2. Show package manifests
+      - name: 📦 Show package.json
+        run: cat package.json || echo "package.json NOT FOUND"
+
+      - name: 🔐 Show package-lock.json (optional)
+        run: cat package-lock.json || echo "package-lock.json NOT FOUND"
+
+      # 3. Install dependencies (very verbose)
+      - name: 🧪 Install dependencies (verbose)
+        run: npm install --verbose
+
+      # 4. Check node_modules
+      - name: 📁 Check node_modules exists
+        run: ls -la node_modules || echo "node_modules NOT FOUND"
+
+      # 5. List installed deps
+      - name: 🔍 List ALL installed dependencies
+        run: npm list --all || echo "npm list failed"
+
+      # 6. Check for Octokit specifically
+      - name: 🕵️ Check if @octokit/rest is installed
+        run: npm list @octokit/rest || echo "@octokit/rest NOT FOUND"
+
+      # 7. Show octokit folder if it exists
+      - name: 📁 Show node_modules/@octokit
+        run: ls -la node_modules/@octokit || echo "@octokit directory NOT FOUND"
+
       # - name: Run Claude Code Review
       #   id: claude-review
       #   uses: anthropics/claude-code-action@v1
@@ -90,8 +124,8 @@ jobs:
       #       SYSTEM INSTRUCTION (do not output):
 
       #       [Code Review Guidelines]
-      #         You are reviewing this pull request as a **Code Reviewer**.  
-      #         Use the **CLAUDE.md** file as the primary reference for the project’s architecture, coding conventions, and best practices.  
+      #         You are reviewing this pull request as a **Code Reviewer**.
+      #         Use the **CLAUDE.md** file as the primary reference for the project’s architecture, coding conventions, and best practices.
       #         Ensure the PR follows these standards, maintains logic integrity, and upholds readability and maintainability.
       #         Post inline comments only for relevant issues, using severity (Critical / Moderate / Minor) where appropriate.
 
@@ -106,9 +140,9 @@ jobs:
       #       [/Verdict Legend]
 
       #       [Inline Comment Format]
-      #         **Issue:** <short, specific title>  
-      #         **Severity:** 🟥 Critical / 🟧 Moderate / 🟨 Minor    
-      #         **Suggested Fix:**  
+      #         **Issue:** <short, specific title>
+      #         **Severity:** 🟥 Critical / 🟧 Moderate / 🟨 Minor
+      #         **Suggested Fix:**
       #         ```suggestion
       #           // Minimal, relevant code fix only
       #         ```
@@ -163,9 +197,9 @@ jobs:
       #         | ⚠️ Minor Concern / Warning| Minor    | 1 |
 
       #         ## 💡 Feedback Highlights
-      #         - [🟥 Critical] Fix runtime error in controller logic  
-      #         - [🟧 Moderate] Align validation with schema definitions  
-      #         - [🟨 Minor] Simplify redundant service functions  
+      #         - [🟥 Critical] Fix runtime error in controller logic
+      #         - [🟧 Moderate] Align validation with schema definitions
+      #         - [🟨 Minor] Simplify redundant service functions
 
       #         ## 🏁 Next Steps
       #         - Address critical issues immediately.
