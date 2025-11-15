@@ -28,11 +28,11 @@ jobs:
               comment_id: context.payload.comment.id,
               content: 'eyes'
             })
-      
+
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Clean workspace before installing
         run: |
@@ -203,8 +203,8 @@ jobs:
                             Bash(gh pr view:*),
                             Bash(gh pr review:*)"
 
-      # - name: Submit Claude Review Result
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   run: |
-      #     node .github/scripts/submitClaudeCodeReview.mjs
+      - name: Submit Claude Review Result
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node .github/scripts/submitClaudeCodeReview.mjs
