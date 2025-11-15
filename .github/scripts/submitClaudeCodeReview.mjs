@@ -16,7 +16,7 @@ import { exitWith } from "./_helpers.mjs"
       `🔍 Checking latest Claude Code Review Summary for PR #${prNumber}...`
     )
 
-    1️⃣ Fetch all comments
+    // 1️⃣ Fetch all comments
     const { data: comments } = await octokit.rest.issues.listComments({
       owner,
       repo,
