@@ -1,25 +1,28 @@
 import { octokit, repoInfo } from './_config.mjs'
 
-const gql = String.raw
-
-;(async function main() {
+;(async function debugThreads() {
   const { owner, repo, prNumber } = repoInfo
 
-  const query = gql`
-    query ($owner: String!, $repo: String!, $pr: Int!) {
+  console.log(`🔍 Fetching review threads for PR #${prNumber}...`)
+
+  const query = `
+    query($owner: String!, $repo: String!, $pr: Int!) {
       repository(owner: $owner, name: $repo) {
         pullRequest(number: $pr) {
           reviewThreads(first: 100) {
             nodes {
               id
               isResolved
-              comments(first: 100) {
+              comments(first: 50) {
                 nodes {
                   id
                   body
                   path
                   originalLine
-                  diffHunk
+                  author {
+                    login
+                  }
+                  createdAt
                 }
               }
             }
@@ -36,28 +39,34 @@ const gql = String.raw
       pr: parseInt(prNumber),
     })
 
-    const threads = data?.repository?.pullRequest?.reviewThreads?.nodes || []
+    const threads = data.repository.pullRequest.reviewThreads.nodes
 
-    console.log(`Found ${threads.length} review threads\n`)
+    console.log(`\n🧵 Found ${threads.length} review threads\n`)
 
-    const formatted = threads.map((t) => ({
-      threadId: t.id,
-      isResolved: t.isResolved,
-      comments: t.comments.nodes.map((c) => ({
-        id: c.id,
-        body: c.body,
-        path: c.path,
-        originalLine: c.originalLine,
-        diffHunk: c.diffHunk,
-      })),
-    }))
+    threads.forEach((thread, index) => {
+      console.log(`──────────────────────────────────────────────`)
+      console.log(`THREAD #${index + 1}`)
+      console.log(`Thread ID: ${thread.id}`)
+      console.log(`Resolved:  ${thread.isResolved ? '✅ Yes' : '❌ No'}`)
+      console.log(`Comments:`)
 
-    console.log('Review Comment Threads:')
-    console.log(JSON.stringify(formatted, null, 2))
+      thread.comments.nodes.forEach((c) => {
+        console.log(`
+  ➤ Comment ID: ${c.id}
+     Author:     ${c.author?.login}
+     File:       ${c.path}
+     Line:       ${c.originalLine}
+     Created:    ${c.createdAt}
+     Body:
+     ${c.body.replace(/\n/g, '\n       ')}
+        `)
+      })
+    })
 
-    return formatted
+    console.log(`──────────────────────────────────────────────`)
+    console.log(`\n✨ Done printing all review threads.\n`)
   } catch (err) {
-    console.error('Error fetching review comments:', err)
+    console.error('❌ Error fetching review threads:', err)
     process.exit(1)
   }
 })()
