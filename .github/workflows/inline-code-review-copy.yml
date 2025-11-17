@@ -64,148 +64,148 @@ jobs:
         run: |
           git fetch origin ${{ github.event.pull_request.base.ref }}
 
-      # - name: Run Claude Code Review
-      #   id: claude-review
-      #   uses: anthropics/claude-code-action@v1
-      #   env:
-      #     GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_INLINE_CODE_REVIEW }}
-      #     track_progress: true
-      #     prompt: |
-      #       🧩 What to Do (run in order)
-      #       1. Read the PR diff and CLAUDE.md.
-      #       2. Retrieve all past PR comments and PR reviews.
-      #       3. Start a pending pull request review.
-      #       4. Analyze the diff according to project conventions.
-      #       5. For each issue found:
-      #          - Check if a similar unresolved comment already exists.
-      #            * If unresolved → re-comment or clarify.
-      #            * If resolved → skip re-commenting.
-      #          - Otherwise → post a new inline comment with clear, actionable feedback and a severity status.
-      #       6. Submit the review and post a summary comment following the Review Summary Rules.
+      - name: Run Claude Code Review
+        id: claude-review
+        uses: anthropics/claude-code-action@v1
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_INLINE_CODE_REVIEW }}
+          track_progress: true
+          prompt: |
+            🧩 What to Do (run in order)
+            1. Read the PR diff and CLAUDE.md.
+            2. Retrieve all past PR comments and PR reviews.
+            3. Start a pending pull request review.
+            4. Analyze the diff according to project conventions.
+            5. For each issue found:
+               - Check if a similar unresolved comment already exists.
+                 * If unresolved → re-comment or clarify.
+                 * If resolved → skip re-commenting.
+               - Otherwise → post a new inline comment with clear, actionable feedback and a severity status.
+            6. Submit the review and post a summary comment following the Review Summary Rules.
 
-      #       ---
+            ---
 
-      #       SYSTEM INSTRUCTION (do not output):
+            SYSTEM INSTRUCTION (do not output):
 
-      #       [Code Review Guidelines]
-      #         You are reviewing this pull request as a **Code Reviewer**.
-      #         Use the **CLAUDE.md** file as the primary reference for the project’s architecture, coding conventions, and best practices.
-      #         Ensure the PR follows these standards, maintains logic integrity, and upholds readability and maintainability.
-      #         Post inline comments only for relevant issues, using severity (Critical / Moderate / Minor) where appropriate.
+            [Code Review Guidelines]
+              You are reviewing this pull request as a **Code Reviewer**.
+              Use the **CLAUDE.md** file as the primary reference for the project’s architecture, coding conventions, and best practices.
+              Ensure the PR follows these standards, maintains logic integrity, and upholds readability and maintainability.
+              Post inline comments only for relevant issues, using severity (Critical / Moderate / Minor) where appropriate.
 
-      #         ## Project Context (from CLAUDE.md)
-      #         ${{ steps.project-context.outputs.claude_md }}
-      #       [/Code Review Guidelines]
+              ## Project Context (from CLAUDE.md)
+              ${{ steps.project-context.outputs.claude_md }}
+            [/Code Review Guidelines]
 
-      #       [Verdict Legend]
-      #         - ✅ PASS / APPROVED — code follows conventions, no blocking issues
-      #         - ❌ FAIL / NEEDS CHANGE — issue detected that must be fixed
-      #         - ⚠️ WARNING / MINOR CONCERN — non-blocking issue or recommendation
-      #       [/Verdict Legend]
+            [Verdict Legend]
+              - ✅ PASS / APPROVED — code follows conventions, no blocking issues
+              - ❌ FAIL / NEEDS CHANGE — issue detected that must be fixed
+              - ⚠️ WARNING / MINOR CONCERN — non-blocking issue or recommendation
+            [/Verdict Legend]
 
-      #       [Inline Comment Format]
-      #         **Issue:** <short, specific title>
-      #         **Severity:** 🟥 Critical / 🟧 Moderate / 🟨 Minor
-      #         **Suggested Fix:**
-      #         ```suggestion
-      #           // Minimal, relevant code fix only
-      #         ```
-      #         **Explanation:** <Explain how this fix improves correctness, clarity, or maintainability.>
-      #       [/Inline Comment Format]
+            [Inline Comment Format]
+              **Issue:** <short, specific title>
+              **Severity:** 🟥 Critical / 🟧 Moderate / 🟨 Minor
+              **Suggested Fix:**
+              ```suggestion
+                // Minimal, relevant code fix only
+              ```
+              **Explanation:** <Explain how this fix improves correctness, clarity, or maintainability.>
+            [/Inline Comment Format]
 
-      #       [Inline Comment Rules]
-      #         - Add inline comments only for actionable and meaningful issues.
-      #         - Avoid duplicates of unresolved comments.
-      #         - Do not comment on unchanged lines.
-      #         - Prefer inline code suggestions whenever possible for easier adoption.
-      #       [/Inline Comment Rules]
+            [Inline Comment Rules]
+              - Add inline comments only for actionable and meaningful issues.
+              - Avoid duplicates of unresolved comments.
+              - Do not comment on unchanged lines.
+              - Prefer inline code suggestions whenever possible for easier adoption.
+            [/Inline Comment Rules]
 
-      #       [Review Summary Rules]
-      #         After posting inline comments, submit a single summary comment.
+            [Review Summary Rules]
+              After posting inline comments, submit a single summary comment.
 
-      #         ## 📄 Claude Code Review Summary
-      #         - Tag the PR assignee or creator.
-      #         - Include a metrics table summarizing both verdict and severity:
+              ## 📄 Claude Code Review Summary
+              - Tag the PR assignee or creator.
+              - Include a metrics table summarizing both verdict and severity:
 
-      #           | **Metric** | **Severity** | **Count** |
-      #           |:--------------------------|:--------:|:------:|
-      #           | ✅ Approved / Passed      | -        | n |
-      #           | ❌ Failed / Needs Change  | Critical | n |
-      #           | ❌ Failed / Needs Change  | Moderate | n |
-      #           | ⚠️ Minor Concern / Warning| Minor    | n |
+                | **Metric** | **Severity** | **Count** |
+                |:--------------------------|:--------:|:------:|
+                | ✅ Approved / Passed      | -        | n |
+                | ❌ Failed / Needs Change  | Critical | n |
+                | ❌ Failed / Needs Change  | Moderate | n |
+                | ⚠️ Minor Concern / Warning| Minor    | n |
 
-      #         ## 💡 Feedback Highlights
-      #         - [🟥 Critical] Short description of critical issue
-      #         - [🟧 Moderate] Short description of moderate issue
-      #         - [🟨 Minor] Short description of minor issue
+              ## 💡 Feedback Highlights
+              - [🟥 Critical] Short description of critical issue
+              - [🟧 Moderate] Short description of moderate issue
+              - [🟨 Minor] Short description of minor issue
 
-      #         ## 🏁 Next Steps
-      #         - Address critical issues immediately.
-      #         - Consider moderate improvements.
-      #         - Optional: implement minor suggestions.
+              ## 🏁 Next Steps
+              - Address critical issues immediately.
+              - Consider moderate improvements.
+              - Optional: implement minor suggestions.
 
-      #         ## 🌟 Appreciation
-      #         Great work overall! Once these points are addressed, the PR should be fully ready for approval.
+              ## 🌟 Appreciation
+              Great work overall! Once these points are addressed, the PR should be fully ready for approval.
 
-      #         ### 🧩 Example Summary
+              ### 🧩 Example Summary
 
-      #         ```
-      #         Hey @${{ steps.pr-meta.outputs.assignee }},
+              ```
+              Hey @${{ steps.pr-meta.outputs.assignee }},
 
-      #         ## 📄 Claude Code Review Summary
-      #         | **Metric** | **Severity** | **Count** |
-      #         |:--------------------------|:--------:|:------:|
-      #         | ✅ Approved / Passed      | -        | 2 |
-      #         | ❌ Failed / Needs Change  | Critical | 2 |
-      #         | ❌ Failed / Needs Change  | Moderate | 1 |
-      #         | ⚠️ Minor Concern / Warning| Minor    | 1 |
+              ## 📄 Claude Code Review Summary
+              | **Metric** | **Severity** | **Count** |
+              |:--------------------------|:--------:|:------:|
+              | ✅ Approved / Passed      | -        | 2 |
+              | ❌ Failed / Needs Change  | Critical | 2 |
+              | ❌ Failed / Needs Change  | Moderate | 1 |
+              | ⚠️ Minor Concern / Warning| Minor    | 1 |
 
-      #         ## 💡 Feedback Highlights
-      #         - [🟥 Critical] Fix runtime error in controller logic
-      #         - [🟧 Moderate] Align validation with schema definitions
-      #         - [🟨 Minor] Simplify redundant service functions
+              ## 💡 Feedback Highlights
+              - [🟥 Critical] Fix runtime error in controller logic
+              - [🟧 Moderate] Align validation with schema definitions
+              - [🟨 Minor] Simplify redundant service functions
 
-      #         ## 🏁 Next Steps
-      #         - Address critical issues immediately.
-      #         - Consider moderate improvements.
-      #         - Optional: implement minor suggestions.
+              ## 🏁 Next Steps
+              - Address critical issues immediately.
+              - Consider moderate improvements.
+              - Optional: implement minor suggestions.
 
-      #         ## 🌟 Appreciation
-      #         Great work overall! Once these points are addressed, the PR should be fully ready for approval.
-      #         ```
-      #       [/Review Summary Rules]
+              ## 🌟 Appreciation
+              Great work overall! Once these points are addressed, the PR should be fully ready for approval.
+              ```
+            [/Review Summary Rules]
 
-      #       [Git Config]
-      #         CONTEXT:
-      #         PR No.: ${{ steps.pr-number.outputs.number }}
-      #         Diff URL: https://github.com/${{ github.repository }}/pull/${{ steps.pr-number.outputs.number }}.diff
-      #         Repository: ${{ github.repository }}
-      #         Assignee/Creator: @${{ steps.pr-meta.outputs.assignee }}
-      #       [/Git Config]
+            [Git Config]
+              CONTEXT:
+              PR No.: ${{ steps.pr-number.outputs.number }}
+              Diff URL: https://github.com/${{ github.repository }}/pull/${{ steps.pr-number.outputs.number }}.diff
+              Repository: ${{ github.repository }}
+              Assignee/Creator: @${{ steps.pr-meta.outputs.assignee }}
+            [/Git Config]
 
-      #     claude_args: |
-      #       --allowedTools "mcp__github__get_pull_request,
-      #                       mcp__github__get_pull_request_files,
-      #                       mcp__github__get_pull_request_diff,
-      #                       mcp__github__create_pending_pull_request_review,
-      #                       mcp__github__add_comment_to_pending_review,
-      #                       mcp__github__submit_pending_pull_request_review,
-      #                       mcp__github_inline_comment__create_inline_comment,
-      #                       mcp__github__add_issue_comment,
-      #                       mcp__github__get_pull_request_comments,
-      #                       mcp__github__get_pull_request_reviews,
-      #                       mcp__github__resolve_pull_request_conversation,
-      #                       mcp__github__create_issue_comment,
-      #                       Bash(gh pr view:*),
-      #                       Bash(gh pr review:*)"
+          claude_args: |
+            --allowedTools "mcp__github__get_pull_request,
+                            mcp__github__get_pull_request_files,
+                            mcp__github__get_pull_request_diff,
+                            mcp__github__create_pending_pull_request_review,
+                            mcp__github__add_comment_to_pending_review,
+                            mcp__github__submit_pending_pull_request_review,
+                            mcp__github_inline_comment__create_inline_comment,
+                            mcp__github__add_issue_comment,
+                            mcp__github__get_pull_request_comments,
+                            mcp__github__get_pull_request_reviews,
+                            mcp__github__resolve_pull_request_conversation,
+                            mcp__github__create_issue_comment,
+                            Bash(gh pr view:*),
+                            Bash(gh pr review:*)"
 
-      # - name: Submit Claude Review Result
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   run: |
-      #     node .github/scripts/submitClaudeCodeReview.mjs
+      - name: Submit Claude Review Result
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node .github/scripts/submitClaudeCodeReview.mjs
       - name: Resolve Inline Comments
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
