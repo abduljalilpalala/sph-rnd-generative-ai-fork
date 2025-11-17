@@ -129,6 +129,8 @@ jobs:
 
       - name: Get PR base branch
         id: pr-info
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           PR_NUMBER=${{ github.event.issue.number }}
           BASE_REF=$(gh pr view $PR_NUMBER --json baseRefName -q .baseRefName)
