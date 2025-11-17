@@ -1,16 +1,9 @@
-import { octokit, repoInfo } from "./_config.mjs"
-import { exitWith } from "./_helpers.mjs"
+import { octokit, repoInfo } from './_config.mjs'
+import { exitWith } from './_helpers.mjs'
 
-(async function main() {
+;(async function main() {
   try {
     const { owner, repo, prNumber } = repoInfo
-
-    console.log('Hello World');
-    console.log('repoInfo: ', repoInfo)
-    console.log('CWD:', process.cwd())
-    console.log('Script path:', import.meta.url)
-    console.log('NODE VERSION:', process.version)
-    console.log('NODE EXECUTABLE:', process.execPath)
 
     console.log(
       `🔍 Checking latest Claude Code Review Summary for PR #${prNumber}...`
