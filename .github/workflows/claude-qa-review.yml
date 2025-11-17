@@ -19,6 +19,17 @@ jobs:
     runs-on: [self-hosted, claude-code-review]
 
     steps:
+      - name: Add 👀 reaction to comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'eyes'
+            })
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -32,12 +43,14 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: "20"
+          node-version: '20'
 
-      - name: Clean and install deps
+      - name: Clean workspace before installing
         run: |
           rm -rf node_modules package-lock.json
-          npm install
+
+      - name: Install dependencies
+        run: npm install
 
       - name: Check if commit already reviewed
         id: commit-check
@@ -45,132 +58,150 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node .github/scripts/checkLatestCommit.mjs
 
-      ### -------------------------
-      ### PREVIOUS & QA FETCHERS
-      ### -------------------------
-
-      - name: Fetch previous test cases
+      - name: Fetch previous comment test cases
         id: previous-test-case
         run: |
+          # Always write file even if script fails
           node .github/scripts/getPreviousCases.mjs > previous.md || echo "[]" > previous.md
-          echo "previous_b64=$(base64 -w 0 previous.md)" >> $GITHUB_OUTPUT
+      
+          PREV_B64=$(base64 -w 0 previous.md || echo "")
+          echo "previous_b64=$PREV_B64" >> $GITHUB_OUTPUT
 
-      - name: Fetch ignored test cases
+      - name: Get Ignored Test Cases
         id: ignored-test-cases
         run: |
           node .github/scripts/getIgnoredCases.mjs > ignored.md || echo "[]" > ignored.md
-          echo "ignored_b64=$(base64 -w 0 ignored.md)" >> $GITHUB_OUTPUT
+          
+          IGNORED_B64=$(base64 -w 0 ignored.md || echo "")
+          echo "ignored_b64=$IGNORED_B64" >> $GITHUB_OUTPUT
 
       - name: Detect Review Mode
         id: detect-mode
+        shell: bash
         run: |
-          COMMENT_BODY="${{ github.event.comment.body }}"
-          if echo "$COMMENT_BODY" | grep -Eiq 'testcase:\s*https://docs\.google\.com/'; then
+          # Read entire comment body safely (multi-line, special chars, quotes)
+          COMMENT_BODY=$(cat <<'EOF'
+          ${{ github.event.comment.body }}
+          EOF
+          )
+          if echo "$COMMENT_BODY" | grep -Eiq 'testcase:\s*https:\/\/docs\.google\.com\/spreadsheets\/d\/'; then
             echo "mode=sheet" >> $GITHUB_OUTPUT
+            echo "Detected: Sheet Mode"
           else
             echo "mode=inline" >> $GITHUB_OUTPUT
+            echo "Detected: Inline Mode"
           fi
 
+      # 🧩 Run the appropriate QA fetcher (inline or sheet)
       - name: Fetch QA test cases
         id: qa-sheet
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          MAX_INPUT_CHARS: ${{ secrets.MAX_INPUT_CHARS }}
+          MAX_OUTPUT_CHARS: ${{ secrets.MAX_OUTPUT_CHARS }}
         run: |
           if [ "${{ steps.detect-mode.outputs.mode }}" = "sheet" ]; then
+            echo "📄 Running Claude Sheet Review"
             node .github/scripts/claudeSheetReview.mjs > qa.md || echo "[]" > qa.md
           else
+            echo "📝 Running Claude Inline Review"
             node .github/scripts/claudeInlineReview.mjs > qa.md || echo "[]" > qa.md
           fi
+      
+          # Ensure file exists and not empty
+          if [ ! -s qa.md ]; then
+            echo "[]" > qa.md
+          fi
+      
+          # Encode file safely for GitHub output
+          QA_CONTENT=$(base64 -w 0 qa.md || echo "W10=") # W10= is base64 for []
+          echo "qa_b64=$QA_CONTENT" >> $GITHUB_OUTPUT
 
-          echo "qa_b64=$(base64 -w 0 qa.md)" >> $GITHUB_OUTPUT
-
-      ### -------------------------
-      ### DIFF SECTION
-      ### -------------------------
-
-      - name: Get changed files
-        id: changed-files
+      - name: Debug event info
         run: |
+          echo "Event Name: ${{ github.event_name }}"
+          echo "PR Number: ${{ github.event.issue.number }}"
+          echo "Comment Body: '${{ github.event.comment.body }}'"
+          echo "Detected Mode: ${{ steps.detect-mode.outputs.mode }}"
+          echo "Branch Ref: ${{ github.ref }}"
+      
+      - name: Get changed files
+        id: changed_files
+        run: |
+          # Fetch base branch commit only
           git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
+      
+          # Show only changed filenames between base and PR head
           git diff --name-only FETCH_HEAD HEAD > changed.txt
+      
           echo "files<<EOF" >> $GITHUB_OUTPUT
           cat changed.txt >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Get limited diff
-        id: limited-diff
+        id: limited_diff
         run: |
+          # Fetch only the base branch commit
           git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
+      
+          # Generate the diff between base commit (FETCH_HEAD) and PR HEAD
           git diff --unified=5 FETCH_HEAD HEAD > diff.patch
+      
+          # Limit size
           head -c 50000 diff.patch > shortdiff.patch
+      
           echo "diff<<EOF" >> $GITHUB_OUTPUT
           cat shortdiff.patch >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      ### -------------------------
-      ### SINGLE CLAUDE RUN
-      ### -------------------------
-      - name: Run Claude Atomic QA Review
+      - name: Run Claude Test Review
         id: claude-review
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_QA_REVIEW }}
           track_progress: true
-          claude_args: |
-            --allowedTools ""
           prompt: |
-            You are a QA reviewer. Follow rules in `.github/prompts/claude-qa-rules.md`.
+            ## Instructions
+              Follow all rules defined in `.github/prompts/claude-qa-rules.md`.
 
-            ## Inputs
-            Changed Files:
-            ${{ steps.changed-files.outputs.files }}
+              ## Base64-encoded Context
+              [Changed Files]
+              ${{ steps.changed_files.outputs.files }}
 
-            Previous Cases (b64):
-            ${{ steps.previous-test-case.outputs.previous_b64 }}
+              [Previous Test Cases (base64)]
+              ${{ steps.previous-test-case.outputs.previous_b64 }}
 
-            QA Cases (b64):
-            ${{ steps.qa-sheet.outputs.qa_b64 }}
+              [QA Test Cases (base64)]
+              ${{ steps.qa-sheet.outputs.qa_b64 }}
 
-            Ignored Cases (b64):
-            ${{ steps.ignored-test-cases.outputs.ignored_b64 }}
+              [Ignored Test Cases (base64)]
+              ${{ steps.ignored-test-cases.outputs.ignored_b64 }}
 
-            Limited Diff (<=50k chars):
-            ${{ steps.limited-diff.outputs.diff }}
+              Claude: Decode these only when needed. Do not decode everything automatically.
 
-            ## Required Output (IMPORTANT)
-            Return ONLY valid JSON with this structure:
+              ## Task Flow
+              1. Gather test cases.
+              2. Evaluate test cases following `.github/claude-rules.md`.
+              3. Re-run previous test cases as needed.
+              4. Run behavioral scan following `.github/claude-rules.md`.
+              5. Simplify behavioral results for managers.
+              6. Combine all test cases, remove duplicates.
+              7. Generate summary.
 
-            {
-              "summary": "<markdown summary for PR>",
-              "inline_comments": [
-                {
-                  "path": "file path",
-                  "start_line": number,
-                  "end_line": number,
-                  "body": "comment body in markdown"
-                }
-              ]
-            }
+              ## Git Config
+              PR #: ${{ steps.pr-number.outputs.number }}
+              Changed Files Summary:
+              ${{ steps.changed_files.outputs.files }}
 
-            - DO NOT call any tools
-            - DO NOT wrap in code blocks
-            - DO NOT add explanations outside JSON
+              Limited Diff:
+              ${{ steps.limited_diff.outputs.diff }}
+          claude_args: |
+            --allowedTools "base64_decode, mcp__github__add_issue_comment"
 
-      - name: Debug Claude Raw Output
-        run: |
-          echo "RAW COMPLETION ==="
-          echo "${{ steps.claude-review.outputs.completion }}"
-          echo "=================="
-
-      - name: Save Claude Output
-        run: echo '${{ steps.claude-review.outputs.completion }}' > claude_output.json
-
-      ### -------------------------
-      ### POST RESULTS USING NODE
-      ### -------------------------
-      - name: Submit Atomic Review
+      - name: Submit Claude Review Result
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ steps.pr-number.outputs.number }}
-          COMMIT_SHA: ${{ github.sha }}
-          REPO_OWNER: ${{ github.repository_owner }}
-          REPO_NAME: ${{ github.event.repository.name }}
-        run: node .github/scripts/postAtomicReview.mjs
+        run: |
+          node .github/scripts/submitClaudeReview.mjs
