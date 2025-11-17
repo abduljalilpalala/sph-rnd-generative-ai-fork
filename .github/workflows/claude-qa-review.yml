@@ -130,31 +130,18 @@ jobs:
       - name: Get changed files
         id: changed_files
         run: |
-          # Fetch base branch commit only
-          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
+          # Fetch full history for both PR branch and base branch
+          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=0
       
-          # Show only changed filenames between base and PR head
-          git diff --name-only FETCH_HEAD HEAD > changed.txt
+          # Find the correct merge-base (same commit GitHub uses for PR diff)
+          BASE=$(git merge-base FETCH_HEAD HEAD)
       
-          echo "files<<EOF" >> $GITHUB_OUTPUT
-          cat changed.txt >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Get limited diff
-        id: limited_diff
-        run: |
-          # Fetch only the base branch commit
-          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
+          # Get only filenames that changed
+          git diff --name-only $BASE HEAD > changed.txt
       
-          # Generate the diff between base commit (FETCH_HEAD) and PR HEAD
-          git diff --unified=5 FETCH_HEAD HEAD > diff.patch
-      
-          # Limit size
-          head -c 50000 diff.patch > shortdiff.patch
-      
-          echo "diff<<EOF" >> $GITHUB_OUTPUT
-          cat shortdiff.patch >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          # Encode for safe GitHub output (no EOF issues)
+          FILES_B64=$(base64 -w0 changed.txt || base64 changed.txt)
+          echo "files_b64=$FILES_B64" >> $GITHUB_OUTPUT
 
       - name: Run Claude Test Review
         id: claude-review
@@ -192,11 +179,6 @@ jobs:
 
               ## Git Config
               PR #: ${{ steps.pr-number.outputs.number }}
-              Changed Files Summary:
-              ${{ steps.changed_files.outputs.files }}
-
-              Limited Diff:
-              ${{ steps.limited_diff.outputs.diff }}
           claude_args: |
             --allowedTools "base64_decode, mcp__github__add_issue_comment"
 
