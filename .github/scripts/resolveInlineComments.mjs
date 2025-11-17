@@ -41,7 +41,10 @@ import { octokit, repoInfo } from './_config.mjs'
 
     const threads = data.repository.pullRequest.reviewThreads.nodes
 
-    console.log(`\n🧵 Found ${threads.length} review threads\n`)
+    // ⭐ New log
+    console.log(`\n📊 TOTAL THREADS FOUND: ${threads.length}\n`)
+
+    console.log(`\n🧵 Printing thread details...\n`)
 
     threads.forEach((thread, index) => {
       console.log(`──────────────────────────────────────────────`)
