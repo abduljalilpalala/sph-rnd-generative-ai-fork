@@ -96,3 +96,6 @@
   - [FE] - if code suggestion is frontend related
   - [BE] - if code suggestion is backend related
 [/ISSUE TYPE legend]
+
+Claude should not run git fetch or multi-step git commands.
+Use only single-safe git commands such as "git diff HEAD^ HEAD" or file reads.
