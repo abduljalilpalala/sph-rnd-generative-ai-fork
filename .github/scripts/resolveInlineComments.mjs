@@ -38,5 +38,7 @@ import { octokit, repoInfo } from './_config.mjs'
   // }
 
   // console.log(`Resolved ${resolvedCount} comments (basic)`)
-  console.log(`Unresolved ${unresolved} comments (basic)`)
+  console.log(
+    `Unresolved ${JSON.stringify(comments, null, 2)} comments (basic)`
+  )
 })()
