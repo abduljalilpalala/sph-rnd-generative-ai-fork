@@ -33,14 +33,6 @@
     - Whether **logical flow** between controller → service → repository still makes sense.
 [/Behavioral Check Guidelines]
 
-[Inline Comment Rules]
-  - Add inline comments only for "❌ Fail" test cases only. 
-  - The inline code suggestion needs to apply to the full diff, not just part of it.
-  - Exclude the "✅ PASS" test cases cases.
-  - Do not inline comment if there is same existing unresolved inline comment (no duplicate inline comment).
-  - Do not inline comment if lines that are not part of the PR's changes.
-[/Inline Comment Rules]
-
 [COMMENT BODY RULES]
   The test cases used here are combined test cases from the Previous Test Cases result and the current one.
   The final PR comment **must contain only these two sections** and nothing else:
@@ -104,23 +96,3 @@
   - [FE] - if code suggestion is frontend related
   - [BE] - if code suggestion is backend related
 [/ISSUE TYPE legend]
-
-[Inline Comment Format]
-  <strong>[Case ID]</strong> (Verdict): "<Expected Result>"
-
-  **Behavior Tested:**
-  <Describe intended user/system behavior in plain English.>
-
-  **Observed Effect (from code):**
-  <Describe what will actually happen — e.g., “controller will call a missing function, causing runtime error”.>
-
-  **Impact:**
-  <Explain what a user, client, or integration would see.>
-
-  **Suggestion:**
-  <Plain English suggestion — e.g., “Restore correct function name in controller to fix flow”.>
-
-  ```suggestion
-    // Suggest only the necessary code to fix the issue. Nothing extra.
-  ```
-[/Inline Comment Format]
