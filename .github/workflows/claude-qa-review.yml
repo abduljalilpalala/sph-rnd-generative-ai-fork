@@ -171,7 +171,7 @@ jobs:
 
               ## Base64-encoded Context
               [Changed Files]
-              ${{ steps.changed_files.outputs.files }}
+              ${{ steps.changed_files.outputs.files_b64 }}
 
               [Previous Test Cases (base64)]
               ${{ steps.previous-test-case.outputs.previous_b64 }}
