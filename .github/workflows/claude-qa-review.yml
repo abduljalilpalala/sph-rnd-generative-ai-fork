@@ -126,20 +126,25 @@ jobs:
           echo "Comment Body: '${{ github.event.comment.body }}'"
           echo "Detected Mode: ${{ steps.detect-mode.outputs.mode }}"
           echo "Branch Ref: ${{ github.ref }}"
-      
+
       - name: Get changed files
         id: changed_files
         run: |
-          # Fetch full history for both PR branch and base branch
-          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=0
+          # Ensure repo has full history (if shallow)
+          if git rev-parse --is-shallow-repository | grep -q "true"; then
+            git fetch --unshallow
+          fi
       
-          # Find the correct merge-base (same commit GitHub uses for PR diff)
-          BASE=$(git merge-base FETCH_HEAD HEAD)
+          # Fetch the full base branch history
+          git fetch origin ${{ github.event.pull_request.base.ref }}
       
-          # Get only filenames that changed
+          # Compute the correct merge-base (same commit GH uses for PR diff)
+          BASE=$(git merge-base origin/${{ github.event.pull_request.base.ref }} HEAD)
+      
+          # List changed files
           git diff --name-only $BASE HEAD > changed.txt
       
-          # Encode for safe GitHub output (no EOF issues)
+          # Encode safely for GitHub Outputs
           FILES_B64=$(base64 -w0 changed.txt || base64 changed.txt)
           echo "files_b64=$FILES_B64" >> $GITHUB_OUTPUT
 
