@@ -62,6 +62,9 @@
       >
       > _**Suggestion:**_
       > <Plain English suggestion — e.g., “Restore correct function name in controller to fix flow”.>
+      > ```diff
+      >  // code suggestion here
+      > ```
 
       ---
       </details>
