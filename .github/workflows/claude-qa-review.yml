@@ -1,6 +1,9 @@
 name: Claude QA Review
 
 on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+
   issue_comment:
     types: [created]
 
@@ -14,8 +17,17 @@ permissions:
 jobs:
   claude-qa-review:
     if: |
-      github.event.issue.pull_request &&
-      contains(github.event.comment.body, '@claude-qa-review')
+      (
+        github.event_name == 'pull_request' &&
+        github.event.pull_request.draft == false
+      )
+      ||
+      (
+        github.event_name == 'issue_comment' &&
+        github.event.issue.pull_request &&
+        contains(github.event.comment.body, '@claude-qa-review')
+      )
+
     runs-on: [self-hosted, claude-code-review]
 
     steps:
