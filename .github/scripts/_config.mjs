@@ -1,7 +1,7 @@
 import fs from "fs";
 import { Octokit } from "@octokit/rest";
 import Anthropic from "@anthropic-ai/sdk";
-import { exitWith } from "./_helpers.mjs";
+import { exitWith } from './_helpers.mjs'
 
 export const {
   ANTHROPIC_API_KEY,

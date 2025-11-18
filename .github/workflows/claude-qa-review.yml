@@ -75,20 +75,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node .github/scripts/checkLatestCommit.mjs
 
-      - name: Fetch previous comment test cases (DEBUG)
+      - name: Fetch previous comment test cases
         id: previous-test-case
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "⏳ Running getPreviousCases.mjs in debug mode..."
-          node .github/scripts/getPreviousCases.mjs
-          echo "⛔ Stopping workflow early (debug mode)"
-          exit 0
-
-      - name: Stop workflow after logging
-        run: |
-          echo "⛔ Stopping workflow early (debug mode enabled)."
-          exit 0
+          # Always write file even if script fails
+          node .github/scripts/getPreviousCases.mjs > previous.md || echo "[]" > previous.md
+      
+          PREV_B64=$(base64 -w 0 previous.md || echo "")
+          echo "previous_b64=$PREV_B64" >> $GITHUB_OUTPUT
 
       - name: Get Ignored Test Cases
         id: ignored-test-cases
