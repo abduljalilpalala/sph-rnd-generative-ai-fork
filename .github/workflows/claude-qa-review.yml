@@ -2,7 +2,7 @@ name: Claude QA Review
 
 on:
   pull_request:
-    types: [opened, ready_for_review]
+    types: [ready_for_review]
 
   issue_comment:
     types: [created]
