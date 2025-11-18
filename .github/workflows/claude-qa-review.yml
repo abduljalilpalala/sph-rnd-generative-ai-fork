@@ -78,11 +78,12 @@ jobs:
       - name: Fetch previous comment test cases
         id: previous-test-case
         run: |
-          # Always write file even if script fails
           node .github/scripts/getPreviousCases.mjs > previous.md || echo "[]" > previous.md
-      
-          PREV_B64=$(base64 -w 0 previous.md || echo "")
-          echo "previous_b64=$PREV_B64" >> $GITHUB_OUTPUT
+
+      - name: Stop workflow after logging
+        run: |
+          echo "⛔ Stopping workflow early (debug mode enabled)."
+          exit 0
 
       - name: Get Ignored Test Cases
         id: ignored-test-cases
