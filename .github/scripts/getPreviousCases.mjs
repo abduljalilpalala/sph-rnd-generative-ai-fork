@@ -87,12 +87,14 @@ import fs from "fs";
       };
     });
 
-    // 🔹 Output JSON to console
-    const jsonOutput = JSON.stringify(testCases, null, 2);
-    console.log(jsonOutput);
+    console.log("====== 🟦 PREVIOUS TEST CASES (RAW LOG) ======");
+    console.log(JSON.stringify(testCases, null, 2));
+    console.log("====== 🟩 END OF TEST CASE LOG ======");
 
-    // 🔹 Optionally write to file (useful for debugging)
-    fs.writeFileSync("previous.json", jsonOutput, "utf8");
+    fs.writeFileSync("previous.json", JSON.stringify(testCases, null, 2));
+
+    // Output clean JSON result for workflow
+    console.log(JSON.stringify(testCases, null, 2));
   } catch (err) {
     exitWith("❌ Error extracting previous test cases:", err);
   }
