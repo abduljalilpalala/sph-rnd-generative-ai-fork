@@ -77,6 +77,8 @@ jobs:
 
       - name: Fetch previous comment test cases (DEBUG)
         id: previous-test-case
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "⏳ Running getPreviousCases.mjs in debug mode..."
           node .github/scripts/getPreviousCases.mjs
@@ -90,6 +92,8 @@ jobs:
 
       - name: Get Ignored Test Cases
         id: ignored-test-cases
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           node .github/scripts/getIgnoredCases.mjs > ignored.md || echo "[]" > ignored.md
           
