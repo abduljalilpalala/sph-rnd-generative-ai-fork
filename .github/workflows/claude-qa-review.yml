@@ -75,10 +75,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node .github/scripts/checkLatestCommit.mjs
 
-      - name: Fetch previous comment test cases
+      - name: Fetch previous comment test cases (DEBUG)
         id: previous-test-case
         run: |
-          node .github/scripts/getPreviousCases.mjs > previous.md || echo "[]" > previous.md
+          echo "⏳ Running getPreviousCases.mjs in debug mode..."
+          node .github/scripts/getPreviousCases.mjs
+          echo "⛔ Stopping workflow early (debug mode)"
+          exit 0
 
       - name: Stop workflow after logging
         run: |
