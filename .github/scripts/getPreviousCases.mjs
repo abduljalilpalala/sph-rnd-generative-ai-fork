@@ -6,7 +6,10 @@ import fs from "fs";
   try {
     const { owner, repo, prNumber } = repoInfo;
 
-    // 🔹 Fetch all PR comments (issue comments)
+    console.log("===== 🟦 DEBUG MODE ENABLED — getPreviousCases.mjs =====");
+    console.log(`🔎 Fetching previous test cases for PR #${prNumber}...\n`);
+
+    // Fetch comments
     const { data: comments } = await octokit.rest.issues.listComments({
       owner,
       repo,
@@ -14,87 +17,72 @@ import fs from "fs";
       per_page: 100,
     });
 
+    console.log(`📌 Total comments found: ${comments?.length}`);
+
     if (!comments?.length) {
       console.log("⚠️ No comments found on this PR.");
       return;
     }
 
-    // 🔹 Filter comments that contain Claude qa summary
+    // Filter summary comments
     const claudeComments = comments.filter((c) =>
       c.body?.includes("## 📄 Claude QA Summary")
     );
 
+    console.log(`📌 QA summary comments detected: ${claudeComments.length}`);
+
     if (!claudeComments.length) {
-      console.log("none");
+      console.log("❗ No Claude QA summary comments found.");
       return;
     }
 
-    // 🔹 Sort comments newest → oldest
+    // Take latest
     const latest = claudeComments.sort(
       (a, b) => new Date(b.created_at) - new Date(a.created_at)
     )[0];
 
+    console.log("\n====== 🟧 RAW COMMENT BODY (START) ======");
+    console.log(latest.body);
+    console.log("====== 🟧 RAW COMMENT BODY (END) ======\n");
+
     const body = latest.body || "";
     const marker = "## 📄 Detailed test case result";
 
-    // 🔹 Find start marker
+    console.log(`🔍 Searching for marker: "${marker}"`);
     const startIndex = body.indexOf(marker);
+    console.log(`📌 Marker index result: ${startIndex}`);
+
     if (startIndex === -1) {
-      console.log("⚠️ Could not find '## 📄 Detailed test case result' section.");
+      console.log("❌ Marker not found in comment body. Cannot continue.");
       return;
     }
 
-    // 🔹 Extract everything after the marker
     const contentAfter = body.slice(startIndex + marker.length).trim();
 
-    // 🔹 Match all <details>...</details> blocks
+    console.log("\n====== 🟨 CONTENT AFTER MARKER (START) ======");
+    console.log(contentAfter);
+    console.log("====== 🟨 CONTENT AFTER MARKER (END) ======\n");
+
+    // Match <details> blocks
     const detailsMatches = [...contentAfter.matchAll(/<details>[\s\S]*?<\/details>/g)];
+
+    console.log(`📌 Total <details> blocks detected: ${detailsMatches.length}`);
+
     if (!detailsMatches.length) {
-      console.log("none");
+      console.log("❌ No <details> blocks found. Cannot extract test cases.");
       return;
     }
 
-    // 🔹 Parse each test case
-    const testCases = detailsMatches.map((m) => {
-      const block = m[0];
-
-      // ✅ Updated regex to handle both [TC-001] and TC-001
-      const summaryMatch = block.match(
-        /<summary>\s*<strong>\[?([^\]<]+)\]?\s*<\/strong>\s*\(([^)]+)\):\s*(.*?)<\/summary>/is
-      );
-
-      const TEST_CASE_ID = summaryMatch ? summaryMatch[1].trim() : "";
-      const VERDICT = summaryMatch ? summaryMatch[2].trim() : "";
-      const EXPECTED_RESULT = summaryMatch ? summaryMatch[3].trim() : "";
-
-      // Extract all lines inside <details> after the summary
-      const contentMatch = block.match(/<\/summary>([\s\S]*?)<\/details>/i);
-      let DETAILS = contentMatch ? contentMatch[1].trim() : "";
-
-      // Clean Markdown symbols
-      DETAILS = DETAILS
-        .replace(/^>+/gm, "") // remove blockquotes
-        .replace(/[_*`]/g, "") // remove markdown emphasis
-        .replace(/-{3,}/g, "") // remove divider lines
-        .replace(/\n{2,}/g, "\n") // normalize multiple newlines
-        .trim();
-
-      return {
-        TEST_CASE_ID,
-        VERDICT,
-        EXPECTED_RESULT,
-        DETAILS,
-      };
+    console.log("\n====== 🟪 RAW DETAILS BLOCKS (START) ======");
+    detailsMatches.forEach((m, idx) => {
+      console.log(`--- Block ${idx + 1} ---`);
+      console.log(m[0]);
     });
+    console.log("====== 🟪 RAW DETAILS BLOCKS (END) ======\n");
 
-    console.log("====== 🟦 PREVIOUS TEST CASES (RAW LOG) ======");
-    console.log(JSON.stringify(testCases, null, 2));
-    console.log("====== 🟩 END OF TEST CASE LOG ======");
+    console.log("\n===== 🟩 DEBUG MODE END — stopping here (no parsing yet) =====");
+    return; // STOP HERE — DO NOT PARSE TEST CASES YET
 
-    fs.writeFileSync("previous.json", JSON.stringify(testCases, null, 2));
-
-    // Output clean JSON result for workflow
-    console.log(JSON.stringify(testCases, null, 2));
   } catch (err) {
     exitWith("❌ Error extracting previous test cases:", err);
   }
