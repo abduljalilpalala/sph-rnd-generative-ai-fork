@@ -49,7 +49,7 @@
 
   2. `## 📄 Detailed test case result.
       <details>
-      <summary> <strong>[Case ID]</strong> (verdict): [ISSUE TYPE][Expected Result] </summary>
+      <summary> <strong>[Case ID]</strong> (verdict): [ISSUE_TYPE][EXPECTED_RESULT] </summary>
         
       > _**Behavior Tested:**_  
       > <Describe intended user/system behavior in plain English.>
@@ -95,10 +95,14 @@
   - ⚠️ CANNOT VERIFY — not enough context or unrelated change
 [/Verdict legend]
 
-[ISSUE TYPE legend]
+[ISSUE_TYPE legend]
   - [FE] - if code suggestion is frontend related
   - [BE] - if code suggestion is backend related
-[/ISSUE TYPE legend]
+[/ISSUE_TYPE legend]
+
+[EXPECTED_RESULT legend]
+- if it sounds technical then convert it to simple terms that a manager can easily understand.
+[/EXPECTED_RESULT legend]
 
 Claude should not run git fetch or multi-step git commands.
 Use only single-safe git commands such as "git diff HEAD^ HEAD" or file reads.
