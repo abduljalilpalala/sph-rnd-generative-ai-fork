@@ -84,6 +84,9 @@ import fs from "fs";
     return; // STOP HERE — DO NOT PARSE TEST CASES YET
 
   } catch (err) {
-    exitWith("❌ Error extracting previous test cases:", err);
+    console.error("❌ ERROR (RAW):");
+    console.error(err);
+    console.error(err.stack);
+    throw err;
   }
 })();
