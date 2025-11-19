@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Body, Param, Delete, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Put, Query } from '@nestjs/common';
 import { UserService } from './user.service';
+import { SearchUserDto } from './dto/search-user.dto';
 
 @Controller('users')
 export class UserController {
@@ -8,6 +9,11 @@ export class UserController {
   @Post()
   create(@Body() body: { name: string; email: string }) {
     return this.userService.create(body);
+  }
+
+  @Get('search')
+  search(@Query() searchDto: SearchUserDto) {
+    return this.userService.search(searchDto);
   }
 
   @Get()

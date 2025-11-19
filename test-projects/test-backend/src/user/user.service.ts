@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { User } from '@prisma/client';
+import { SearchUserDto } from './dto/search-user.dto';
 
 @Injectable()
 export class UserService {
@@ -8,6 +9,36 @@ export class UserService {
 
   async create(data: { name: string; email: string }): Promise<User> {
     return this.prisma.user.create({ data });
+  }
+
+  async search(searchDto: SearchUserDto): Promise<User[]> {
+    const { name, email, page = 1, limit = 10 } = searchDto;
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+
+    if (name) {
+      where.name = {
+        contains: name,
+        mode: 'insensitive',
+      };
+    }
+
+    if (email) {
+      where.email = {
+        contains: email,
+        mode: 'insensitive',
+      };
+    }
+
+    return this.prisma.user.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
   }
 
   async findAll(): Promise<User[]> {
