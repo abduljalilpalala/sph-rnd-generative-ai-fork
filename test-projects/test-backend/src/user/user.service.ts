@@ -25,4 +25,49 @@ export class UserService {
   async remove(id: number): Promise<User> {
     return this.prisma.user.delete({ where: { id } });
   }
+
+  async search(params: {
+    name?: string;
+    email?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ users: User[]; total: number; page: number; limit: number }> {
+    const { name, email, page = 1, limit = 10 } = params;
+    const skip = (page - 1) * limit;
+
+    // Build the where clause dynamically
+    const where: any = {};
+
+    if (name) {
+      where.name = {
+        contains: name,
+        mode: 'insensitive',
+      };
+    }
+
+    if (email) {
+      where.email = {
+        contains: email,
+        mode: 'insensitive',
+      };
+    }
+
+    // Execute both queries in parallel
+    const [users, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+
+    return {
+      users,
+      total,
+      page,
+      limit,
+    };
+  }
 }
