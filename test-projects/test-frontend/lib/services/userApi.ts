@@ -21,7 +21,7 @@ export interface UpdateUserDto {
 export const userApi = createApi({
   reducerPath: "userApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000",
+    baseUrl: process.env.NEXT_PUBLIC_API_URL,
   }),
   tagTypes: ["User"],
   endpoints: (builder) => ({
