@@ -107,38 +107,88 @@ export class UserService {
 
     let created = 0;
 
-    // Create users in batches with transaction
+    // Create users in batches with optimized batch processing
     if (validUsers.length > 0) {
-      try {
-        await this.prisma.$transaction(async (prisma) => {
-          for (const user of validUsers) {
-            try {
-              await prisma.user.create({
-                data: {
-                  email: user.email,
-                  name: user.name || null,
-                },
-              });
-              created++;
-            } catch (error) {
-              // Handle unique constraint violation
-              const rowIndex = users.findIndex((u) => u.email === user.email);
-              const isPrismaError =
-                error instanceof Prisma.PrismaClientKnownRequestError;
-              errors.push({
-                row: rowIndex + 2,
-                email: user.email,
-                name: user.name,
-                error:
-                  isPrismaError && error.code === 'P2002'
-                    ? 'Email already exists'
-                    : 'Failed to create user',
-              });
-            }
+      // Check for duplicate emails within the file
+      const emailSet = new Set<string>();
+      const duplicateEmails = new Set<string>();
+
+      validUsers.forEach((user) => {
+        if (emailSet.has(user.email)) {
+          duplicateEmails.add(user.email);
+        } else {
+          emailSet.add(user.email);
+        }
+      });
+
+      // Report duplicate emails within the file
+      if (duplicateEmails.size > 0) {
+        validUsers.forEach((user, index) => {
+          if (duplicateEmails.has(user.email)) {
+            const rowIndex = users.findIndex((u) => u.email === user.email);
+            errors.push({
+              row: rowIndex + 2,
+              email: user.email,
+              name: user.name,
+              error: 'Duplicate email in file',
+            });
           }
         });
-      } catch (error) {
-        throw new BadRequestException('Failed to process bulk upload');
+      }
+
+      // Filter out users with duplicate emails
+      const uniqueUsers = validUsers.filter(
+        (user) => !duplicateEmails.has(user.email),
+      );
+
+      // Check for existing emails in database
+      const existingUsers = await this.prisma.user.findMany({
+        where: {
+          email: {
+            in: uniqueUsers.map((u) => u.email),
+          },
+        },
+        select: { email: true },
+      });
+
+      const existingEmails = new Set(existingUsers.map((u) => u.email));
+
+      // Separate users into new and existing
+      const newUsers: UserRow[] = [];
+      uniqueUsers.forEach((user) => {
+        if (existingEmails.has(user.email)) {
+          const rowIndex = users.findIndex((u) => u.email === user.email);
+          errors.push({
+            row: rowIndex + 2,
+            email: user.email,
+            name: user.name,
+            error: 'Email already exists in database',
+          });
+        } else {
+          newUsers.push(user);
+        }
+      });
+
+      // Batch insert all new users at once
+      if (newUsers.length > 0) {
+        try {
+          const BATCH_SIZE = 500; // Process in chunks of 500 for very large datasets
+          for (let i = 0; i < newUsers.length; i += BATCH_SIZE) {
+            const batch = newUsers.slice(i, i + BATCH_SIZE);
+            const result = await this.prisma.user.createMany({
+              data: batch.map((user) => ({
+                email: user.email,
+                name: user.name || null,
+              })),
+              skipDuplicates: true, // Skip any duplicates that might occur
+            });
+            created += result.count;
+          }
+        } catch (error) {
+          throw new BadRequestException(
+            'Failed to process bulk upload: Database error',
+          );
+        }
       }
     }
 
