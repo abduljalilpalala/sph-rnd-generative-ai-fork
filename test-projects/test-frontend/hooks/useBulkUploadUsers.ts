@@ -30,8 +30,13 @@ export const useBulkUploadUsers = () => {
           router.push("/users");
         }, 2000);
       }
-    } catch (err: any) {
-      setError(err?.data?.message || "Failed to upload file. Please try again.");
+    } catch (err) {
+      if (err && typeof err === "object" && "data" in err) {
+        const errorData = err.data as { message?: string };
+        setError(errorData?.message || "Failed to upload file. Please try again.");
+      } else {
+        setError("Failed to upload file. Please try again.");
+      }
     }
   };
 

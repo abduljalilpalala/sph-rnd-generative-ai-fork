@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { User } from '@prisma/client';
+import { User, Prisma } from '@prisma/client';
 import * as XLSX from 'xlsx';
 import {
   BulkUploadResponseDto,
@@ -40,7 +40,7 @@ export class UserService {
   }
 
   async bulkCreateFromExcel(
-    file: Express.Multer.File,
+    file: Express.Multer.File | undefined,
   ): Promise<BulkUploadResponseDto> {
     if (!file) {
       throw new BadRequestException('No file provided');
@@ -123,12 +123,14 @@ export class UserService {
             } catch (error) {
               // Handle unique constraint violation
               const rowIndex = users.findIndex((u) => u.email === user.email);
+              const isPrismaError =
+                error instanceof Prisma.PrismaClientKnownRequestError;
               errors.push({
                 row: rowIndex + 2,
                 email: user.email,
                 name: user.name,
                 error:
-                  error.code === 'P2002'
+                  isPrismaError && error.code === 'P2002'
                     ? 'Email already exists'
                     : 'Failed to create user',
               });

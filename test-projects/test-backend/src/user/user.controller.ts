@@ -23,7 +23,7 @@ export class UserController {
 
   @Post('bulk-upload')
   @UseInterceptors(FileInterceptor('file'))
-  bulkUpload(@UploadedFile() file: Express.Multer.File) {
+  bulkUpload(@UploadedFile() file: Express.Multer.File | undefined) {
     return this.userService.bulkCreateFromExcel(file);
   }
 
