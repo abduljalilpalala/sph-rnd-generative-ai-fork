@@ -28,6 +28,7 @@ const UsersPage = () => {
         title="Users"
         actions={[
           { href: "/users/create", label: "Create User", variant: "success" },
+          { href: "/users/bulk-upload", label: "Bulk Upload", variant: "primary" },
           { href: "/", label: "Home", variant: "secondary" },
         ]}
       />

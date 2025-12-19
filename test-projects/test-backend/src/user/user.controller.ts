@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Body, Param, Delete, Put } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  Put,
+  UseInterceptors,
+  UploadedFile,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { UserService } from './user.service';
 
 @Controller('users')
@@ -8,6 +19,12 @@ export class UserController {
   @Post()
   create(@Body() body: { name: string; email: string }) {
     return this.userService.create(body);
+  }
+
+  @Post('bulk-upload')
+  @UseInterceptors(FileInterceptor('file'))
+  bulkUpload(@UploadedFile() file: Express.Multer.File | undefined) {
+    return this.userService.bulkCreateFromExcel(file);
   }
 
   @Get()
@@ -21,7 +38,10 @@ export class UserController {
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() body: { name?: string; email?: string }) {
+  update(
+    @Param('id') id: string,
+    @Body() body: { name?: string; email?: string },
+  ) {
     return this.userService.update(+id, body);
   }
 

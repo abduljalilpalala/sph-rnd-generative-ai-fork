@@ -6,6 +6,8 @@ export type { ButtonVariant, ButtonSize } from "@/components/atoms/Button";
 
 export { Card } from "@/components/atoms/Card";
 
+export { FileUpload } from "@/components/atoms/FileUpload";
+
 export { Input } from "@/components/atoms/Input";
 
 export { Label } from "@/components/atoms/Label";
