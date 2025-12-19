@@ -18,6 +18,20 @@ export interface UpdateUserDto {
   name?: string;
 }
 
+export interface SearchUserDto {
+  name?: string;
+  email?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface SearchUserResult {
+  data: User[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export const userApi = createApi({
   reducerPath: "userApi",
   baseQuery: fetchBaseQuery({
@@ -32,6 +46,17 @@ export const userApi = createApi({
     getUser: builder.query<User, number>({
       query: (id) => `/users/${id}`,
       providesTags: (result, error, id) => [{ type: "User", id }],
+    }),
+    searchUsers: builder.query<SearchUserResult, SearchUserDto>({
+      query: (params) => {
+        const searchParams = new URLSearchParams();
+        if (params.name) searchParams.append("name", params.name);
+        if (params.email) searchParams.append("email", params.email);
+        if (params.page) searchParams.append("page", params.page.toString());
+        if (params.limit) searchParams.append("limit", params.limit.toString());
+        return `/users/search?${searchParams.toString()}`;
+      },
+      providesTags: ["User"],
     }),
     createUser: builder.mutation<User, CreateUserDto>({
       query: (body) => ({
@@ -62,6 +87,7 @@ export const userApi = createApi({
 export const {
   useGetUsersQuery,
   useGetUserQuery,
+  useSearchUsersQuery,
   useCreateUserMutation,
   useUpdateUserMutation,
   useDeleteUserMutation,
