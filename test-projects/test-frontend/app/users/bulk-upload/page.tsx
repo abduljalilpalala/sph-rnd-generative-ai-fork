@@ -3,7 +3,6 @@
 import { useBulkUploadUsers } from "@/hooks/useBulkUploadUsers";
 import { BulkUploadForm } from "@/components/organisms";
 import { PageLayout, PageHeader } from "@/components/templates";
-import { Link } from "@/components/atoms";
 
 export default function BulkUploadPage() {
   const { handleUpload, isLoading, uploadResult, error, reset } =
@@ -14,9 +13,7 @@ export default function BulkUploadPage() {
       <PageHeader
         title="Bulk User Upload"
         actions={[
-          <Link key="back" href="/users" variant="secondary">
-            ← Back to Users
-          </Link>,
+          { href: "/users", label: "← Back to Users", variant: "secondary" },
         ]}
       />
       <BulkUploadForm
