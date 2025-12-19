@@ -18,6 +18,21 @@ export interface UpdateUserDto {
   name?: string;
 }
 
+export interface BulkUploadError {
+  row: number;
+  email: string;
+  name?: string;
+  error: string;
+}
+
+export interface BulkUploadResponse {
+  success: boolean;
+  message: string;
+  created: number;
+  failed: number;
+  errors: BulkUploadError[];
+}
+
 export const userApi = createApi({
   reducerPath: "userApi",
   baseQuery: fetchBaseQuery({
@@ -56,6 +71,14 @@ export const userApi = createApi({
       }),
       invalidatesTags: ["User"],
     }),
+    bulkUploadUsers: builder.mutation<BulkUploadResponse, FormData>({
+      query: (formData) => ({
+        url: "/users/bulk-upload",
+        method: "POST",
+        body: formData,
+      }),
+      invalidatesTags: ["User"],
+    }),
   }),
 });
 
@@ -65,4 +88,5 @@ export const {
   useCreateUserMutation,
   useUpdateUserMutation,
   useDeleteUserMutation,
+  useBulkUploadUsersMutation,
 } = userApi;
