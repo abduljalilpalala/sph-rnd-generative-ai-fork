@@ -37,6 +37,10 @@ export class UserService {
   async search(searchDto: SearchUserDto): Promise<SearchUserResult> {
     const { name, email, page = 1, limit = 10 } = searchDto;
 
+    // Ensure page and limit are numbers
+    const pageNum = Number(page);
+    const limitNum = Number(limit);
+
     // Build where clause for filtering
     const where: any = {};
 
@@ -63,14 +67,14 @@ export class UserService {
     }
 
     // Calculate pagination
-    const skip = (page - 1) * limit;
+    const skip = (pageNum - 1) * limitNum;
 
     // Execute queries
     const [data, total] = await Promise.all([
       this.prisma.user.findMany({
         where,
         skip,
-        take: limit,
+        take: limitNum,
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.user.count({ where }),
@@ -79,8 +83,8 @@ export class UserService {
     return {
       data,
       total,
-      page,
-      limit,
+      page: pageNum,
+      limit: limitNum,
     };
   }
 }

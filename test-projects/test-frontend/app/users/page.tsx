@@ -27,6 +27,7 @@ const UsersPage = () => {
       <PageHeader
         title="Users"
         actions={[
+          { href: "/users/search", label: "Search Users", variant: "primary" },
           { href: "/users/create", label: "Create User", variant: "success" },
           { href: "/", label: "Home", variant: "secondary" },
         ]}

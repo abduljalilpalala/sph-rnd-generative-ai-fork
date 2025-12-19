@@ -32,7 +32,9 @@ export default function UserSearchPage() {
     <PageLayout>
       <PageHeader
         title="Search Users"
-        description="Search for users by name or email"
+        actions={[
+          { href: "/users", label: "Back to Users", variant: "secondary" },
+        ]}
       />
 
       {/* Search Form */}
