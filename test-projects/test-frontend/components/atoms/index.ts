@@ -19,3 +19,7 @@ export type { LinkVariant } from "@/components/atoms/Link";
 
 export { Text } from "@/components/atoms/Text";
 export type { TextVariant, TextColor } from "@/components/atoms/Text";
+
+export { Textarea } from "@/components/atoms/Textarea";
+
+export { Checkbox } from "@/components/atoms/Checkbox";
