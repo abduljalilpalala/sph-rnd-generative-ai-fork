@@ -47,7 +47,7 @@ export const postApi = createApi({
         method: "PUT",
         body: data,
       }),
-      invalidatesTags: (result, error, { id }) => [{ type: "Post", id }],
+      invalidatesTags: (result, error, { id }) => [{ type: "Post", id }, "Post"],
     }),
     deletePost: builder.mutation<void, number>({
       query: (id) => ({
