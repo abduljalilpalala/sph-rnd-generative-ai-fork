@@ -115,8 +115,8 @@ const RolesPage = () => {
     setCurrentPage(1); // Reset to first page
   };
 
-  const getStatusColor = (status: Role["status"]) => {
-    return status === "active" ? "green" : "gray";
+  const getStatusVariant = (status: Role["status"]) => {
+    return status === "active" ? "success" : "info";
   };
 
   return (
@@ -222,7 +222,7 @@ const RolesPage = () => {
                           <div className="text-sm text-gray-500">{role.permissions.length}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <Badge color={getStatusColor(role.status)}>
+                          <Badge variant={getStatusVariant(role.status)}>
                             {role.status.charAt(0).toUpperCase() + role.status.slice(1)}
                           </Badge>
                         </td>

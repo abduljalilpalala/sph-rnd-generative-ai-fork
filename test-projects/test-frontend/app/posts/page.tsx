@@ -115,16 +115,16 @@ const PostsPage = () => {
     setCurrentPage(1); // Reset to first page
   };
 
-  const getStatusColor = (status: Post["status"]) => {
+  const getStatusVariant = (status: Post["status"]) => {
     switch (status) {
       case "published":
-        return "green";
+        return "success";
       case "draft":
-        return "yellow";
+        return "warning";
       case "archived":
-        return "gray";
+        return "info";
       default:
-        return "gray";
+        return "info";
     }
   };
 
@@ -227,7 +227,7 @@ const PostsPage = () => {
                           <div className="text-sm text-gray-500">{post.category}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <Badge color={getStatusColor(post.status)}>
+                          <Badge variant={getStatusVariant(post.status)}>
                             {post.status.charAt(0).toUpperCase() + post.status.slice(1)}
                           </Badge>
                         </td>
