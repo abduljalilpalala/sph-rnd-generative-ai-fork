@@ -1,6 +1,7 @@
 "use client";
 
 import { Icon } from "@/components/atoms";
+import { usePathname } from "next/navigation";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -8,11 +9,20 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
+  const pathname = usePathname();
+
   const menuItems = [
-    { icon: "clock" as const, label: "My Daily Time Record", href: "/time-records", active: true },
-    { icon: "calendar" as const, label: "My Leaves", href: "/leaves", active: false },
-    { icon: "moonCrescent" as const, label: "My Overtime", href: "/overtime", active: false },
+    { icon: "home" as const, label: "Dashboard", href: "/", section: "dashboard" },
+    { icon: "clock" as const, label: "My Daily Time Record", href: "/time-records", section: "time-records" },
+    { icon: "calendar" as const, label: "My Leaves", href: "/leaves", section: "leaves" },
+    { icon: "moonCrescent" as const, label: "My Overtime", href: "/overtime", section: "overtime" },
+    { icon: "user" as const, label: "User Management", href: "/users", section: "users" },
   ];
+
+  const isActive = (href: string) => {
+    if (href === "/") return pathname === "/";
+    return pathname.startsWith(href);
+  };
 
   return (
     <>
@@ -46,8 +56,9 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                 <li key={item.label}>
                   <a
                     href={item.href}
+                    onClick={onClose}
                     className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                      item.active
+                      isActive(item.href)
                         ? "bg-blue-50 text-blue-600"
                         : "text-gray-700 hover:bg-gray-50"
                     }`}
