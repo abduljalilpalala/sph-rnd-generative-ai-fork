@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Icon } from "@/components/atoms";
 import { usePathname } from "next/navigation";
 
@@ -53,7 +54,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             <ul className="space-y-2">
               {menuItems.map((item) => (
                 <li key={item.label}>
-                  <a
+                  <Link
                     href={item.href}
                     onClick={onClose}
                     className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
@@ -64,7 +65,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                   >
                     <Icon name={item.icon} size={20} />
                     <span className="text-sm font-medium">{item.label}</span>
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
