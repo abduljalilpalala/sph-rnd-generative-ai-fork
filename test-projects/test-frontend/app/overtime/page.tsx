@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Sidebar, OvertimeTable } from "@/components/organisms";
+import { Sidebar, OvertimeTable, TopNavigation } from "@/components/organisms";
 import { Icon } from "@/components/atoms";
 
 const OvertimePage = () => {
@@ -138,19 +138,15 @@ const OvertimePage = () => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
+        <TopNavigation
+          onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          pageTitle="Overtime Management"
+        />
+
         <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 lg:p-6">
           <div className="mb-6">
-            <div className="flex items-center gap-3 mb-2">
-              <button
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                aria-label="Toggle menu"
-              >
-                <Icon name="menu" size={24} className="text-gray-600" />
-              </button>
-              <h1 className="text-2xl font-bold text-gray-900">Overtime Management</h1>
-            </div>
-            <p className="text-sm text-gray-600 mt-1 ml-14">
+            <h1 className="text-2xl font-bold text-gray-900">Overtime Management</h1>
+            <p className="text-sm text-gray-600 mt-1">
               Track and manage your overtime requests
             </p>
           </div>

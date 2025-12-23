@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Sidebar } from "@/components/organisms";
+import { Sidebar, TopNavigation } from "@/components/organisms";
 import { Icon, Badge } from "@/components/atoms";
 
 interface Role {
@@ -124,21 +124,17 @@ const RolesPage = () => {
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       <div className="flex-1 flex flex-col overflow-hidden">
+        <TopNavigation
+          onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          pageTitle="Role Management"
+        />
+
         <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 lg:p-6">
           <div className="max-w-7xl mx-auto">
             {/* Page Header */}
             <div className="mb-6">
-              <div className="flex items-center gap-3 mb-2">
-                <button
-                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                  aria-label="Toggle menu"
-                >
-                  <Icon name="menu" size={24} className="text-gray-600" />
-                </button>
-                <h1 className="text-2xl font-bold text-gray-800">Role Management</h1>
-              </div>
-              <p className="text-gray-600 ml-14">Manage user roles and permissions</p>
+              <h1 className="text-2xl font-bold text-gray-800">Role Management</h1>
+              <p className="text-gray-600">Manage user roles and permissions</p>
             </div>
 
             {/* Summary Cards */}

@@ -47,27 +47,12 @@ export const TopNavigation = ({ onMenuClick, pageTitle }: TopNavigationProps) =>
         <div className="flex items-center gap-4">
           <button
             onClick={onMenuClick}
-            className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             aria-label="Toggle menu"
           >
             <Icon name="menu" size={24} className="text-gray-600" />
           </button>
-          <div className="flex items-center gap-3">
-            <Icon name="menu" size={20} className="text-gray-600 hidden lg:block" />
-            <h1 className="text-lg font-semibold text-gray-800">{pageTitle}</h1>
-            <button className="p-1 hover:bg-gray-100 rounded-full transition-colors hidden sm:block">
-              <svg
-                className="w-5 h-5 text-gray-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <circle cx="12" cy="12" r="10" strokeWidth="2" />
-                <line x1="12" y1="16" x2="12" y2="12" strokeWidth="2" />
-                <line x1="12" y1="8" x2="12.01" y2="8" strokeWidth="2" />
-              </svg>
-            </button>
-          </div>
+          <h1 className="text-lg font-semibold text-gray-800">{pageTitle}</h1>
         </div>
 
         {/* Right Section */}

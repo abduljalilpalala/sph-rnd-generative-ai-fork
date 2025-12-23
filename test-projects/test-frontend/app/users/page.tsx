@@ -3,9 +3,9 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { useUsers } from "@/hooks/useUsers";
-import { UserList, Sidebar } from "@/components/organisms";
+import { UserList, Sidebar, TopNavigation } from "@/components/organisms";
 import { ConfirmModal } from "@/components/molecules";
-import { Alert, Icon } from "@/components/atoms";
+import { Alert } from "@/components/atoms";
 
 const UsersPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -50,24 +50,21 @@ const UsersPage = () => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Top Navigation */}
+        <TopNavigation
+          onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          pageTitle="User Management"
+        />
+
         <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 lg:p-6">
           <div className="max-w-6xl mx-auto">
             {/* Page Header */}
             <div className="flex justify-between items-center mb-6">
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                  aria-label="Toggle menu"
-                >
-                  <Icon name="menu" size={24} className="text-gray-600" />
-                </button>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-800">Users</h2>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Manage system users and their information
-                  </p>
-                </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800">Users</h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Manage system users and their information
+                </p>
               </div>
               <Link
                 href="/users/create"
