@@ -13,10 +13,9 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
   const menuItems = [
     { icon: "home" as const, label: "Dashboard", href: "/", section: "dashboard" },
-    { icon: "clock" as const, label: "My Daily Time Record", href: "/time-records", section: "time-records" },
-    { icon: "calendar" as const, label: "My Leaves", href: "/leaves", section: "leaves" },
-    { icon: "moonCrescent" as const, label: "My Overtime", href: "/overtime", section: "overtime" },
     { icon: "user" as const, label: "User Management", href: "/users", section: "users" },
+    { icon: "document" as const, label: "Post Management", href: "/posts", section: "posts" },
+    { icon: "shield" as const, label: "Role Management", href: "/roles", section: "roles" },
   ];
 
   const isActive = (href: string) => {
@@ -45,7 +44,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center gap-2">
               <span className="text-2xl font-bold text-orange-500">Sun*</span>
-              <span className="text-2xl font-bold text-gray-800">HRIS</span>
+              <span className="text-2xl font-bold text-gray-800">System</span>
             </div>
           </div>
 

@@ -25,35 +25,35 @@ const Home = () => {
             {/* Welcome Section */}
             <div className="mb-8">
               <h2 className="text-3xl font-bold text-gray-800 mb-2">
-                Welcome to <span className="text-orange-500">Sun*</span> HRIS
+                Welcome to <span className="text-orange-500">Sun*</span> Management System
               </h2>
               <p className="text-gray-600">
-                Human Resource Information System - Manage your time, leaves, and profile
+                Manage users, posts, roles, and system settings
               </p>
             </div>
 
             {/* Quick Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-              <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-orange-500">
+              <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-blue-500">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 mb-1">Today's Status</p>
-                    <p className="text-2xl font-bold text-gray-800">Present</p>
+                    <p className="text-sm text-gray-600 mb-1">Total Users</p>
+                    <p className="text-2xl font-bold text-gray-800">156</p>
                   </div>
-                  <div className="bg-orange-50 p-3 rounded-full">
-                    <Icon name="clock" size={24} className="text-orange-500" />
+                  <div className="bg-blue-50 p-3 rounded-full">
+                    <Icon name="user" size={24} className="text-blue-500" />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-blue-500">
+              <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-green-500">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 mb-1">Available Leaves</p>
-                    <p className="text-2xl font-bold text-gray-800">12 days</p>
+                    <p className="text-sm text-gray-600 mb-1">Total Posts</p>
+                    <p className="text-2xl font-bold text-gray-800">342</p>
                   </div>
-                  <div className="bg-blue-50 p-3 rounded-full">
-                    <Icon name="calendar" size={24} className="text-blue-500" />
+                  <div className="bg-green-50 p-3 rounded-full">
+                    <Icon name="document" size={24} className="text-green-500" />
                   </div>
                 </div>
               </div>
@@ -61,11 +61,11 @@ const Home = () => {
               <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-purple-500">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 mb-1">This Month</p>
-                    <p className="text-2xl font-bold text-gray-800">160 hrs</p>
+                    <p className="text-sm text-gray-600 mb-1">Active Roles</p>
+                    <p className="text-2xl font-bold text-gray-800">8</p>
                   </div>
                   <div className="bg-purple-50 p-3 rounded-full">
-                    <Icon name="moonCrescent" size={24} className="text-purple-500" />
+                    <Icon name="shield" size={24} className="text-purple-500" />
                   </div>
                 </div>
               </div>
@@ -75,25 +75,6 @@ const Home = () => {
             <div>
               <h3 className="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <Link
-                  href="/time-records"
-                  className="block p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-100"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="bg-orange-50 p-3 rounded-lg">
-                      <Icon name="clock" size={24} className="text-orange-500" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-800 mb-1">
-                        Daily Time Record
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        Track your attendance and work hours
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-
                 <Link
                   href="/users"
                   className="block p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-100"
@@ -113,21 +94,43 @@ const Home = () => {
                   </div>
                 </Link>
 
-                <div className="block p-6 bg-white rounded-lg shadow-sm border border-gray-100 opacity-60">
+                <Link
+                  href="/posts"
+                  className="block p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-100"
+                >
                   <div className="flex items-start gap-4">
-                    <div className="bg-purple-50 p-3 rounded-lg">
-                      <Icon name="calendar" size={24} className="text-purple-500" />
+                    <div className="bg-green-50 p-3 rounded-lg">
+                      <Icon name="document" size={24} className="text-green-500" />
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-gray-800 mb-1">
-                        My Leaves
+                        Post Management
                       </h3>
                       <p className="text-sm text-gray-600">
-                        Manage leave requests (Coming Soon)
+                        Create, edit, and manage posts
                       </p>
                     </div>
                   </div>
-                </div>
+                </Link>
+
+                <Link
+                  href="/roles"
+                  className="block p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-100"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="bg-purple-50 p-3 rounded-lg">
+                      <Icon name="shield" size={24} className="text-purple-500" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-800 mb-1">
+                        Role Management
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Manage user roles and permissions
+                      </p>
+                    </div>
+                  </div>
+                </Link>
               </div>
             </div>
           </div>
