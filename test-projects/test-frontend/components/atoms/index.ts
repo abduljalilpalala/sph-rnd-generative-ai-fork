@@ -1,10 +1,14 @@
 export { Alert } from "@/components/atoms/Alert";
 export type { AlertVariant } from "@/components/atoms/Alert";
 
+export { Badge } from "@/components/atoms/Badge";
+
 export { Button } from "@/components/atoms/Button";
 export type { ButtonVariant, ButtonSize } from "@/components/atoms/Button";
 
 export { Card } from "@/components/atoms/Card";
+
+export { Icon } from "@/components/atoms/Icon";
 
 export { Input } from "@/components/atoms/Input";
 
