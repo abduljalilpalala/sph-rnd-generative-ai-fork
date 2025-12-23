@@ -1,13 +1,15 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { userApi } from "@/lib/services/userApi";
+import { postApi } from "@/lib/services/postApi";
 
 export const makeStore = () => {
   return configureStore({
     reducer: {
       [userApi.reducerPath]: userApi.reducer,
+      [postApi.reducerPath]: postApi.reducer,
     },
     middleware: (getDefaultMiddleware) =>
-      getDefaultMiddleware().concat(userApi.middleware),
+      getDefaultMiddleware().concat(userApi.middleware, postApi.middleware),
   });
 };
 
