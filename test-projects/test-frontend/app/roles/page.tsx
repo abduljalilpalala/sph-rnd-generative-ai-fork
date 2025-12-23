@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Sidebar, TopNavigation } from "@/components/organisms";
+import { useState, useMemo } from "react";
+import { Sidebar } from "@/components/organisms";
 import { Icon, Badge } from "@/components/atoms";
 
 interface Role {
@@ -16,6 +16,8 @@ interface Role {
 
 const RolesPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Mock data
   const roles: Role[] = [
@@ -93,6 +95,26 @@ const RolesPage = () => {
     },
   ];
 
+  // Pagination logic
+  const paginatedRoles = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return roles.slice(startIndex, endIndex);
+  }, [roles, currentPage, itemsPerPage]);
+
+  const totalPages = useMemo(() => {
+    return Math.ceil(roles.length / itemsPerPage);
+  }, [roles, itemsPerPage]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (value: number) => {
+    setItemsPerPage(value);
+    setCurrentPage(1); // Reset to first page
+  };
+
   const getStatusColor = (status: Role["status"]) => {
     return status === "active" ? "green" : "gray";
   };
@@ -102,17 +124,21 @@ const RolesPage = () => {
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <TopNavigation
-          onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          pageTitle="Role Management"
-        />
-
         <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 lg:p-6">
           <div className="max-w-7xl mx-auto">
             {/* Page Header */}
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-800 mb-2">Role Management</h1>
-              <p className="text-gray-600">Manage user roles and permissions</p>
+              <div className="flex items-center gap-3 mb-2">
+                <button
+                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  aria-label="Toggle menu"
+                >
+                  <Icon name="menu" size={24} className="text-gray-600" />
+                </button>
+                <h1 className="text-2xl font-bold text-gray-800">Role Management</h1>
+              </div>
+              <p className="text-gray-600 ml-14">Manage user roles and permissions</p>
             </div>
 
             {/* Summary Cards */}
@@ -182,7 +208,7 @@ const RolesPage = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {roles.map((role) => (
+                    {paginatedRoles.map((role) => (
                       <tr key={role.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-2">
@@ -215,6 +241,45 @@ const RolesPage = () => {
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Pagination Controls */}
+              <div className="mt-4 p-4 flex justify-between items-center border-t border-gray-200">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">Show</span>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                    className="border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value={10}>10</option>
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                  </select>
+                  <span className="text-sm text-gray-600">
+                    entries (Total: {roles.length})
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-sm text-gray-600">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
             </div>
           </div>

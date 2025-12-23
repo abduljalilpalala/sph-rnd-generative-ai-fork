@@ -4,7 +4,8 @@ import { useState, use } from "react";
 import Link from "next/link";
 import { useUser } from "@/hooks/useUser";
 import { useUpdateUser } from "@/hooks/useUpdateUser";
-import { UserForm, Sidebar, TopNavigation } from "@/components/organisms";
+import { UserForm, Sidebar } from "@/components/organisms";
+import { Icon } from "@/components/atoms";
 
 const EditUserPage = ({ params }: { params: Promise<{ id: string }> }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -20,11 +21,6 @@ const EditUserPage = ({ params }: { params: Promise<{ id: string }> }) => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <TopNavigation
-          onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          pageTitle="Edit User"
-        />
-
         <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 lg:p-6">
           <div className="max-w-2xl mx-auto">
             {/* Loading State */}
@@ -55,11 +51,20 @@ const EditUserPage = ({ params }: { params: Promise<{ id: string }> }) => {
             {!isLoadingUser && user && (
               <>
                 <div className="flex justify-between items-center mb-6">
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-800">Edit User</h2>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Update user information
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                      aria-label="Toggle menu"
+                    >
+                      <Icon name="menu" size={24} className="text-gray-600" />
+                    </button>
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-800">Edit User</h2>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Update user information
+                      </p>
+                    </div>
                   </div>
                   <Link
                     href={`/users/${userId}`}

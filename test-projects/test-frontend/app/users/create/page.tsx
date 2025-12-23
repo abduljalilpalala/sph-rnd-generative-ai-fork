@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useCreateUser } from "@/hooks/useCreateUser";
-import { UserForm, Sidebar, TopNavigation } from "@/components/organisms";
+import { UserForm, Sidebar } from "@/components/organisms";
+import { Icon } from "@/components/atoms";
 
 const CreateUserPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -16,20 +17,24 @@ const CreateUserPage = () => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <TopNavigation
-          onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          pageTitle="Create User"
-        />
-
         <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 lg:p-6">
           <div className="max-w-2xl mx-auto">
             {/* Page Header */}
             <div className="flex justify-between items-center mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-800">Create User</h2>
-                <p className="text-sm text-gray-600 mt-1">
-                  Add a new user to the system
-                </p>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  aria-label="Toggle menu"
+                >
+                  <Icon name="menu" size={24} className="text-gray-600" />
+                </button>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-800">Create User</h2>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Add a new user to the system
+                  </p>
+                </div>
               </div>
               <Link
                 href="/users"

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Sidebar, TopNavigation } from "@/components/organisms";
+import { Sidebar } from "@/components/organisms";
 import { Icon } from "@/components/atoms";
 
 const Home = () => {
@@ -15,19 +15,23 @@ const Home = () => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <TopNavigation
-          onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          pageTitle="Dashboard"
-        />
-
         <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 lg:p-6">
           <div className="max-w-6xl mx-auto">
             {/* Welcome Section */}
             <div className="mb-8">
-              <h2 className="text-3xl font-bold text-gray-800 mb-2">
-                Welcome to <span className="text-orange-500">Sun*</span> Management System
-              </h2>
-              <p className="text-gray-600">
+              <div className="flex items-center gap-3 mb-2">
+                <button
+                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  aria-label="Toggle menu"
+                >
+                  <Icon name="menu" size={24} className="text-gray-600" />
+                </button>
+                <h2 className="text-3xl font-bold text-gray-800">
+                  Welcome to <span className="text-orange-500">Sun*</span> Management System
+                </h2>
+              </div>
+              <p className="text-gray-600 ml-14">
                 Manage users, posts, roles, and system settings
               </p>
             </div>
