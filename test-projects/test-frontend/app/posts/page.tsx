@@ -1,109 +1,37 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Sidebar, TopNavigation } from "@/components/organisms";
-import { Icon, Badge } from "@/components/atoms";
-
-interface Post {
-  id: number;
-  title: string;
-  author: string;
-  category: string;
-  status: "published" | "draft" | "archived";
-  publishedDate: string;
-  views: number;
-}
+import Link from "next/link";
+import { usePosts } from "@/hooks/usePosts";
+import { PostList, Sidebar, TopNavigation } from "@/components/organisms";
+import { ConfirmModal } from "@/components/molecules";
+import { Alert } from "@/components/atoms";
 
 const PostsPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-
-  // Mock data
-  const posts: Post[] = [
-    {
-      id: 1,
-      title: "Getting Started with Next.js 15",
-      author: "John Doe",
-      category: "Technology",
-      status: "published",
-      publishedDate: "2024-01-15",
-      views: 1234,
-    },
-    {
-      id: 2,
-      title: "Best Practices for React Development",
-      author: "Jane Smith",
-      category: "Development",
-      status: "published",
-      publishedDate: "2024-01-14",
-      views: 892,
-    },
-    {
-      id: 3,
-      title: "Introduction to TypeScript",
-      author: "Bob Wilson",
-      category: "Programming",
-      status: "draft",
-      publishedDate: "2024-01-13",
-      views: 0,
-    },
-    {
-      id: 4,
-      title: "Tailwind CSS Tips and Tricks",
-      author: "Alice Johnson",
-      category: "Design",
-      status: "published",
-      publishedDate: "2024-01-12",
-      views: 654,
-    },
-    {
-      id: 5,
-      title: "Understanding Redux Toolkit",
-      author: "Charlie Brown",
-      category: "Development",
-      status: "archived",
-      publishedDate: "2023-12-20",
-      views: 2341,
-    },
-    {
-      id: 6,
-      title: "Building Responsive Layouts",
-      author: "Diana Prince",
-      category: "Design",
-      status: "published",
-      publishedDate: "2024-01-10",
-      views: 445,
-    },
-    {
-      id: 7,
-      title: "API Design Best Practices",
-      author: "Evan Davis",
-      category: "Backend",
-      status: "draft",
-      publishedDate: "2024-01-09",
-      views: 0,
-    },
-    {
-      id: 8,
-      title: "Testing React Components",
-      author: "Fiona Green",
-      category: "Testing",
-      status: "published",
-      publishedDate: "2024-01-08",
-      views: 789,
-    },
-  ];
+  const {
+    posts,
+    isLoading,
+    error,
+    openDeleteModal,
+    confirmDelete,
+    closeDeleteModal,
+    deleteModalOpen,
+    deleteError,
+    isDeleting,
+  } = usePosts();
 
   // Pagination logic
   const paginatedPosts = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    return posts.slice(startIndex, endIndex);
+    return posts?.slice(startIndex, endIndex);
   }, [posts, currentPage, itemsPerPage]);
 
   const totalPages = useMemo(() => {
-    return Math.ceil(posts.length / itemsPerPage);
+    return Math.ceil((posts?.length || 0) / itemsPerPage);
   }, [posts, itemsPerPage]);
 
   const handlePageChange = (page: number) => {
@@ -115,180 +43,121 @@ const PostsPage = () => {
     setCurrentPage(1); // Reset to first page
   };
 
-  const getStatusVariant = (status: Post["status"]) => {
-    switch (status) {
-      case "published":
-        return "success";
-      case "draft":
-        return "warning";
-      case "archived":
-        return "info";
-      default:
-        return "info";
-    }
-  };
-
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
+      {/* Sidebar */}
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
+      {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Top Navigation */}
         <TopNavigation
           onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
           pageTitle="Post Management"
         />
 
         <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 lg:p-6">
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-6xl mx-auto">
             {/* Page Header */}
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-800">Post Management</h1>
-              <p className="text-gray-600">Create, edit, and manage all posts</p>
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800">Posts</h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Manage posts and their content
+                </p>
+              </div>
+              <Link
+                href="/posts/create"
+                className="bg-green-500 text-white hover:bg-green-600 font-bold rounded transition py-2 px-4"
+              >
+                Create Post
+              </Link>
             </div>
 
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-green-500">
-                <p className="text-sm text-gray-600 mb-1">Published</p>
-                <p className="text-2xl font-bold text-gray-800">
-                  {posts.filter((p) => p.status === "published").length}
-                </p>
-              </div>
-
-              <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-yellow-500">
-                <p className="text-sm text-gray-600 mb-1">Drafts</p>
-                <p className="text-2xl font-bold text-gray-800">
-                  {posts.filter((p) => p.status === "draft").length}
-                </p>
-              </div>
-
-              <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-gray-500">
-                <p className="text-sm text-gray-600 mb-1">Archived</p>
-                <p className="text-2xl font-bold text-gray-800">
-                  {posts.filter((p) => p.status === "archived").length}
-                </p>
-              </div>
-
-              <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-blue-500">
-                <p className="text-sm text-gray-600 mb-1">Total Views</p>
-                <p className="text-2xl font-bold text-gray-800">
-                  {posts.reduce((sum, p) => sum + p.views, 0).toLocaleString()}
-                </p>
-              </div>
-            </div>
-
-            {/* Posts Table */}
-            <div className="bg-white rounded-lg shadow-sm">
-              <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-                <h2 className="text-lg font-semibold text-gray-800">All Posts</h2>
-                <button className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2">
-                  <Icon name="document" size={18} />
-                  Create Post
-                </button>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Title
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Author
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Category
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Published Date
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Views
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {paginatedPosts.map((post) => (
-                      <tr key={post.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">{post.title}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-500">{post.author}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-500">{post.category}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <Badge variant={getStatusVariant(post.status)}>
-                            {post.status.charAt(0).toUpperCase() + post.status.slice(1)}
-                          </Badge>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-500">{post.publishedDate}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-500">{post.views.toLocaleString()}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <button className="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
-                          <button className="text-red-600 hover:text-red-900">Delete</button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Pagination Controls */}
-              <div className="mt-4 p-4 flex justify-between items-center border-t border-gray-200">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">Show</span>
-                  <select
-                    value={itemsPerPage}
-                    onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
-                    className="border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value={10}>10</option>
-                    <option value={25}>25</option>
-                    <option value={50}>50</option>
-                  </select>
-                  <span className="text-sm text-gray-600">
-                    entries (Total: {posts.length})
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Previous
-                  </button>
-                  <span className="text-sm text-gray-600">
-                    Page {currentPage} of {totalPages}
-                  </span>
-                  <button
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Next
-                  </button>
+            {/* Content */}
+            {isLoading && (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  <p className="mt-4 text-gray-600">Loading posts...</p>
                 </div>
               </div>
-            </div>
+            )}
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+                <p className="text-red-800 font-medium">Error loading posts</p>
+                <p className="text-red-600 text-sm mt-1">Please try again later</p>
+              </div>
+            )}
+
+            {!isLoading && !error && (
+              <>
+                <PostList posts={paginatedPosts} onDelete={openDeleteModal} />
+
+                {/* Pagination Controls */}
+                {posts && posts.length > 0 && (
+                  <div className="mt-4 flex justify-between items-center bg-white px-4 py-3 rounded-lg shadow-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-600">Show</span>
+                      <select
+                        value={itemsPerPage}
+                        onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                        className="border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value={10}>10</option>
+                        <option value={25}>25</option>
+                        <option value={50}>50</option>
+                      </select>
+                      <span className="text-sm text-gray-600">
+                        entries (Total: {posts.length})
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Previous
+                      </button>
+                      <span className="text-sm text-gray-600">
+                        Page {currentPage} of {totalPages}
+                      </span>
+                      <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </main>
       </div>
+
+      {/* Modals */}
+      <ConfirmModal
+        isOpen={deleteModalOpen}
+        title="Delete Post"
+        message="Are you sure you want to delete this post? This action cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onConfirm={confirmDelete}
+        onCancel={closeDeleteModal}
+        isLoading={isDeleting}
+      />
+
+      {deleteError && (
+        <div className="fixed bottom-4 right-4 max-w-md z-50">
+          <Alert variant="error">{deleteError}</Alert>
+        </div>
+      )}
     </div>
   );
 };
