@@ -4,12 +4,14 @@ import { useState } from "react";
 import Link from "next/link";
 import { Sidebar, TopNavigation } from "@/components/organisms";
 import { Icon } from "@/components/atoms";
+import { ProtectedRoute } from "@/components/templates";
 
 const Home = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
+    <ProtectedRoute>
+      <div className="flex h-screen overflow-hidden bg-gray-50">
       {/* Sidebar */}
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
@@ -138,6 +140,7 @@ const Home = () => {
         </main>
       </div>
     </div>
+    </ProtectedRoute>
   );
 };
 
