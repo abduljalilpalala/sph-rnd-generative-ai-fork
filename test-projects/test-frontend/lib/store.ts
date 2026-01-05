@@ -1,13 +1,21 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { userApi } from "@/lib/services/userApi";
+import { projectApi } from "@/lib/services/projectApi";
+import { taskApi } from "@/lib/services/taskApi";
 
 export const makeStore = () => {
   return configureStore({
     reducer: {
       [userApi.reducerPath]: userApi.reducer,
+      [projectApi.reducerPath]: projectApi.reducer,
+      [taskApi.reducerPath]: taskApi.reducer,
     },
     middleware: (getDefaultMiddleware) =>
-      getDefaultMiddleware().concat(userApi.middleware),
+      getDefaultMiddleware().concat(
+        userApi.middleware,
+        projectApi.middleware,
+        taskApi.middleware
+      ),
   });
 };
 
