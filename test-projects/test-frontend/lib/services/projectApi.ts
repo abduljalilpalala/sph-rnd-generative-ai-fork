@@ -65,7 +65,7 @@ export const projectApi = createApi({
       query: (userId) => ({
         url: "/projects",
         method: "GET",
-        body: { userId },
+        params: { userId },
       }),
       providesTags: ["Project"],
     }),
@@ -73,7 +73,7 @@ export const projectApi = createApi({
       query: ({ userId, projectId }) => ({
         url: `/projects/${projectId}`,
         method: "GET",
-        body: { userId },
+        params: { userId },
       }),
       providesTags: (result, error, { projectId }) => [
         { type: "Project", id: projectId },
@@ -104,7 +104,7 @@ export const projectApi = createApi({
       query: ({ userId, projectId }) => ({
         url: `/projects/${projectId}`,
         method: "DELETE",
-        body: { userId },
+        params: { userId },
       }),
       invalidatesTags: ["Project"],
     }),
@@ -129,7 +129,7 @@ export const projectApi = createApi({
       query: ({ userId, projectId }) => ({
         url: `/projects/${projectId}/members`,
         method: "GET",
-        body: { userId },
+        params: { userId },
       }),
       providesTags: ["ProjectMember"],
     }),

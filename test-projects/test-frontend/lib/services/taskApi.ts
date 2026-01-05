@@ -65,7 +65,7 @@ export const taskApi = createApi({
       query: ({ userId, projectId }) => ({
         url: `/projects/${projectId}/tasks`,
         method: "GET",
-        body: { userId },
+        params: { userId },
       }),
       providesTags: ["Task"],
     }),
@@ -92,7 +92,7 @@ export const taskApi = createApi({
       query: ({ userId, taskId }) => ({
         url: `/tasks/${taskId}`,
         method: "DELETE",
-        body: { userId },
+        params: { userId },
       }),
       invalidatesTags: ["Task"],
     }),
