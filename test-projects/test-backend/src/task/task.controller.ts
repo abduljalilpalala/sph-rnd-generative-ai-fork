@@ -5,6 +5,7 @@ import {
   Patch,
   Delete,
   Body,
+  Query,
   Param,
   ParseIntPipe,
   HttpCode,
@@ -31,9 +32,9 @@ export class TaskController {
   @Get('projects/:projectId/tasks')
   findAll(
     @Param('projectId', ParseIntPipe) projectId: number,
-    @Body() body: { userId: number },
+    @Query('userId', ParseIntPipe) userId: number,
   ) {
-    return this.taskService.findAll(body.userId, projectId);
+    return this.taskService.findAll(userId, projectId);
   }
 
   @Patch('tasks/:id')
@@ -47,8 +48,8 @@ export class TaskController {
 
   @Delete('tasks/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseIntPipe) id: number, @Body() body: { userId: number }) {
-    return this.taskService.remove(body.userId, id);
+  remove(@Param('id', ParseIntPipe) id: number, @Query('userId', ParseIntPipe) userId: number) {
+    return this.taskService.remove(userId, id);
   }
 
   @Post('tasks/:id/assign')

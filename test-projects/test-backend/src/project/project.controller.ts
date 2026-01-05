@@ -5,6 +5,7 @@ import {
   Patch,
   Delete,
   Body,
+  Query,
   Param,
   ParseIntPipe,
   HttpCode,
@@ -26,13 +27,13 @@ export class ProjectController {
   }
 
   @Get()
-  findAll(@Body() body: { userId: number }) {
-    return this.projectService.findAll(body.userId);
+  findAll(@Query('userId', ParseIntPipe) userId: number) {
+    return this.projectService.findAll(userId);
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number, @Body() body: { userId: number }) {
-    return this.projectService.findOne(body.userId, id);
+  findOne(@Param('id', ParseIntPipe) id: number, @Query('userId', ParseIntPipe) userId: number) {
+    return this.projectService.findOne(userId, id);
   }
 
   @Patch(':id')
@@ -46,8 +47,8 @@ export class ProjectController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseIntPipe) id: number, @Body() body: { userId: number }) {
-    return this.projectService.remove(body.userId, id);
+  remove(@Param('id', ParseIntPipe) id: number, @Query('userId', ParseIntPipe) userId: number) {
+    return this.projectService.remove(userId, id);
   }
 
   @Post(':id/members')
@@ -60,7 +61,7 @@ export class ProjectController {
   }
 
   @Get(':id/members')
-  getMembers(@Param('id', ParseIntPipe) id: number, @Body() body: { userId: number }) {
-    return this.projectService.getMembers(body.userId, id);
+  getMembers(@Param('id', ParseIntPipe) id: number, @Query('userId', ParseIntPipe) userId: number) {
+    return this.projectService.getMembers(userId, id);
   }
 }
