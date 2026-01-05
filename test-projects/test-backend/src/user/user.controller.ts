@@ -1,7 +1,18 @@
-import { Controller, Get, Post, Body, Param, Delete, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Put, Patch, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
+import { UserRole } from '@prisma/client';
+
+interface UserPayload {
+  id: number;
+  email: string;
+  role: string;
+}
 
 @Controller('users')
+@UseGuards(RolesGuard)
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
@@ -28,5 +39,15 @@ export class UserController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.userService.remove(+id);
+  }
+
+  @Patch(':id/role')
+  @Roles(UserRole.ADMIN)
+  updateRole(
+    @Param('id') id: string,
+    @Body() body: { role: UserRole },
+    @CurrentUser() user: UserPayload,
+  ) {
+    return this.userService.updateRole(+id, body.role, user.role as UserRole);
   }
 }

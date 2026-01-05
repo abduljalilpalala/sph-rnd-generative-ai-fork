@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { User } from '@prisma/client';
+import { User, UserRole } from '@prisma/client';
 
 @Injectable()
 export class UserService {
@@ -24,5 +24,21 @@ export class UserService {
 
   async remove(id: number): Promise<User> {
     return this.prisma.user.delete({ where: { id } });
+  }
+
+  async updateRole(
+    id: number,
+    role: UserRole,
+    requestorRole: UserRole,
+  ): Promise<User> {
+    // Only admins can assign or remove roles
+    if (requestorRole !== UserRole.ADMIN) {
+      throw new ForbiddenException('Only admins can assign or remove roles');
+    }
+
+    return this.prisma.user.update({
+      where: { id },
+      data: { role },
+    });
   }
 }

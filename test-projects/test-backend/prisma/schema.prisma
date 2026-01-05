@@ -13,10 +13,63 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum UserRole {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+enum ReportStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               Int              @id @default(autoincrement())
+  email            String           @unique
+  name             String?
+  role             UserRole         @default(USER)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  posts            Post[]
+  reports          Report[]
+  moderationLogs   ModerationLog[]
+}
+
+model Post {
+  id             Int              @id @default(autoincrement())
+  title          String
+  content        String
+  authorId       Int
+  author         User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  reports        Report[]
+  moderationLogs ModerationLog[]
+}
+
+model Report {
+  id          Int          @id @default(autoincrement())
+  reason      String
+  postId      Int
+  post        Post         @relation(fields: [postId], references: [id], onDelete: Cascade)
+  reporterId  Int
+  reporter    User         @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+  status      ReportStatus @default(PENDING)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@unique([postId, reporterId])
+}
+
+model ModerationLog {
+  id          Int      @id @default(autoincrement())
+  action      String
+  postId      Int
+  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  moderatorId Int
+  moderator   User     @relation(fields: [moderatorId], references: [id], onDelete: Cascade)
+  details     String?
+  createdAt   DateTime @default(now())
 }
