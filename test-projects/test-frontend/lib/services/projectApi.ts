@@ -50,13 +50,8 @@ export interface UpdateProjectDto {
 }
 
 export interface AddMemberDto {
-  userId: number;
+  memberUserId: number;
   role: ProjectRole;
-}
-
-export interface AddMemberRequest {
-  userId: number;
-  data: Omit<AddMemberDto, "userId">;
 }
 
 export const projectApi = createApi({
@@ -115,12 +110,12 @@ export const projectApi = createApi({
     }),
     addMember: builder.mutation<
       ProjectMember,
-      { projectId: number; data: AddMemberRequest }
+      { projectId: number; userId: number; data: AddMemberDto }
     >({
-      query: ({ projectId, data }) => ({
+      query: ({ projectId, userId, data }) => ({
         url: `/projects/${projectId}/members`,
         method: "POST",
-        body: { userId: data.userId, ...data.data },
+        body: { userId, ...data },
       }),
       invalidatesTags: (result, error, { projectId }) => [
         { type: "Project", id: projectId },

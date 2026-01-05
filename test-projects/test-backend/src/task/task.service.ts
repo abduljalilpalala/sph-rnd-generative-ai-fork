@@ -118,12 +118,12 @@ export class TaskService {
     }
 
     await this.verifyProjectMembership(userId, task.projectId);
-    await this.verifyProjectMembership(data.userId, task.projectId);
+    await this.verifyProjectMembership(data.assigneeUserId, task.projectId);
 
     const existingAssignment = await this.prisma.taskAssignment.findFirst({
       where: {
         taskId: taskId,
-        userId: data.userId,
+        userId: data.assigneeUserId,
       },
     });
 
@@ -134,7 +134,7 @@ export class TaskService {
     return this.prisma.taskAssignment.create({
       data: {
         taskId: taskId,
-        userId: data.userId,
+        userId: data.assigneeUserId,
       },
       include: {
         user: true,

@@ -3,7 +3,7 @@ import { ProjectRole } from '@prisma/client';
 
 export class AddMemberDto {
   @IsInt()
-  userId: number;
+  memberUserId: number;
 
   @IsEnum(ProjectRole)
   role: ProjectRole;

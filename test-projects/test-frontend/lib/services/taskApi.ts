@@ -51,7 +51,7 @@ export interface UpdateTaskDto {
 }
 
 export interface AssignTaskDto {
-  userId: number;
+  assigneeUserId: number;
 }
 
 export const taskApi = createApi({
@@ -98,12 +98,12 @@ export const taskApi = createApi({
     }),
     assignTask: builder.mutation<
       TaskAssignment,
-      { taskId: number; data: AssignTaskDto }
+      { taskId: number; userId: number; data: AssignTaskDto }
     >({
-      query: ({ taskId, data }) => ({
+      query: ({ taskId, userId, data }) => ({
         url: `/tasks/${taskId}/assign`,
         method: "POST",
-        body: data,
+        body: { userId, ...data },
       }),
       invalidatesTags: ["Task"],
     }),

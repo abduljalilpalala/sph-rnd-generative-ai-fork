@@ -140,7 +140,7 @@ export class ProjectService {
 
     const existingMember = await this.prisma.projectMember.findFirst({
       where: {
-        userId: data.userId,
+        userId: data.memberUserId,
         projectId: projectId,
       },
     });
@@ -151,7 +151,7 @@ export class ProjectService {
 
     return this.prisma.projectMember.create({
       data: {
-        userId: data.userId,
+        userId: data.memberUserId,
         projectId: projectId,
         role: data.role,
       },

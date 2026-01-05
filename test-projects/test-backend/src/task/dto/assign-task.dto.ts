@@ -2,5 +2,5 @@ import { IsInt } from 'class-validator';
 
 export class AssignTaskDto {
   @IsInt()
-  userId: number;
+  assigneeUserId: number;
 }

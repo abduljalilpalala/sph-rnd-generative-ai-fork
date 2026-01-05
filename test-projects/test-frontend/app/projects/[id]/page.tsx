@@ -61,12 +61,10 @@ export default function ProjectDetailPage() {
   const handleAddMember = async (data: { userId: number; role: ProjectRole }) => {
     await addMember({
       projectId,
+      userId: MOCK_USER_ID,
       data: {
-        userId: MOCK_USER_ID,
-        data: {
-          userId: data.userId,
-          role: data.role,
-        },
+        memberUserId: data.userId,
+        role: data.role,
       },
     }).unwrap();
     setShowAddMemberModal(false);
@@ -110,13 +108,13 @@ export default function ProjectDetailPage() {
     setTaskToDelete(null);
   };
 
-  const handleAssignTask = async (userId: number) => {
+  const handleAssignTask = async (assigneeUserId: number) => {
     if (taskToAssign === null) return;
     await assignTask({
       taskId: taskToAssign,
+      userId: MOCK_USER_ID,
       data: {
-        userId: MOCK_USER_ID,
-        userId,
+        assigneeUserId,
       },
     }).unwrap();
     setShowAssignTaskModal(false);
