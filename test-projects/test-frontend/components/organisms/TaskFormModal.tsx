@@ -1,4 +1,4 @@
-import { useState, FormEvent } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import { Modal } from "@/components/molecules/Modal";
 import { Button, Input, Label } from "@/components/atoms";
 import { Task, TaskStatus } from "@/lib/services/taskApi";
@@ -22,6 +22,20 @@ export const TaskFormModal = ({
   const [description, setDescription] = useState(task?.description || "");
   const [status, setStatus] = useState<TaskStatus>(task?.status || TaskStatus.TODO);
   const [error, setError] = useState<string | null>(null);
+
+  // Update form fields when task prop changes (for edit mode)
+  useEffect(() => {
+    if (task) {
+      setTitle(task.title);
+      setDescription(task.description || "");
+      setStatus(task.status);
+    } else {
+      // Reset to empty when creating new task
+      setTitle("");
+      setDescription("");
+      setStatus(TaskStatus.TODO);
+    }
+  }, [task]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
