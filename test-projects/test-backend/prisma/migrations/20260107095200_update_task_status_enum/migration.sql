@@ -12,16 +12,19 @@ END $$;
 
 CREATE TYPE "public"."TaskStatus_new" AS ENUM ('OPEN', 'IN_PROGRESS', 'FOR_REVIEW', 'CLOSED');
 
--- Step 2: Update existing data before altering the column
--- Convert TODO to OPEN and DONE to CLOSED
-UPDATE "public"."Task" SET "status" = 'OPEN'::text WHERE "status"::text = 'TODO';
-UPDATE "public"."Task" SET "status" = 'CLOSED'::text WHERE "status"::text = 'DONE';
-
--- Step 3: Alter the column to use the new enum type
+-- Step 2: Convert the column to text temporarily to allow data updates
 ALTER TABLE "public"."Task" ALTER COLUMN "status" DROP DEFAULT;
-ALTER TABLE "public"."Task" ALTER COLUMN "status" TYPE "public"."TaskStatus_new" USING ("status"::text::"public"."TaskStatus_new");
+ALTER TABLE "public"."Task" ALTER COLUMN "status" TYPE text USING ("status"::text);
+
+-- Step 3: Update existing data
+-- Convert TODO to OPEN and DONE to CLOSED
+UPDATE "public"."Task" SET "status" = 'OPEN' WHERE "status" = 'TODO';
+UPDATE "public"."Task" SET "status" = 'CLOSED' WHERE "status" = 'DONE';
+
+-- Step 4: Alter the column to use the new enum type
+ALTER TABLE "public"."Task" ALTER COLUMN "status" TYPE "public"."TaskStatus_new" USING ("status"::"public"."TaskStatus_new");
 ALTER TABLE "public"."Task" ALTER COLUMN "status" SET DEFAULT 'OPEN'::"public"."TaskStatus_new";
 
--- Step 4: Drop the old enum and rename the new one
+-- Step 5: Drop the old enum and rename the new one
 DROP TYPE "public"."TaskStatus";
 ALTER TYPE "public"."TaskStatus_new" RENAME TO "TaskStatus";
