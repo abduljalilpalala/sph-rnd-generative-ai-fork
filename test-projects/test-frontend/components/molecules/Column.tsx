@@ -57,7 +57,7 @@ export const Column = ({ columnId, title, tasks, onEdit, onDelete, onAssign }: C
         </div>
 
         {/* Droppable Area */}
-        <Droppable droppableId={columnId} isDropDisabled={false}>
+        <Droppable droppableId={columnId} isDropDisabled={false} isCombineEnabled={false}>
           {(provided, snapshot) => (
             <div
               ref={provided.innerRef}

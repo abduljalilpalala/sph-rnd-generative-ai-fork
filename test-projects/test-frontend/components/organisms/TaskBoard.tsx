@@ -18,11 +18,11 @@ interface BoardData {
     [key: string]: {
       id: string;
       title: string;
-      taskIds: number[];
+      taskIds: string[];
     };
   };
   tasks: {
-    [key: number]: Task;
+    [key: string]: Task;
   };
 }
 
@@ -31,34 +31,35 @@ const initializeBoardData = (tasks: Task[] | undefined): BoardData => {
     [TaskStatus.OPEN]: {
       id: TaskStatus.OPEN,
       title: "Open",
-      taskIds: [] as number[],
+      taskIds: [] as string[],
     },
     [TaskStatus.IN_PROGRESS]: {
       id: TaskStatus.IN_PROGRESS,
       title: "In-Progress",
-      taskIds: [] as number[],
+      taskIds: [] as string[],
     },
     [TaskStatus.FOR_REVIEW]: {
       id: TaskStatus.FOR_REVIEW,
       title: "For Review",
-      taskIds: [] as number[],
+      taskIds: [] as string[],
     },
     [TaskStatus.CLOSED]: {
       id: TaskStatus.CLOSED,
       title: "Closed",
-      taskIds: [] as number[],
+      taskIds: [] as string[],
     },
   };
 
-  const tasksMap: { [key: number]: Task } = {};
+  const tasksMap: { [key: string]: Task } = {};
 
   if (tasks) {
     // Sort tasks by order field first
     const sortedTasks = [...tasks].sort((a, b) => a.order - b.order);
 
     sortedTasks.forEach((task) => {
-      tasksMap[task.id] = task;
-      columns[task.status].taskIds.push(task.id);
+      const taskIdStr = task.id.toString();
+      tasksMap[taskIdStr] = task;
+      columns[task.status].taskIds.push(taskIdStr);
     });
   }
 
@@ -99,13 +100,14 @@ export const TaskBoard = ({
 
     const sourceColumn = boardData.columns[source.droppableId];
     const destinationColumn = boardData.columns[destination.droppableId];
-    const taskId = parseInt(draggableId);
+    const taskIdStr = draggableId; // Already a string from Draggable
+    const taskId = parseInt(draggableId); // Convert to number for API calls
 
     // Moving within the same column
     if (source.droppableId === destination.droppableId) {
       const newTaskIds = Array.from(sourceColumn.taskIds);
       newTaskIds.splice(source.index, 1);
-      newTaskIds.splice(destination.index, 0, taskId);
+      newTaskIds.splice(destination.index, 0, taskIdStr);
 
       const newColumn = {
         ...sourceColumn,
@@ -124,7 +126,7 @@ export const TaskBoard = ({
 
       // Calculate new order values for all tasks in the column
       const taskOrders = newTaskIds.map((id, index) => ({
-        taskId: id,
+        taskId: parseInt(id),
         order: index,
       }));
 
@@ -142,7 +144,7 @@ export const TaskBoard = ({
       };
 
       const destinationTaskIds = Array.from(destinationColumn.taskIds);
-      destinationTaskIds.splice(destination.index, 0, taskId);
+      destinationTaskIds.splice(destination.index, 0, taskIdStr);
       const newDestinationColumn = {
         ...destinationColumn,
         taskIds: destinationTaskIds,
@@ -166,12 +168,12 @@ export const TaskBoard = ({
 
       // Calculate new order values for tasks in both columns
       const sourceTaskOrders = sourceTaskIds.map((id, index) => ({
-        taskId: id,
+        taskId: parseInt(id),
         order: index,
       }));
 
       const destinationTaskOrders = destinationTaskIds.map((id, index) => ({
-        taskId: id,
+        taskId: parseInt(id),
         order: index,
       }));
 
