@@ -1,4 +1,5 @@
-import { Droppable } from "react-beautiful-dnd";
+import { useDroppable } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { Card } from "@/components/atoms";
 import { TaskCard } from "@/components/molecules/TaskCard";
 import { Task, TaskStatus } from "@/lib/services/taskApi";
@@ -43,6 +44,12 @@ const getColumnHeaderColor = (columnId: string): string => {
 };
 
 export const Column = ({ columnId, title, tasks, onEdit, onDelete, onAssign }: ColumnProps) => {
+  const { setNodeRef, isOver } = useDroppable({
+    id: columnId,
+  });
+
+  const taskIds = tasks.map((task) => task.id.toString());
+
   return (
     <div className="flex-1 min-w-[280px] max-w-[350px]">
       <Card className={`border-2 ${getColumnColor(columnId)} h-full flex flex-col`}>
@@ -57,35 +64,31 @@ export const Column = ({ columnId, title, tasks, onEdit, onDelete, onAssign }: C
         </div>
 
         {/* Droppable Area */}
-        <Droppable droppableId={columnId} isDropDisabled={false} isCombineEnabled={false}>
-          {(provided, snapshot) => (
-            <div
-              ref={provided.innerRef}
-              {...provided.droppableProps}
-              className={`flex-1 p-3 min-h-[200px] transition-colors ${
-                snapshot.isDraggingOver ? "bg-blue-50" : "bg-transparent"
-              }`}
-            >
-              {tasks.length === 0 ? (
-                <div className="flex items-center justify-center h-32 text-gray-400 text-sm">
-                  Drop tasks here
-                </div>
-              ) : (
-                tasks.map((task, index) => (
-                  <TaskCard
-                    key={task.id}
-                    task={task}
-                    index={index}
-                    onEdit={onEdit}
-                    onDelete={onDelete}
-                    onAssign={onAssign}
-                  />
-                ))
-              )}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
+        <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
+          <div
+            ref={setNodeRef}
+            className={`flex-1 p-3 min-h-[200px] transition-colors ${
+              isOver ? "bg-blue-50" : "bg-transparent"
+            }`}
+          >
+            {tasks.length === 0 ? (
+              <div className="flex items-center justify-center h-32 text-gray-400 text-sm">
+                Drop tasks here
+              </div>
+            ) : (
+              tasks.map((task, index) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  index={index}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                  onAssign={onAssign}
+                />
+              ))
+            )}
+          </div>
+        </SortableContext>
       </Card>
     </div>
   );

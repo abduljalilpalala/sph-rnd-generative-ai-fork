@@ -1,6 +1,16 @@
 import { useState, useEffect } from "react";
-import { DragDropContext, DropResult } from "react-beautiful-dnd";
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  PointerSensor,
+  closestCorners,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
 import { Column } from "@/components/molecules/Column";
+import { TaskCard } from "@/components/molecules/TaskCard";
 import { Task, TaskStatus } from "@/lib/services/taskApi";
 
 interface TaskBoardProps {
@@ -76,41 +86,98 @@ export const TaskBoard = ({
   onReorder,
 }: TaskBoardProps) => {
   const [boardData, setBoardData] = useState<BoardData>(initializeBoardData(tasks));
+  const [activeTask, setActiveTask] = useState<Task | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
 
   // Update board data when tasks prop changes
   useEffect(() => {
     setBoardData(initializeBoardData(tasks));
   }, [tasks]);
 
-  const handleDragEnd = (result: DropResult) => {
-    const { destination, source, draggableId } = result;
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    const taskId = active.id.toString();
+    const task = boardData.tasks[taskId];
+    if (task) {
+      setActiveTask(task);
+    }
+  };
 
-    // Dropped outside the list
-    if (!destination) {
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveTask(null);
+
+    if (!over) {
       return;
     }
 
-    // Dropped in the same position
-    if (
-      destination.droppableId === source.droppableId &&
-      destination.index === source.index
-    ) {
+    const activeId = active.id.toString();
+    const overId = over.id.toString();
+
+    // Find source column
+    let sourceColumnId: string | null = null;
+    for (const [columnId, column] of Object.entries(boardData.columns)) {
+      if (column.taskIds.includes(activeId)) {
+        sourceColumnId = columnId;
+        break;
+      }
+    }
+
+    if (!sourceColumnId) {
       return;
     }
 
-    const sourceColumn = boardData.columns[source.droppableId];
-    const destinationColumn = boardData.columns[destination.droppableId];
-    const taskIdStr = draggableId; // Already a string from Draggable
-    const taskId = parseInt(draggableId); // Convert to number for API calls
+    // Determine destination column
+    let destinationColumnId: string;
+    let destinationIndex: number;
+
+    // Check if dropped over a column container
+    if (Object.keys(boardData.columns).includes(overId)) {
+      destinationColumnId = overId;
+      destinationIndex = boardData.columns[overId].taskIds.length;
+    } else {
+      // Dropped over a task, find its column
+      let foundColumn: string | null = null;
+      for (const [columnId, column] of Object.entries(boardData.columns)) {
+        const taskIndex = column.taskIds.indexOf(overId);
+        if (taskIndex !== -1) {
+          foundColumn = columnId;
+          destinationIndex = taskIndex;
+          break;
+        }
+      }
+
+      if (!foundColumn) {
+        return;
+      }
+
+      destinationColumnId = foundColumn;
+    }
+
+    const taskId = parseInt(activeId);
 
     // Moving within the same column
-    if (source.droppableId === destination.droppableId) {
-      const newTaskIds = Array.from(sourceColumn.taskIds);
-      newTaskIds.splice(source.index, 1);
-      newTaskIds.splice(destination.index, 0, taskIdStr);
+    if (sourceColumnId === destinationColumnId) {
+      const column = boardData.columns[sourceColumnId];
+      const oldIndex = column.taskIds.indexOf(activeId);
+
+      if (oldIndex === destinationIndex) {
+        return;
+      }
+
+      const newTaskIds = [...column.taskIds];
+      newTaskIds.splice(oldIndex, 1);
+      newTaskIds.splice(destinationIndex, 0, activeId);
 
       const newColumn = {
-        ...sourceColumn,
+        ...column,
         taskIds: newTaskIds,
       };
 
@@ -136,15 +203,21 @@ export const TaskBoard = ({
       }
     } else {
       // Moving to a different column
-      const sourceTaskIds = Array.from(sourceColumn.taskIds);
-      sourceTaskIds.splice(source.index, 1);
+      const sourceColumn = boardData.columns[sourceColumnId];
+      const destinationColumn = boardData.columns[destinationColumnId];
+
+      const sourceTaskIds = [...sourceColumn.taskIds];
+      const sourceIndex = sourceTaskIds.indexOf(activeId);
+      sourceTaskIds.splice(sourceIndex, 1);
+
+      const destinationTaskIds = [...destinationColumn.taskIds];
+      destinationTaskIds.splice(destinationIndex, 0, activeId);
+
       const newSourceColumn = {
         ...sourceColumn,
         taskIds: sourceTaskIds,
       };
 
-      const destinationTaskIds = Array.from(destinationColumn.taskIds);
-      destinationTaskIds.splice(destination.index, 0, taskIdStr);
       const newDestinationColumn = {
         ...destinationColumn,
         taskIds: destinationTaskIds,
@@ -163,7 +236,7 @@ export const TaskBoard = ({
 
       // Notify parent component about status change
       if (onStatusChange) {
-        onStatusChange(taskId, destination.droppableId as TaskStatus);
+        onStatusChange(taskId, destinationColumnId as TaskStatus);
       }
 
       // Calculate new order values for tasks in both columns
@@ -192,7 +265,12 @@ export const TaskBoard = ({
   ];
 
   return (
-    <DragDropContext onDragEnd={handleDragEnd}>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCorners}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
       <div className="flex gap-4 overflow-x-auto pb-4">
         {columnOrder.map((columnId) => {
           const column = boardData.columns[columnId];
@@ -213,6 +291,21 @@ export const TaskBoard = ({
           );
         })}
       </div>
-    </DragDropContext>
+
+      <DragOverlay>
+        {activeTask ? (
+          <div className="cursor-grabbing">
+            <TaskCard
+              task={activeTask}
+              index={0}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onAssign={onAssign}
+              isDragging
+            />
+          </div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
   );
 };
