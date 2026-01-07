@@ -4,3 +4,4 @@ export { FormField } from "@/components/molecules/FormField";
 export { TableHeader } from "@/components/molecules/TableHeader";
 export { TableRow } from "@/components/molecules/TableRow";
 export { ConfirmModal } from "@/components/molecules/ConfirmModal";
+export { Modal } from "@/components/molecules/Modal";

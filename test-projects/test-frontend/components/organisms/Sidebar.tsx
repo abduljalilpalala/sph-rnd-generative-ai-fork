@@ -15,6 +15,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const menuItems = [
     { icon: "home" as const, label: "Dashboard", href: "/", section: "dashboard" },
     { icon: "user" as const, label: "User Management", href: "/users", section: "users" },
+    { icon: "folder" as const, label: "Project Management", href: "/projects", section: "projects" },
     { icon: "document" as const, label: "Post Management", href: "/posts", section: "posts" },
     { icon: "shield" as const, label: "Role Management", href: "/roles", section: "roles" },
   ];
