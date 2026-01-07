@@ -1,9 +1,10 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 export enum TaskStatus {
-  TODO = "TODO",
+  OPEN = "OPEN",
   IN_PROGRESS = "IN_PROGRESS",
-  DONE = "DONE",
+  FOR_REVIEW = "FOR_REVIEW",
+  CLOSED = "CLOSED",
 }
 
 export interface TaskAssignment {

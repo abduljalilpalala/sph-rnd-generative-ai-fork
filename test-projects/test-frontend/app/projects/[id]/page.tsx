@@ -16,7 +16,7 @@ import {
   Task,
 } from "@/lib/services/taskApi";
 import {
-  TaskList,
+  TaskBoard,
   TaskFormModal,
   AddMemberModal,
   AssignTaskModal,
@@ -123,6 +123,16 @@ export default function ProjectDetailPage() {
     setTaskToAssign(null);
   };
 
+  const handleStatusChange = async (taskId: number, newStatus: any) => {
+    await updateTask({
+      taskId,
+      data: {
+        userId: MOCK_USER_ID,
+        status: newStatus,
+      },
+    }).unwrap();
+  };
+
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
       {/* Sidebar */}
@@ -209,7 +219,8 @@ export default function ProjectDetailPage() {
 
                 {/* Tasks Section */}
                 <div className="mb-4">
-                  <h3 className="text-lg font-semibold">Tasks</h3>
+                  <h3 className="text-lg font-semibold">Tasks Board</h3>
+                  <p className="text-sm text-gray-600">Drag and drop tasks between columns to update their status</p>
                 </div>
                 {tasksLoading ? (
                   <div className="flex items-center justify-center py-12">
@@ -219,7 +230,7 @@ export default function ProjectDetailPage() {
                     </div>
                   </div>
                 ) : (
-                  <TaskList
+                  <TaskBoard
                     tasks={tasks}
                     onEdit={(task) => {
                       setSelectedTask(task);
@@ -233,7 +244,7 @@ export default function ProjectDetailPage() {
                       setTaskToAssign(id);
                       setShowAssignTaskModal(true);
                     }}
-                    currentUserId={MOCK_USER_ID}
+                    onStatusChange={handleStatusChange}
                   />
                 )}
               </>

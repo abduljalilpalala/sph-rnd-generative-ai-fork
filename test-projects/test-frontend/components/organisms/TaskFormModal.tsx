@@ -20,7 +20,7 @@ export const TaskFormModal = ({
 }: TaskFormModalProps) => {
   const [title, setTitle] = useState(task?.title || "");
   const [description, setDescription] = useState(task?.description || "");
-  const [status, setStatus] = useState<TaskStatus>(task?.status || TaskStatus.TODO);
+  const [status, setStatus] = useState<TaskStatus>(task?.status || TaskStatus.OPEN);
   const [error, setError] = useState<string | null>(null);
 
   // Update form fields when task prop changes (for edit mode)
@@ -33,7 +33,7 @@ export const TaskFormModal = ({
       // Reset to empty when creating new task
       setTitle("");
       setDescription("");
-      setStatus(TaskStatus.TODO);
+      setStatus(TaskStatus.OPEN);
     }
   }, [task]);
 
@@ -51,7 +51,7 @@ export const TaskFormModal = ({
       onClose();
       setTitle("");
       setDescription("");
-      setStatus(TaskStatus.TODO);
+      setStatus(TaskStatus.OPEN);
     } catch (err) {
       setError("Failed to save task. Please try again.");
     }
@@ -60,7 +60,7 @@ export const TaskFormModal = ({
   const handleClose = () => {
     setTitle("");
     setDescription("");
-    setStatus(TaskStatus.TODO);
+    setStatus(TaskStatus.OPEN);
     setError(null);
     onClose();
   };
@@ -125,9 +125,10 @@ export const TaskFormModal = ({
             onChange={(e) => setStatus(e.target.value as TaskStatus)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value={TaskStatus.TODO}>To Do</option>
+            <option value={TaskStatus.OPEN}>Open</option>
             <option value={TaskStatus.IN_PROGRESS}>In Progress</option>
-            <option value={TaskStatus.DONE}>Done</option>
+            <option value={TaskStatus.FOR_REVIEW}>For Review</option>
+            <option value={TaskStatus.CLOSED}>Closed</option>
           </select>
         </div>
       </form>
