@@ -13,6 +13,7 @@ import {
   useUpdateTaskMutation,
   useDeleteTaskMutation,
   useAssignTaskMutation,
+  useReorderTasksMutation,
   Task,
 } from "@/lib/services/taskApi";
 import {
@@ -48,6 +49,7 @@ export default function ProjectDetailPage() {
   const [updateTask, { isLoading: isUpdatingTask }] = useUpdateTaskMutation();
   const [deleteTask, { isLoading: isDeletingTask }] = useDeleteTaskMutation();
   const [assignTask, { isLoading: isAssigningTask }] = useAssignTaskMutation();
+  const [reorderTasks] = useReorderTasksMutation();
 
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
@@ -129,6 +131,16 @@ export default function ProjectDetailPage() {
       data: {
         userId: MOCK_USER_ID,
         status: newStatus,
+      },
+    }).unwrap();
+  };
+
+  const handleReorder = async (taskOrders: { taskId: number; order: number }[]) => {
+    await reorderTasks({
+      projectId,
+      data: {
+        userId: MOCK_USER_ID,
+        tasks: taskOrders,
       },
     }).unwrap();
   };
@@ -232,6 +244,7 @@ export default function ProjectDetailPage() {
                 ) : (
                   <TaskBoard
                     tasks={tasks}
+                    projectId={projectId}
                     onEdit={(task) => {
                       setSelectedTask(task);
                       setShowEditTaskModal(true);
@@ -245,6 +258,7 @@ export default function ProjectDetailPage() {
                       setShowAssignTaskModal(true);
                     }}
                     onStatusChange={handleStatusChange}
+                    onReorder={handleReorder}
                   />
                 )}
               </>

@@ -56,9 +56,14 @@ export class TaskService {
           },
         },
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy: [
+        {
+          order: 'asc',
+        },
+        {
+          createdAt: 'desc',
+        },
+      ],
     });
   }
 
@@ -141,6 +146,24 @@ export class TaskService {
         task: true,
       },
     });
+  }
+
+  async reorderTasks(
+    userId: number,
+    projectId: number,
+    taskOrders: { taskId: number; order: number }[],
+  ): Promise<void> {
+    await this.verifyProjectMembership(userId, projectId);
+
+    // Update all tasks in a transaction
+    await this.prisma.$transaction(
+      taskOrders.map((taskOrder) =>
+        this.prisma.task.update({
+          where: { id: taskOrder.taskId },
+          data: { order: taskOrder.order },
+        }),
+      ),
+    );
   }
 
   private async verifyProjectMembership(

@@ -5,10 +5,12 @@ import { Task, TaskStatus } from "@/lib/services/taskApi";
 
 interface TaskBoardProps {
   tasks: Task[] | undefined;
+  projectId: number;
   onEdit?: (task: Task) => void;
   onDelete?: (id: number) => void;
   onAssign?: (taskId: number) => void;
   onStatusChange?: (taskId: number, newStatus: TaskStatus) => void;
+  onReorder?: (taskOrders: { taskId: number; order: number }[]) => void;
 }
 
 interface BoardData {
@@ -51,7 +53,10 @@ const initializeBoardData = (tasks: Task[] | undefined): BoardData => {
   const tasksMap: { [key: number]: Task } = {};
 
   if (tasks) {
-    tasks.forEach((task) => {
+    // Sort tasks by order field first
+    const sortedTasks = [...tasks].sort((a, b) => a.order - b.order);
+
+    sortedTasks.forEach((task) => {
       tasksMap[task.id] = task;
       columns[task.status].taskIds.push(task.id);
     });
@@ -62,10 +67,12 @@ const initializeBoardData = (tasks: Task[] | undefined): BoardData => {
 
 export const TaskBoard = ({
   tasks,
+  projectId,
   onEdit,
   onDelete,
   onAssign,
   onStatusChange,
+  onReorder,
 }: TaskBoardProps) => {
   const [boardData, setBoardData] = useState<BoardData>(initializeBoardData(tasks));
 
@@ -105,13 +112,26 @@ export const TaskBoard = ({
         taskIds: newTaskIds,
       };
 
-      setBoardData({
+      const newBoardData = {
         ...boardData,
         columns: {
           ...boardData.columns,
           [newColumn.id]: newColumn,
         },
-      });
+      };
+
+      setBoardData(newBoardData);
+
+      // Calculate new order values for all tasks in the column
+      const taskOrders = newTaskIds.map((id, index) => ({
+        taskId: id,
+        order: index,
+      }));
+
+      // Persist the reordering
+      if (onReorder) {
+        onReorder(taskOrders);
+      }
     } else {
       // Moving to a different column
       const sourceTaskIds = Array.from(sourceColumn.taskIds);
@@ -128,18 +148,36 @@ export const TaskBoard = ({
         taskIds: destinationTaskIds,
       };
 
-      setBoardData({
+      const newBoardData = {
         ...boardData,
         columns: {
           ...boardData.columns,
           [newSourceColumn.id]: newSourceColumn,
           [newDestinationColumn.id]: newDestinationColumn,
         },
-      });
+      };
+
+      setBoardData(newBoardData);
 
       // Notify parent component about status change
       if (onStatusChange) {
         onStatusChange(taskId, destination.droppableId as TaskStatus);
+      }
+
+      // Calculate new order values for tasks in both columns
+      const sourceTaskOrders = sourceTaskIds.map((id, index) => ({
+        taskId: id,
+        order: index,
+      }));
+
+      const destinationTaskOrders = destinationTaskIds.map((id, index) => ({
+        taskId: id,
+        order: index,
+      }));
+
+      // Persist the reordering for both columns
+      if (onReorder) {
+        onReorder([...sourceTaskOrders, ...destinationTaskOrders]);
       }
     }
   };
