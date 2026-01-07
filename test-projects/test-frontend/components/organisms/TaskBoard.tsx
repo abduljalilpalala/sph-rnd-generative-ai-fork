@@ -134,7 +134,7 @@ export const TaskBoard = ({
       return;
     }
 
-    // Determine destination column
+    // Determine destination column and index
     let destinationColumnId: string;
     let destinationIndex: number;
 
@@ -145,20 +145,23 @@ export const TaskBoard = ({
     } else {
       // Dropped over a task, find its column
       let foundColumn: string | null = null;
+      let foundIndex: number = -1;
+
       for (const [columnId, column] of Object.entries(boardData.columns)) {
         const taskIndex = column.taskIds.indexOf(overId);
         if (taskIndex !== -1) {
           foundColumn = columnId;
-          destinationIndex = taskIndex;
+          foundIndex = taskIndex;
           break;
         }
       }
 
-      if (!foundColumn) {
+      if (!foundColumn || foundIndex === -1) {
         return;
       }
 
       destinationColumnId = foundColumn;
+      destinationIndex = foundIndex;
     }
 
     const taskId = parseInt(activeId);
