@@ -164,11 +164,9 @@ const DashboardContent = () => (
                     </div>
                   </div>
                 </Link>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-    </div>
-  </div>
 );
 
 export default Home;
