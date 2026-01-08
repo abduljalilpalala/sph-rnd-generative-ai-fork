@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { FileUploadInput } from "@/components/molecules/FileUploadInput";
+import { useState, useEffect, useRef } from "react";
+import { FileUploadInput, FileUploadInputRef } from "@/components/molecules/FileUploadInput";
 import { Button, ProgressBar, Alert } from "@/components/atoms";
 import { useBatchUpload } from "@/hooks/useBatchUpload";
 
@@ -20,6 +20,8 @@ export const FileUploader = ({
 }: FileUploaderProps) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const fileInputRef = useRef<FileUploadInputRef>(null);
   const { startBatchUpload, isUploading, progress, progressPercentage, isComplete } =
     useBatchUpload();
 
@@ -36,14 +38,49 @@ export const FileUploader = ({
 
     try {
       await startBatchUpload(selectedFiles, { userId, projectId, taskId });
+      // Don't clear files here - wait for isComplete to become true
     } catch (err) {
       setError("Upload failed. Please try again.");
+      // Keep selected files on error so user can retry
     }
   };
+
+  // Clear selected files and trigger refresh after successful upload
+  useEffect(() => {
+    if (isComplete && !isRefreshing) {
+      const clearAndRefresh = async () => {
+        setIsRefreshing(true);
+        setSelectedFiles([]); // Clear state
+
+        // Clear the file input element
+        if (fileInputRef.current) {
+          fileInputRef.current.reset();
+        }
+
+        if (onUploadComplete) {
+          await onUploadComplete();
+        }
+
+        // Small delay to show the refreshing state
+        setTimeout(() => {
+          setIsRefreshing(false);
+        }, 500);
+      };
+
+      clearAndRefresh();
+    }
+  }, [isComplete, isRefreshing, onUploadComplete]);
 
   const handleReset = () => {
     setSelectedFiles([]);
     setError(null);
+    setIsRefreshing(false);
+
+    // Clear the file input element
+    if (fileInputRef.current) {
+      fileInputRef.current.reset();
+    }
+
     if (onUploadComplete) {
       onUploadComplete();
     }
@@ -58,6 +95,7 @@ export const FileUploader = ({
       {!isUploading && !isComplete && (
         <div className="space-y-4">
           <FileUploadInput
+            ref={fileInputRef}
             onFilesSelected={handleFilesSelected}
             multiple
             maxFiles={1000}
@@ -107,16 +145,27 @@ export const FileUploader = ({
       {/* Upload Complete State */}
       {isComplete && progress && (
         <div className="space-y-3 p-4 bg-green-50 rounded-lg border border-green-200">
-          <Alert variant="success">
-            Upload complete! {progress.completed} of {progress.totalFiles} files uploaded
-            successfully.
-          </Alert>
-          {progress.failed > 0 && (
-            <Alert variant="error">{progress.failed} files failed to upload.</Alert>
+          {isRefreshing ? (
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />
+              <span className="text-sm font-medium text-green-900">
+                Updating file list...
+              </span>
+            </div>
+          ) : (
+            <>
+              <Alert variant="success">
+                Upload complete! {progress.completed} of {progress.totalFiles} files uploaded
+                successfully.
+              </Alert>
+              {progress.failed > 0 && (
+                <Alert variant="error">{progress.failed} files failed to upload.</Alert>
+              )}
+              <div className="pt-2">
+                <Button onClick={handleReset}>Upload More Files</Button>
+              </div>
+            </>
           )}
-          <div className="pt-2">
-            <Button onClick={handleReset}>Upload More Files</Button>
-          </div>
         </div>
       )}
     </div>

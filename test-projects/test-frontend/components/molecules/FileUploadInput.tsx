@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useRef, useImperativeHandle, forwardRef } from "react";
 import { Button } from "@/components/atoms";
 
 interface FileUploadInputProps {
@@ -11,14 +11,28 @@ interface FileUploadInputProps {
   disabled?: boolean;
 }
 
-export const FileUploadInput = ({
+export interface FileUploadInputRef {
+  reset: () => void;
+}
+
+export const FileUploadInput = forwardRef<FileUploadInputRef, FileUploadInputProps>(({
   onFilesSelected,
   accept = "image/*,.pdf,.doc,.docx,.txt",
   multiple = true,
   maxFiles = 1000,
   disabled = false,
-}: FileUploadInputProps) => {
+}, ref) => {
   const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Expose reset method to parent component
+  useImperativeHandle(ref, () => ({
+    reset: () => {
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    },
+  }));
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -68,6 +82,7 @@ export const FileUploadInput = ({
       }`}
     >
       <input
+        ref={fileInputRef}
         type="file"
         id="file-upload"
         className="hidden"
@@ -110,4 +125,6 @@ export const FileUploadInput = ({
       </div>
     </div>
   );
-};
+});
+
+FileUploadInput.displayName = "FileUploadInput";
