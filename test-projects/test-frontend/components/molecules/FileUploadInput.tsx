@@ -93,10 +93,14 @@ export const FileUploadInput = ({
           </svg>
         </div>
         <div>
-          <label htmlFor="file-upload">
-            <Button as="span" disabled={disabled}>
+          <label htmlFor="file-upload" className="cursor-pointer inline-block">
+            <span className={`font-bold rounded transition py-2 px-4 inline-block ${
+              disabled
+                ? "bg-blue-500 text-white opacity-50 cursor-not-allowed"
+                : "bg-blue-500 text-white hover:bg-blue-600"
+            }`}>
               Choose files
-            </Button>
+            </span>
           </label>
           <p className="mt-2 text-sm text-gray-600">or drag and drop</p>
         </div>

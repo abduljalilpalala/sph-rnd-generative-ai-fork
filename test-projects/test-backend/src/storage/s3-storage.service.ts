@@ -12,8 +12,8 @@ import {
   IStorageService,
   UploadResult,
   UploadOptions,
-  StorageConfig,
 } from './interfaces/storage.interface';
+import type { StorageConfig } from './interfaces/storage.interface';
 
 @Injectable()
 export class S3StorageService implements IStorageService {
