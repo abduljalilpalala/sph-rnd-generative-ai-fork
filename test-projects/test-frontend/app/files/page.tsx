@@ -17,7 +17,7 @@ export default function FilesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedFiles, setSelectedFiles] = useState<number[]>([]);
 
-  const { files, isLoading, handleDelete, isDeleting } = useFiles({
+  const { files, isLoading, handleDelete, isDeleting, refetch } = useFiles({
     userId,
     search,
     fileType,
@@ -148,7 +148,10 @@ export default function FilesPage() {
               <Card className="mb-6">
                 <FileUploader
                   userId={userId}
-                  onUploadComplete={() => setShowUploader(false)}
+                  onUploadComplete={() => {
+                    setShowUploader(false);
+                    refetch();
+                  }}
                 />
               </Card>
             )}

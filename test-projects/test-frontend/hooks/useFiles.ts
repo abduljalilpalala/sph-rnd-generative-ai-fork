@@ -1,7 +1,7 @@
 import { useGetFilesQuery, useDeleteFileMutation, FileQueryParams } from "@/lib/services/fileApi";
 
 export const useFiles = (params: FileQueryParams) => {
-  const { data: files, isLoading, error } = useGetFilesQuery(params);
+  const { data: files, isLoading, error, refetch } = useGetFilesQuery(params);
   const [deleteFile, { isLoading: isDeleting }] = useDeleteFileMutation();
 
   const handleDelete = async (id: number, userId: number) => {
@@ -19,5 +19,6 @@ export const useFiles = (params: FileQueryParams) => {
     error,
     handleDelete,
     isDeleting,
+    refetch,
   };
 };
