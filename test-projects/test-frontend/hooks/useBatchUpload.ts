@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useUploadBatchMutation, useGetBatchProgressQuery } from "@/lib/services/fileApi";
 
 export const useBatchUpload = () => {
@@ -17,6 +17,7 @@ export const useBatchUpload = () => {
   const startBatchUpload = useCallback(
     async (files: File[], metadata: { userId: number; projectId?: number; taskId?: number }) => {
       setIsUploading(true);
+      setBatchId(null); // Reset previous batch
 
       const CHUNK_SIZE = 50;
       const chunks: File[][] = [];
@@ -47,6 +48,7 @@ export const useBatchUpload = () => {
       } catch (error) {
         console.error("Batch upload failed:", error);
         setIsUploading(false);
+        setBatchId(null);
         throw error;
       }
     },
@@ -61,9 +63,12 @@ export const useBatchUpload = () => {
     ? progress.completed + progress.failed === progress.totalFiles
     : false;
 
-  if (isComplete && isUploading) {
-    setIsUploading(false);
-  }
+  // Properly handle upload completion in useEffect
+  useEffect(() => {
+    if (isComplete && isUploading) {
+      setIsUploading(false);
+    }
+  }, [isComplete, isUploading]);
 
   return {
     startBatchUpload,

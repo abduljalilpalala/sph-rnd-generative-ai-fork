@@ -47,29 +47,32 @@ export const FileUploader = ({
 
   // Clear selected files and trigger refresh after successful upload
   useEffect(() => {
-    if (isComplete && !isRefreshing) {
+    if (isComplete && !isRefreshing && selectedFiles.length > 0) {
       const clearAndRefresh = async () => {
         setIsRefreshing(true);
-        setSelectedFiles([]); // Clear state
+
+        // Call parent callback first to trigger refetch
+        if (onUploadComplete) {
+          await onUploadComplete();
+        }
+
+        // Then clear local state
+        setSelectedFiles([]);
 
         // Clear the file input element
         if (fileInputRef.current) {
           fileInputRef.current.reset();
         }
 
-        if (onUploadComplete) {
-          await onUploadComplete();
-        }
-
-        // Small delay to show the refreshing state
+        // Show "Updating file list..." for a moment
         setTimeout(() => {
           setIsRefreshing(false);
-        }, 500);
+        }, 1000);
       };
 
       clearAndRefresh();
     }
-  }, [isComplete, isRefreshing, onUploadComplete]);
+  }, [isComplete, isRefreshing, selectedFiles.length, onUploadComplete]);
 
   const handleReset = () => {
     setSelectedFiles([]);
@@ -91,8 +94,20 @@ export const FileUploader = ({
       {/* Error Alert */}
       {error && <Alert variant="error">{error}</Alert>}
 
+      {/* Refreshing Overlay */}
+      {isRefreshing && (
+        <div className="p-4 bg-blue-50 border-2 border-blue-300 rounded-lg">
+          <div className="flex items-center justify-center gap-3">
+            <div className="w-6 h-6 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            <span className="text-base font-semibold text-blue-900">
+              Updating file list...
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* File Selection State */}
-      {!isUploading && !isComplete && (
+      {!isUploading && !isComplete && !isRefreshing && (
         <div className="space-y-4">
           <FileUploadInput
             ref={fileInputRef}
@@ -143,29 +158,18 @@ export const FileUploader = ({
       )}
 
       {/* Upload Complete State */}
-      {isComplete && progress && (
+      {isComplete && progress && !isRefreshing && (
         <div className="space-y-3 p-4 bg-green-50 rounded-lg border border-green-200">
-          {isRefreshing ? (
-            <div className="flex items-center gap-3">
-              <div className="w-5 h-5 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />
-              <span className="text-sm font-medium text-green-900">
-                Updating file list...
-              </span>
-            </div>
-          ) : (
-            <>
-              <Alert variant="success">
-                Upload complete! {progress.completed} of {progress.totalFiles} files uploaded
-                successfully.
-              </Alert>
-              {progress.failed > 0 && (
-                <Alert variant="error">{progress.failed} files failed to upload.</Alert>
-              )}
-              <div className="pt-2">
-                <Button onClick={handleReset}>Upload More Files</Button>
-              </div>
-            </>
+          <Alert variant="success">
+            Upload complete! {progress.completed} of {progress.totalFiles} files uploaded
+            successfully.
+          </Alert>
+          {progress.failed > 0 && (
+            <Alert variant="error">{progress.failed} files failed to upload.</Alert>
           )}
+          <div className="pt-2">
+            <Button onClick={handleReset}>Upload More Files</Button>
+          </div>
         </div>
       )}
     </div>
