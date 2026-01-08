@@ -18,6 +18,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     { icon: "folder" as const, label: "Project Management", href: "/projects", section: "projects" },
     { icon: "document" as const, label: "Post Management", href: "/posts", section: "posts" },
     { icon: "shield" as const, label: "Role Management", href: "/roles", section: "roles" },
+    { icon: "cloud" as const, label: "File Management", href: "/files", section: "files" },
   ];
 
   const isActive = (href: string) => {
