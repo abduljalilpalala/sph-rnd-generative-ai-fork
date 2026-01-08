@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FileSize, Icon } from "@/components/atoms";
+import { FileSize, Icon, FileIcon } from "@/components/atoms";
 
 interface FileData {
   id: number;
@@ -68,19 +68,20 @@ export const FileGalleryEnhanced = ({
     );
   }
 
-  const getFileIcon = (fileType: string, mimeType: string) => {
-    if (fileType === "IMAGE") return "📷";
-    if (mimeType.includes("pdf")) return "📄";
-    if (mimeType.includes("word") || mimeType.includes("document")) return "📝";
-    if (mimeType.includes("excel") || mimeType.includes("spreadsheet")) return "📊";
-    return "📁";
+  const isImageFile = (mimeType: string) => {
+    return (
+      mimeType.startsWith("image/") &&
+      ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"].includes(
+        mimeType.toLowerCase()
+      )
+    );
   };
 
   return (
     <>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {files.map((file) => {
-          const isImage = file.fileType === "IMAGE";
+          const isImage = isImageFile(file.mimeType);
           const isDeleting = deletingId === file.id;
 
           return (
@@ -93,7 +94,7 @@ export const FileGalleryEnhanced = ({
               {/* Thumbnail/Preview */}
               <div
                 className="aspect-square bg-gray-50 flex items-center justify-center cursor-pointer relative overflow-hidden"
-                onClick={() => setPreviewFile(file)}
+                onClick={() => isImage ? setPreviewFile(file) : null}
               >
                 {isImage && file.url ? (
                   <>
@@ -111,12 +112,12 @@ export const FileGalleryEnhanced = ({
                     )}
                   </>
                 ) : (
-                  <div className="text-center">
-                    <span className="text-5xl mb-2 block">
-                      {getFileIcon(file.fileType, file.mimeType)}
-                    </span>
-                    <span className="text-xs text-gray-500 font-medium uppercase">
-                      {file.mimeType.split("/")[1]}
+                  <div className="flex flex-col items-center justify-center h-full p-4">
+                    <div className="mb-3">
+                      <FileIcon mimeType={file.mimeType} size="lg" />
+                    </div>
+                    <span className="text-xs text-gray-500 font-medium uppercase text-center">
+                      {file.mimeType.split("/")[1] || "file"}
                     </span>
                   </div>
                 )}
@@ -203,7 +204,7 @@ export const FileGalleryEnhanced = ({
               </button>
             </div>
             <div className="p-4">
-              {previewFile.fileType === "IMAGE" && previewFile.url ? (
+              {isImageFile(previewFile.mimeType) && previewFile.url ? (
                 <img
                   src={previewFile.url}
                   alt={previewFile.originalName}
@@ -211,9 +212,9 @@ export const FileGalleryEnhanced = ({
                 />
               ) : (
                 <div className="flex flex-col items-center justify-center py-12">
-                  <span className="text-6xl mb-4">
-                    {getFileIcon(previewFile.fileType, previewFile.mimeType)}
-                  </span>
+                  <div className="mb-4 transform scale-150">
+                    <FileIcon mimeType={previewFile.mimeType} size="lg" />
+                  </div>
                   <p className="text-gray-600 mb-4">
                     Preview not available for this file type
                   </p>

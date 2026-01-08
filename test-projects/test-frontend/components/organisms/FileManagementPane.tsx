@@ -89,10 +89,10 @@ export const FileManagementPane = () => {
       )}
 
       {/* Filters & Search */}
-      <Card className="mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <Card className="mb-6 p-4">
+        <div className="flex flex-wrap items-end gap-3">
           {/* Search */}
-          <div>
+          <div className="flex-1 min-w-[200px]">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Search
             </label>
@@ -106,7 +106,7 @@ export const FileManagementPane = () => {
           </div>
 
           {/* File Type Filter */}
-          <div>
+          <div className="w-full sm:w-auto sm:min-w-[160px]">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               File Type
             </label>
@@ -126,7 +126,7 @@ export const FileManagementPane = () => {
           </div>
 
           {/* Sort By */}
-          <div>
+          <div className="w-full sm:w-auto sm:min-w-[140px]">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Sort By
             </label>
@@ -142,7 +142,7 @@ export const FileManagementPane = () => {
           </div>
 
           {/* Sort Order */}
-          <div>
+          <div className="w-full sm:w-auto sm:min-w-[140px]">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Sort Order
             </label>
