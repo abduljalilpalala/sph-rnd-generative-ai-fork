@@ -2,29 +2,61 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Sidebar, TopNavigation } from "@/components/organisms";
+import { Sidebar, TopNavigation, FileManagementPane } from "@/components/organisms";
 import { Icon } from "@/components/atoms";
 
 const Home = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<string>("");
+
+  const getPageTitle = () => {
+    switch (activeSection) {
+      case "files":
+        return "File Management";
+      default:
+        return "Dashboard";
+    }
+  };
+
+  const renderContent = () => {
+    switch (activeSection) {
+      case "files":
+        return <FileManagementPane />;
+      default:
+        return <DashboardContent />;
+    }
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
       {/* Sidebar */}
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        activeSection={activeSection}
+        onSectionChange={setActiveSection}
+      />
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Navigation */}
         <TopNavigation
           onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          pageTitle="Dashboard"
+          pageTitle={getPageTitle()}
         />
 
         <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 lg:p-6">
-          <div className="max-w-6xl mx-auto">
-            {/* Welcome Section */}
-            <div className="mb-8">
+          {renderContent()}
+        </main>
+      </div>
+    </div>
+  );
+};
+
+const DashboardContent = () => (
+  <div className="max-w-6xl mx-auto">
+    {/* Welcome Section */}
+    <div className="mb-8">
               <h2 className="text-3xl font-bold text-gray-800 mb-2">
                 Welcome to <span className="text-orange-500">Sun*</span> Management System
               </h2>
@@ -132,13 +164,11 @@ const Home = () => {
                     </div>
                   </div>
                 </Link>
-              </div>
-            </div>
           </div>
-        </main>
+        </div>
       </div>
     </div>
-  );
-};
+  </div>
+);
 
 export default Home;

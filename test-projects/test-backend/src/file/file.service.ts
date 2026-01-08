@@ -50,8 +50,6 @@ export class FileService {
         size: file.size,
         status: FileStatus.UPLOADING,
         uploadedById: metadata.userId,
-        projectId: metadata.projectId,
-        taskId: metadata.taskId,
       },
     });
 
@@ -65,9 +63,15 @@ export class FileService {
         },
       });
 
+      // Generate URL for the uploaded file
+      const url = await this.storageService.getSignedUrl(s3Key, 604800); // 7 days
+
       return await this.prisma.file.update({
         where: { id: fileRecord.id },
-        data: { status: FileStatus.COMPLETED },
+        data: {
+          status: FileStatus.COMPLETED,
+          url,
+        },
         include: { uploadedBy: true },
       });
     } catch (error) {
@@ -146,20 +150,43 @@ export class FileService {
   }
 
   async findAll(query: FileQueryDto): Promise<File[]> {
+    // Build where clause
+    const where: any = {
+      uploadedById: query.userId,
+      fileType: query.fileType,
+      status: FileStatus.COMPLETED,
+    };
+
+    // Add search functionality
+    if (query.search) {
+      where.originalName = {
+        contains: query.search,
+        mode: 'insensitive',
+      };
+    }
+
+    // Build orderBy clause
+    let orderBy: any = { createdAt: 'desc' };
+    if (query.sortBy) {
+      switch (query.sortBy) {
+        case 'name':
+          orderBy = { originalName: query.sortOrder || 'asc' };
+          break;
+        case 'date':
+          orderBy = { createdAt: query.sortOrder || 'desc' };
+          break;
+        case 'size':
+          orderBy = { size: query.sortOrder || 'desc' };
+          break;
+      }
+    }
+
     return this.prisma.file.findMany({
-      where: {
-        uploadedById: query.userId,
-        projectId: query.projectId,
-        taskId: query.taskId,
-        fileType: query.fileType,
-        status: FileStatus.COMPLETED,
-      },
+      where,
       include: {
         uploadedBy: true,
-        project: true,
-        task: true,
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy,
       take: query.limit || 100,
       skip: query.offset || 0,
     });
@@ -168,7 +195,7 @@ export class FileService {
   async findOne(id: number): Promise<File> {
     const file = await this.prisma.file.findUnique({
       where: { id },
-      include: { uploadedBy: true, project: true, task: true },
+      include: { uploadedBy: true },
     });
 
     if (!file) {

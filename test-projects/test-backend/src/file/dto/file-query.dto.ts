@@ -1,4 +1,4 @@
-import { IsOptional, IsInt, IsEnum, Min } from 'class-validator';
+import { IsOptional, IsInt, IsEnum, IsString, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 import { FileType } from '@prisma/client';
 
@@ -9,18 +9,20 @@ export class FileQueryDto {
   userId?: number;
 
   @IsOptional()
-  @IsInt()
-  @Type(() => Number)
-  projectId?: number;
-
-  @IsOptional()
-  @IsInt()
-  @Type(() => Number)
-  taskId?: number;
-
-  @IsOptional()
   @IsEnum(FileType)
   fileType?: FileType;
+
+  @IsOptional()
+  @IsString()
+  search?: string;
+
+  @IsOptional()
+  @IsString()
+  sortBy?: 'name' | 'date' | 'size';
+
+  @IsOptional()
+  @IsString()
+  sortOrder?: 'asc' | 'desc';
 
   @IsOptional()
   @IsInt()

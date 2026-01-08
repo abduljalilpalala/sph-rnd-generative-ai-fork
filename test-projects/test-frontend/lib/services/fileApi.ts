@@ -6,13 +6,12 @@ export interface File {
   storedName: string;
   s3Key: string;
   s3Bucket: string;
+  url?: string;
   mimeType: string;
   fileType: "IMAGE" | "DOCUMENT";
   size: number;
   status: "PENDING" | "UPLOADING" | "COMPLETED" | "FAILED";
   uploadedById: number;
-  projectId?: number;
-  taskId?: number;
   metadata?: any;
   errorMessage?: string;
   createdAt: string;
@@ -26,9 +25,10 @@ export interface File {
 
 export interface FileQueryParams {
   userId?: number;
-  projectId?: number;
-  taskId?: number;
   fileType?: "IMAGE" | "DOCUMENT";
+  search?: string;
+  sortBy?: "name" | "date" | "size";
+  sortOrder?: "asc" | "desc";
   limit?: number;
   offset?: number;
 }

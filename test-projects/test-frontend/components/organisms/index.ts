@@ -14,3 +14,5 @@ export { AddMemberModal } from "@/components/organisms/AddMemberModal";
 export { AssignTaskModal } from "@/components/organisms/AssignTaskModal";
 export { FileGallery } from "@/components/organisms/FileGallery";
 export { FileUploader } from "@/components/organisms/FileUploader";
+export { FileManagementPane } from "@/components/organisms/FileManagementPane";
+export { FileGalleryEnhanced } from "@/components/organisms/FileGalleryEnhanced";
