@@ -2,30 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Sidebar, TopNavigation, FileManagementPane } from "@/components/organisms";
+import { Sidebar, TopNavigation } from "@/components/organisms";
 import { Icon } from "@/components/atoms";
 
 const Home = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState<string>("");
-
-  const getPageTitle = () => {
-    switch (activeSection) {
-      case "files":
-        return "File Management";
-      default:
-        return "Dashboard";
-    }
-  };
-
-  const renderContent = () => {
-    switch (activeSection) {
-      case "files":
-        return <FileManagementPane />;
-      default:
-        return <DashboardContent />;
-    }
-  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
@@ -33,8 +14,6 @@ const Home = () => {
       <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
-        activeSection={activeSection}
-        onSectionChange={setActiveSection}
       />
 
       {/* Main Content */}
@@ -42,11 +21,11 @@ const Home = () => {
         {/* Top Navigation */}
         <TopNavigation
           onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          pageTitle={getPageTitle()}
+          pageTitle="Dashboard"
         />
 
         <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 lg:p-6">
-          {renderContent()}
+          <DashboardContent />
         </main>
       </div>
     </div>

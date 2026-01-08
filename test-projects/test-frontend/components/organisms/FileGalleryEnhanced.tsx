@@ -19,6 +19,8 @@ interface FileGalleryEnhancedProps {
   onDelete: (id: number) => void;
   onDownload: (id: number) => void;
   deletingId?: number;
+  selectedFiles?: number[];
+  onToggleSelect?: (id: number) => void;
 }
 
 export const FileGalleryEnhanced = ({
@@ -27,6 +29,8 @@ export const FileGalleryEnhanced = ({
   onDelete,
   onDownload,
   deletingId,
+  selectedFiles = [],
+  onToggleSelect,
 }: FileGalleryEnhancedProps) => {
   const [hoveredFile, setHoveredFile] = useState<number | null>(null);
   const [previewFile, setPreviewFile] = useState<FileData | null>(null);
@@ -83,14 +87,30 @@ export const FileGalleryEnhanced = ({
         {files.map((file) => {
           const isImage = isImageFile(file.mimeType);
           const isDeleting = deletingId === file.id;
+          const isSelected = selectedFiles.includes(file.id);
 
           return (
             <div
               key={file.id}
-              className="bg-white rounded-lg border border-gray-200 hover:shadow-lg transition-all duration-200 overflow-hidden group relative"
+              className={`bg-white rounded-lg border-2 hover:shadow-lg transition-all duration-200 overflow-hidden group relative ${
+                isSelected ? "border-blue-500 bg-blue-50" : "border-gray-200"
+              }`}
               onMouseEnter={() => setHoveredFile(file.id)}
               onMouseLeave={() => setHoveredFile(null)}
             >
+              {/* Checkbox */}
+              {onToggleSelect && (
+                <div className="absolute top-3 left-3 z-10">
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => onToggleSelect(file.id)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                  />
+                </div>
+              )}
+
               {/* Thumbnail/Preview */}
               <div
                 className="aspect-square bg-gray-50 flex items-center justify-center cursor-pointer relative overflow-hidden"
