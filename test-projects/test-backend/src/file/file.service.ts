@@ -13,7 +13,7 @@ import * as path from 'path';
 import { FileQueryDto } from './dto/file-query.dto';
 import { UploadMetadataDto } from './dto/upload-metadata.dto';
 
-interface BatchProgress {
+export interface BatchProgress {
   totalFiles: number;
   completed: number;
   failed: number;
