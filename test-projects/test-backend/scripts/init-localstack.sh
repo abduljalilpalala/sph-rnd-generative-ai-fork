@@ -53,28 +53,52 @@ echo -e "${GREEN}LocalStack is ready!${NC}"
 BUCKET_NAME=${S3_BUCKET:-local-files}
 echo -e "${YELLOW}Creating S3 bucket: $BUCKET_NAME${NC}"
 
-# Check if aws CLI is installed
-if ! command -v aws &> /dev/null; then
-    echo -e "${RED}ERROR: AWS CLI is not installed. Please install it first.${NC}"
-    echo "Install with: pip install awscli-local awscli"
-    exit 1
-fi
-
-# Configure AWS CLI for LocalStack (if not already configured)
+# Configure AWS credentials for LocalStack
 export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-test}
 export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-test}
 export AWS_DEFAULT_REGION=${S3_REGION:-us-east-1}
 
-# Create bucket (ignore error if already exists)
-if aws --endpoint-url="${LOCALSTACK_ENDPOINT}" s3 mb "s3://$BUCKET_NAME" 2>/dev/null; then
-    echo -e "${GREEN}Bucket '$BUCKET_NAME' created successfully.${NC}"
-else
-    echo -e "${YELLOW}Bucket '$BUCKET_NAME' already exists or failed to create.${NC}"
-fi
+# Check if AWS CLI is installed
+if command -v aws &> /dev/null; then
+    echo -e "${GREEN}Using AWS CLI${NC}"
 
-# List buckets to confirm
-echo -e "${YELLOW}Available buckets:${NC}"
-aws --endpoint-url="${LOCALSTACK_ENDPOINT}" s3 ls
+    # Create bucket (ignore error if already exists)
+    if aws --endpoint-url="${LOCALSTACK_ENDPOINT}" s3 mb "s3://$BUCKET_NAME" 2>/dev/null; then
+        echo -e "${GREEN}Bucket '$BUCKET_NAME' created successfully.${NC}"
+    else
+        echo -e "${YELLOW}Bucket '$BUCKET_NAME' already exists or failed to create.${NC}"
+    fi
+
+    # List buckets to confirm
+    echo -e "${YELLOW}Available buckets:${NC}"
+    aws --endpoint-url="${LOCALSTACK_ENDPOINT}" s3 ls
+else
+    echo -e "${YELLOW}AWS CLI not found. Using direct API calls...${NC}"
+
+    # Create bucket using direct HTTP request to LocalStack S3 API
+    RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT "${LOCALSTACK_ENDPOINT}/${BUCKET_NAME}" 2>&1)
+    HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+
+    if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "409" ]; then
+        if [ "$HTTP_CODE" = "200" ]; then
+            echo -e "${GREEN}Bucket '$BUCKET_NAME' created successfully.${NC}"
+        else
+            echo -e "${YELLOW}Bucket '$BUCKET_NAME' already exists.${NC}"
+        fi
+    else
+        echo -e "${RED}Failed to create bucket. HTTP status: $HTTP_CODE${NC}"
+        echo -e "${YELLOW}Response: $(echo "$RESPONSE" | head -n-1)${NC}"
+    fi
+
+    # List buckets using direct API call
+    echo -e "${YELLOW}Available buckets:${NC}"
+    BUCKETS=$(curl -s "${LOCALSTACK_ENDPOINT}/" 2>&1)
+    if echo "$BUCKETS" | grep -q "ListAllMyBucketsResult"; then
+        echo "$BUCKETS" | grep -oP '(?<=<Name>)[^<]+' || echo -e "${YELLOW}No buckets found or unable to parse response${NC}"
+    else
+        echo -e "${YELLOW}$BUCKET_NAME${NC}"
+    fi
+fi
 
 echo -e "${GREEN}LocalStack S3 initialization complete!${NC}"
 echo -e "${GREEN}S3 endpoint: ${LOCALSTACK_ENDPOINT}${NC}"
