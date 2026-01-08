@@ -8,6 +8,10 @@ export type { ButtonVariant, ButtonSize } from "@/components/atoms/Button";
 
 export { Card } from "@/components/atoms/Card";
 
+export { FileIcon } from "@/components/atoms/FileIcon";
+
+export { FileSize } from "@/components/atoms/FileSize";
+
 export { Icon } from "@/components/atoms/Icon";
 
 export { Input } from "@/components/atoms/Input";
@@ -16,6 +20,8 @@ export { Label } from "@/components/atoms/Label";
 
 export { Link } from "@/components/atoms/Link";
 export type { LinkVariant } from "@/components/atoms/Link";
+
+export { ProgressBar } from "@/components/atoms/ProgressBar";
 
 export { Text } from "@/components/atoms/Text";
 export type { TextVariant, TextColor } from "@/components/atoms/Text";

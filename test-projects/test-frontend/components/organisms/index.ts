@@ -12,3 +12,5 @@ export { TaskList } from "@/components/organisms/TaskList";
 export { TaskFormModal } from "@/components/organisms/TaskFormModal";
 export { AddMemberModal } from "@/components/organisms/AddMemberModal";
 export { AssignTaskModal } from "@/components/organisms/AssignTaskModal";
+export { FileGallery } from "@/components/organisms/FileGallery";
+export { FileUploader } from "@/components/organisms/FileUploader";

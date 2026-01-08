@@ -23,6 +23,7 @@ model User {
   projectMemberships ProjectMember[]
   createdTasks     Task[]
   taskAssignments  TaskAssignment[]
+  uploadedFiles    File[]
 }
 
 model Project {
@@ -33,6 +34,7 @@ model Project {
   owner       User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   members     ProjectMember[]
   tasks       Task[]
+  files       File[]
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 }
@@ -71,6 +73,7 @@ model Task {
   project     Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
   createdBy   User             @relation(fields: [createdById], references: [id], onDelete: Cascade)
   assignments TaskAssignment[]
+  files       File[]
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 }
@@ -85,4 +88,44 @@ model TaskAssignment {
   updatedAt DateTime @updatedAt
 
   @@unique([taskId, userId])
+}
+
+enum FileType {
+  IMAGE
+  DOCUMENT
+}
+
+enum FileStatus {
+  PENDING
+  UPLOADING
+  COMPLETED
+  FAILED
+}
+
+model File {
+  id            Int         @id @default(autoincrement())
+  originalName  String
+  storedName    String      @unique
+  s3Key         String      @unique
+  s3Bucket      String
+  mimeType      String
+  fileType      FileType
+  size          Int
+  status        FileStatus  @default(PENDING)
+  uploadedById  Int
+  uploadedBy    User        @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+  projectId     Int?
+  project       Project?    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  taskId        Int?
+  task          Task?       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  metadata      Json?
+  errorMessage  String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([uploadedById])
+  @@index([projectId])
+  @@index([taskId])
+  @@index([fileType])
+  @@index([status])
 }
