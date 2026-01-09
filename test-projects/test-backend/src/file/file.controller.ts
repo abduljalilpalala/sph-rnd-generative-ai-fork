@@ -22,6 +22,7 @@ import { FileService } from './file.service';
 import { FileQueryDto } from './dto/file-query.dto';
 import { UploadMetadataDto } from './dto/upload-metadata.dto';
 import { BatchDeleteDto } from './dto/batch-delete.dto';
+import { FileDownloadResponse } from './interfaces/file-download.interface';
 
 @Controller('files')
 export class FileController {
@@ -97,14 +98,26 @@ export class FileController {
     @Param('id', ParseIntPipe) id: number,
     @Res({ passthrough: true }) res: Response,
   ): Promise<StreamableFile> {
-    const { stream, filename, contentType, contentLength } =
+    const downloadResponse: FileDownloadResponse =
       await this.fileService.downloadFile(id);
 
-    res.set({
-      'Content-Type': contentType || 'application/octet-stream',
+    // Explicitly type the destructured values
+    const stream = downloadResponse.stream;
+    const filename = downloadResponse.filename;
+    const contentType = downloadResponse.contentType;
+    const contentLength = downloadResponse.contentLength;
+
+    // Set response headers with explicit types
+    const headers: Record<string, string | number> = {
+      'Content-Type': contentType,
       'Content-Disposition': `attachment; filename="${filename}"`,
-      ...(contentLength && { 'Content-Length': contentLength }),
-    });
+    };
+
+    if (contentLength > 0) {
+      headers['Content-Length'] = contentLength;
+    }
+
+    res.set(headers);
 
     return new StreamableFile(stream);
   }

@@ -10,8 +10,10 @@ import { S3StorageService } from '../storage/s3-storage.service';
 import { File, FileType, FileStatus } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
+import { Readable } from 'stream';
 import { FileQueryDto } from './dto/file-query.dto';
 import { UploadMetadataDto } from './dto/upload-metadata.dto';
+import { FileDownloadResponse } from './interfaces/file-download.interface';
 
 export interface BatchProgress {
   totalFiles: number;
@@ -212,21 +214,23 @@ export class FileService {
     return { url, expiresIn: 3600 };
   }
 
-  async downloadFile(id: number): Promise<{
-    stream: any;
-    filename: string;
-    contentType?: string;
-    contentLength?: number;
-  }> {
+  async downloadFile(id: number): Promise<FileDownloadResponse> {
     const file = await this.findOne(id);
     const { stream, contentType, contentLength } =
       await this.storageService.getFileStream(file.s3Key);
 
+    // Ensure stream is a Readable stream
+    const readableStream = stream as Readable;
+
+    // Provide defaults for optional fields to ensure type safety
+    const safeContentType = contentType || 'application/octet-stream';
+    const safeContentLength = contentLength || 0;
+
     return {
-      stream,
+      stream: readableStream,
       filename: file.originalName,
-      contentType,
-      contentLength,
+      contentType: safeContentType,
+      contentLength: safeContentLength,
     };
   }
 
