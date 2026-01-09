@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useGetProjectsQuery, useCreateProjectMutation, useDeleteProjectMutation } from "@/lib/services/projectApi";
 import { ProjectList, ProjectFormModal, Sidebar, TopNavigation } from "@/components/organisms";
-import { ConfirmModal } from "@/components/molecules";
+import { ConfirmDialog } from "@/components/molecules";
 import { Alert } from "@/components/atoms";
 
 const MOCK_USER_ID = 1;
@@ -116,18 +116,18 @@ export default function ProjectsPage() {
         isLoading={isCreating}
       />
 
-      <ConfirmModal
+      <ConfirmDialog
         isOpen={showDeleteModal}
         title="Delete Project"
         message="Are you sure you want to delete this project? This action cannot be undone."
-        confirmLabel="Delete"
+        confirmText="Delete"
         onConfirm={handleDeleteConfirm}
-        onCancel={() => {
+        onClose={() => {
           setShowDeleteModal(false);
           setProjectToDelete(null);
           setDeleteError(null);
         }}
-        isLoading={isDeleting}
+        variant="danger"
       />
 
       {deleteError && (

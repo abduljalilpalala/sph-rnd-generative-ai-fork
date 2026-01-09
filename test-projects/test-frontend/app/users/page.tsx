@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { useUsers } from "@/hooks/useUsers";
 import { UserList, Sidebar, TopNavigation } from "@/components/organisms";
-import { ConfirmModal } from "@/components/molecules";
+import { ConfirmDialog } from "@/components/molecules";
 import { Alert } from "@/components/atoms";
 
 const UsersPage = () => {
@@ -142,15 +142,15 @@ const UsersPage = () => {
       </div>
 
       {/* Modals */}
-      <ConfirmModal
+      <ConfirmDialog
         isOpen={deleteModalOpen}
         title="Delete User"
         message="Are you sure you want to delete this user? This action cannot be undone."
-        confirmLabel="Delete"
-        cancelLabel="Cancel"
+        confirmText="Delete"
+        cancelText="Cancel"
         onConfirm={confirmDelete}
-        onCancel={closeDeleteModal}
-        isLoading={isDeleting}
+        onClose={closeDeleteModal}
+        variant="danger"
       />
 
       {deleteError && (
