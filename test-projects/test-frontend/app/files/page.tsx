@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { Sidebar, TopNavigation, FileUploader, FileGalleryEnhanced } from "@/components/organisms";
 import { Card, Button } from "@/components/atoms";
+import { ConfirmDialog } from "@/components/molecules";
 import { useFiles } from "@/hooks/useFiles";
+import { downloadFile, downloadFilesAsZip, getDownloadUrl } from "@/lib/utils/fileDownload";
 
 export default function FilesPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -17,6 +19,19 @@ export default function FilesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedFiles, setSelectedFiles] = useState<number[]>([]);
 
+  // Confirm dialog state
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
+
   const { files, isLoading, handleDelete, isDeleting, refetch } = useFiles({
     userId,
     search,
@@ -27,63 +42,95 @@ export default function FilesPage() {
 
   const [deletingId, setDeletingId] = useState<number | undefined>();
 
-  const handleDeleteFile = async (id: number) => {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this file? This action cannot be undone."
-    );
-    if (!confirmed) return;
-
-    setDeletingId(id);
-    try {
-      await handleDelete(id, userId);
-      setSelectedFiles(prev => prev.filter(fId => fId !== id));
-    } finally {
-      setDeletingId(undefined);
-    }
+  const handleDeleteFile = (id: number) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: "Delete File",
+      message: "Are you sure you want to delete this file? This action cannot be undone.",
+      onConfirm: async () => {
+        setDeletingId(id);
+        try {
+          await handleDelete(id, userId);
+          setSelectedFiles((prev) => prev.filter((fId) => fId !== id));
+        } catch (error) {
+          console.error("Failed to delete file:", error);
+        } finally {
+          setDeletingId(undefined);
+        }
+      },
+    });
   };
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = () => {
     if (selectedFiles.length === 0) return;
 
-    const confirmed = window.confirm(
-      `Are you sure you want to delete ${selectedFiles.length} file(s)? This action cannot be undone.`
-    );
-    if (!confirmed) return;
-
-    for (const fileId of selectedFiles) {
-      try {
-        await handleDelete(fileId, userId);
-      } catch (error) {
-        console.error(`Failed to delete file ${fileId}:`, error);
-      }
-    }
-    setSelectedFiles([]);
+    setConfirmDialog({
+      isOpen: true,
+      title: "Delete Multiple Files",
+      message: `Are you sure you want to delete ${selectedFiles.length} file(s)? This action cannot be undone.`,
+      onConfirm: async () => {
+        for (const fileId of selectedFiles) {
+          try {
+            await handleDelete(fileId, userId);
+          } catch (error) {
+            console.error(`Failed to delete file ${fileId}:`, error);
+          }
+        }
+        setSelectedFiles([]);
+      },
+    });
   };
 
   const handleDownload = async (id: number) => {
     const file = files?.find((f) => f.id === id);
-    if (file) {
-      try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/files/${id}/download-url`
-        );
-        const data = await response.json();
-        window.open(data.url, "_blank");
-      } catch (error) {
-        console.error("Failed to download file:", error);
-      }
+    if (!file) return;
+
+    try {
+      // Get download URL from backend
+      const url = await getDownloadUrl(id);
+
+      // Download file directly
+      await downloadFile(url, file.originalName);
+    } catch (error) {
+      console.error("Failed to download file:", error);
     }
   };
 
   const handleBulkDownload = async () => {
     if (selectedFiles.length === 0) return;
 
-    for (const fileId of selectedFiles) {
-      try {
-        await handleDownload(fileId);
-      } catch (error) {
-        console.error(`Failed to download file ${fileId}:`, error);
+    try {
+      // Get all selected files with their URLs
+      const filesToDownload = await Promise.all(
+        selectedFiles.map(async (fileId) => {
+          const file = files?.find((f) => f.id === fileId);
+          if (!file) return null;
+
+          const url = await getDownloadUrl(fileId);
+          return { url, filename: file.originalName };
+        })
+      );
+
+      // Filter out any null values
+      const validFiles = filesToDownload.filter((f) => f !== null) as Array<{
+        url: string;
+        filename: string;
+      }>;
+
+      if (validFiles.length === 0) {
+        console.error("No valid files to download");
+        return;
       }
+
+      // Download as ZIP if multiple files
+      if (validFiles.length === 1) {
+        await downloadFile(validFiles[0].url, validFiles[0].filename);
+      } else {
+        const timestamp = new Date().toISOString().split("T")[0];
+        await downloadFilesAsZip(validFiles, `files-${timestamp}.zip`);
+      }
+    } catch (error) {
+      console.error("Failed to download files:", error);
     }
   };
 
@@ -334,6 +381,18 @@ export default function FilesPage() {
           </div>
         </main>
       </div>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        variant="danger"
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
     </div>
   );
 }
