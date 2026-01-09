@@ -143,4 +143,27 @@ export class S3StorageService implements IStorageService {
       throw error;
     }
   }
+
+  async getFileStream(key: string): Promise<{
+    stream: any;
+    contentType?: string;
+    contentLength?: number;
+  }> {
+    try {
+      const command = new GetObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+      });
+      const result = await this.s3Client.send(command);
+
+      return {
+        stream: result.Body,
+        contentType: result.ContentType,
+        contentLength: result.ContentLength,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to get file stream: ${error.message}`);
+      throw error;
+    }
+  }
 }

@@ -1,11 +1,13 @@
 import JSZip from "jszip";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+
 /**
- * Download a single file directly to the user's machine
+ * Download a single file directly to the user's machine via backend proxy
  */
-export const downloadFile = async (url: string, filename: string): Promise<void> => {
+export const downloadFile = async (fileId: number, filename: string): Promise<void> => {
   try {
-    const response = await fetch(url);
+    const response = await fetch(`${API_URL}/files/${fileId}/download`);
     if (!response.ok) {
       throw new Error(`Failed to fetch file: ${response.statusText}`);
     }
@@ -29,19 +31,19 @@ export const downloadFile = async (url: string, filename: string): Promise<void>
 };
 
 /**
- * Download multiple files as a single ZIP archive
+ * Download multiple files as a single ZIP archive via backend proxy
  */
 export const downloadFilesAsZip = async (
-  files: Array<{ url: string; filename: string }>,
+  files: Array<{ fileId: number; filename: string }>,
   zipFilename: string = "files.zip"
 ): Promise<void> => {
   try {
     const zip = new JSZip();
 
-    // Fetch all files and add them to the zip
+    // Fetch all files via backend proxy and add them to the zip
     const filePromises = files.map(async (file) => {
       try {
-        const response = await fetch(file.url);
+        const response = await fetch(`${API_URL}/files/${file.fileId}/download`);
         if (!response.ok) {
           throw new Error(`Failed to fetch ${file.filename}`);
         }
@@ -75,17 +77,3 @@ export const downloadFilesAsZip = async (
   }
 };
 
-/**
- * Get download URL from the backend
- */
-export const getDownloadUrl = async (
-  fileId: number,
-  apiUrl: string = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"
-): Promise<string> => {
-  const response = await fetch(`${apiUrl}/files/${fileId}/download-url`);
-  if (!response.ok) {
-    throw new Error(`Failed to get download URL: ${response.statusText}`);
-  }
-  const data = await response.json();
-  return data.url;
-};

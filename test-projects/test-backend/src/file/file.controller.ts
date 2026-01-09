@@ -13,7 +13,10 @@ import {
   ParseFilePipeBuilder,
   BadRequestException,
   ParseIntPipe,
+  Res,
+  StreamableFile,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { FileService } from './file.service';
 import { FileQueryDto } from './dto/file-query.dto';
@@ -87,6 +90,23 @@ export class FileController {
   @Get(':id/download-url')
   async getDownloadUrl(@Param('id', ParseIntPipe) id: number) {
     return this.fileService.getDownloadUrl(id);
+  }
+
+  @Get(':id/download')
+  async downloadFile(
+    @Param('id', ParseIntPipe) id: number,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<StreamableFile> {
+    const { stream, filename, contentType, contentLength } =
+      await this.fileService.downloadFile(id);
+
+    res.set({
+      'Content-Type': contentType || 'application/octet-stream',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      ...(contentLength && { 'Content-Length': contentLength }),
+    });
+
+    return new StreamableFile(stream);
   }
 
   @Delete(':id')

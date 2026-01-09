@@ -5,7 +5,7 @@ import { Sidebar, TopNavigation, FileUploader, FileGalleryEnhanced } from "@/com
 import { Card, Button } from "@/components/atoms";
 import { ConfirmDialog } from "@/components/molecules";
 import { useFiles } from "@/hooks/useFiles";
-import { downloadFile, downloadFilesAsZip, getDownloadUrl } from "@/lib/utils/fileDownload";
+import { downloadFile, downloadFilesAsZip } from "@/lib/utils/fileDownload";
 
 export default function FilesPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -86,11 +86,8 @@ export default function FilesPage() {
     if (!file) return;
 
     try {
-      // Get download URL from backend
-      const url = await getDownloadUrl(id);
-
-      // Download file directly
-      await downloadFile(url, file.originalName);
+      // Download file via backend proxy
+      await downloadFile(id, file.originalName);
     } catch (error) {
       console.error("Failed to download file:", error);
     }
@@ -100,34 +97,29 @@ export default function FilesPage() {
     if (selectedFiles.length === 0) return;
 
     try {
-      // Get all selected files with their URLs
-      const filesToDownload = await Promise.all(
-        selectedFiles.map(async (fileId) => {
+      // Get all selected files with their IDs and filenames
+      const filesToDownload = selectedFiles
+        .map((fileId) => {
           const file = files?.find((f) => f.id === fileId);
           if (!file) return null;
-
-          const url = await getDownloadUrl(fileId);
-          return { url, filename: file.originalName };
+          return { fileId, filename: file.originalName };
         })
-      );
+        .filter((f) => f !== null) as Array<{
+          fileId: number;
+          filename: string;
+        }>;
 
-      // Filter out any null values
-      const validFiles = filesToDownload.filter((f) => f !== null) as Array<{
-        url: string;
-        filename: string;
-      }>;
-
-      if (validFiles.length === 0) {
+      if (filesToDownload.length === 0) {
         console.error("No valid files to download");
         return;
       }
 
-      // Download as ZIP if multiple files
-      if (validFiles.length === 1) {
-        await downloadFile(validFiles[0].url, validFiles[0].filename);
+      // Download as ZIP if multiple files, or single file if only one
+      if (filesToDownload.length === 1) {
+        await downloadFile(filesToDownload[0].fileId, filesToDownload[0].filename);
       } else {
         const timestamp = new Date().toISOString().split("T")[0];
-        await downloadFilesAsZip(validFiles, `files-${timestamp}.zip`);
+        await downloadFilesAsZip(filesToDownload, `files-${timestamp}.zip`);
       }
     } catch (error) {
       console.error("Failed to download files:", error);

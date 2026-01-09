@@ -212,6 +212,24 @@ export class FileService {
     return { url, expiresIn: 3600 };
   }
 
+  async downloadFile(id: number): Promise<{
+    stream: any;
+    filename: string;
+    contentType?: string;
+    contentLength?: number;
+  }> {
+    const file = await this.findOne(id);
+    const { stream, contentType, contentLength } =
+      await this.storageService.getFileStream(file.s3Key);
+
+    return {
+      stream,
+      filename: file.originalName,
+      contentType,
+      contentLength,
+    };
+  }
+
   async remove(id: number, userId: number): Promise<void> {
     const file = await this.findOne(id);
 
