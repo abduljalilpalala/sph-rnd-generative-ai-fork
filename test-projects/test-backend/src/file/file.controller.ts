@@ -23,6 +23,7 @@ import { FileQueryDto } from './dto/file-query.dto';
 import { UploadMetadataDto } from './dto/upload-metadata.dto';
 import { BatchDeleteDto } from './dto/batch-delete.dto';
 import { FileDownloadResponse } from './interfaces/file-download.interface';
+import { CustomFileTypeValidator } from './validators/file-type.validator';
 
 @Controller('files')
 export class FileController {
@@ -33,9 +34,11 @@ export class FileController {
   async uploadFile(
     @UploadedFile(
       new ParseFilePipeBuilder()
-        .addFileTypeValidator({
-          fileType: /(jpg|jpeg|png|gif|pdf|doc|docx|txt)$/,
-        })
+        .addValidator(
+          new CustomFileTypeValidator({
+            fileTypes: ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'txt'],
+          }),
+        )
         .addMaxSizeValidator({
           maxSize: 10 * 1024 * 1024,
         })
@@ -54,9 +57,11 @@ export class FileController {
   async uploadBatch(
     @UploadedFiles(
       new ParseFilePipeBuilder()
-        .addFileTypeValidator({
-          fileType: /(jpg|jpeg|png|gif|pdf|doc|docx|txt)$/,
-        })
+        .addValidator(
+          new CustomFileTypeValidator({
+            fileTypes: ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'txt'],
+          }),
+        )
         .addMaxSizeValidator({
           maxSize: 10 * 1024 * 1024,
         })
