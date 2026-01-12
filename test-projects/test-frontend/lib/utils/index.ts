@@ -9,3 +9,8 @@ export {
   AppError,
   type NormalizedError,
 } from "@/lib/utils/errorHandler";
+export {
+  validateFileAvailability,
+  batchValidateFiles,
+  validateBeforeDownload,
+} from "@/lib/utils/fileValidation";

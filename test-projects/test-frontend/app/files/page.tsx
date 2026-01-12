@@ -86,10 +86,16 @@ export default function FilesPage() {
     if (!file) return;
 
     try {
-      // Download file via backend proxy
+      // Download file via backend proxy (with validation)
       await downloadFile(id, file.originalName);
     } catch (error) {
       console.error("Failed to download file:", error);
+      // Show user-friendly error message
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to download file. The file may be corrupted or unavailable.";
+      alert(errorMessage); // Replace with toast notification in production
     }
   };
 
@@ -123,6 +129,12 @@ export default function FilesPage() {
       }
     } catch (error) {
       console.error("Failed to download files:", error);
+      // Show user-friendly error message
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to download files. Some files may be corrupted or unavailable.";
+      alert(errorMessage); // Replace with toast notification in production
     }
   };
 

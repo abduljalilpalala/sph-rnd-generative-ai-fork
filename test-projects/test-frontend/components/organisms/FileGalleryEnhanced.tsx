@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FileSize, Icon, FileIcon } from "@/components/atoms";
+import { batchValidateFiles } from "@/lib/utils";
 
 // Placeholder image data URL (1x1 gray pixel)
 const PLACEHOLDER_IMAGE =
@@ -39,6 +40,8 @@ export const FileGalleryEnhanced = ({
   const [hoveredFile, setHoveredFile] = useState<number | null>(null);
   const [previewFile, setPreviewFile] = useState<FileData | null>(null);
   const [brokenImages, setBrokenImages] = useState<Set<number>>(new Set());
+  const [brokenDocuments, setBrokenDocuments] = useState<Set<number>>(new Set());
+  const [validatingFiles, setValidatingFiles] = useState(false);
 
   /**
    * Handle image load error by marking it as broken
@@ -47,6 +50,42 @@ export const FileGalleryEnhanced = ({
   const handleImageError = (fileId: number) => {
     setBrokenImages((prev) => new Set(prev).add(fileId));
   };
+
+  /**
+   * Validate document files on mount and when files change
+   * Uses HEAD requests to check availability without downloading
+   */
+  useEffect(() => {
+    const validateDocuments = async () => {
+      if (!files || files.length === 0) return;
+
+      // Only validate document files
+      const documentFiles = files.filter((file) => file.fileType === "DOCUMENT");
+      if (documentFiles.length === 0) return;
+
+      setValidatingFiles(true);
+
+      try {
+        const fileIds = documentFiles.map((f) => f.id);
+        const validationResults = await batchValidateFiles(fileIds);
+
+        const brokenIds = new Set<number>();
+        validationResults.forEach((isValid, fileId) => {
+          if (!isValid) {
+            brokenIds.add(fileId);
+          }
+        });
+
+        setBrokenDocuments(brokenIds);
+      } catch (error) {
+        console.error("Failed to validate documents:", error);
+      } finally {
+        setValidatingFiles(false);
+      }
+    };
+
+    validateDocuments();
+  }, [files]);
 
   if (isLoading) {
     return (
@@ -101,15 +140,27 @@ export const FileGalleryEnhanced = ({
           const isImage = isImageFile(file.mimeType);
           const isDeleting = deletingId === file.id;
           const isSelected = selectedFiles.includes(file.id);
+          const isBrokenImage = isImage && brokenImages.has(file.id);
+          const isBrokenDocument = !isImage && brokenDocuments.has(file.id);
+          const isBroken = isBrokenImage || isBrokenDocument;
 
           return (
             <div
               key={file.id}
               className={`bg-white rounded-lg border-2 hover:shadow-lg transition-all duration-200 overflow-hidden group relative ${
-                isSelected ? "border-blue-500 bg-blue-50" : "border-gray-200"
+                isSelected
+                  ? "border-blue-500 bg-blue-50"
+                  : isBroken
+                  ? "border-red-200 bg-red-50"
+                  : "border-gray-200"
               }`}
               onMouseEnter={() => setHoveredFile(file.id)}
               onMouseLeave={() => setHoveredFile(null)}
+              title={
+                isBroken
+                  ? "This file may be corrupted, deleted, or temporarily unavailable"
+                  : undefined
+              }
             >
               {/* Checkbox */}
               {onToggleSelect && (
@@ -155,13 +206,28 @@ export const FileGalleryEnhanced = ({
                     />
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center h-full p-4">
+                  <div className="flex flex-col items-center justify-center h-full p-4 relative">
                     <div className="mb-3">
                       <FileIcon mimeType={file.mimeType} size="lg" />
                     </div>
                     <span className="text-xs text-gray-500 font-medium uppercase text-center">
                       {file.mimeType.split("/")[1] || "file"}
                     </span>
+                    {isBrokenDocument && (
+                      <div className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1">
+                        <svg
+                          className="w-4 h-4"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

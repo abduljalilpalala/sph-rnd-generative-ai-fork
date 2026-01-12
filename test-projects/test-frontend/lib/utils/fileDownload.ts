@@ -1,13 +1,24 @@
 import JSZip from "jszip";
 import { handleError, logError, AppError } from "@/lib/utils/errorHandler";
+import { validateBeforeDownload } from "@/lib/utils/fileValidation";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
 /**
  * Download a single file directly to the user's machine via backend proxy
+ * Validates file availability before attempting download
  */
-export const downloadFile = async (fileId: number, filename: string): Promise<void> => {
+export const downloadFile = async (
+  fileId: number,
+  filename: string,
+  skipValidation: boolean = false
+): Promise<void> => {
   try {
+    // Validate file before downloading (unless explicitly skipped for performance)
+    if (!skipValidation) {
+      await validateBeforeDownload(fileId, filename);
+    }
+
     const response = await fetch(`${API_URL}/files/${fileId}/download`);
     if (!response.ok) {
       throw new AppError(
