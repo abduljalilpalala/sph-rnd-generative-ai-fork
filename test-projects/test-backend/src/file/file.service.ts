@@ -14,6 +14,7 @@ import { Readable } from 'stream';
 import { FileQueryDto } from './dto/file-query.dto';
 import { UploadMetadataDto } from './dto/upload-metadata.dto';
 import { FileDownloadResponse } from './interfaces/file-download.interface';
+import { logError } from '../common/utils/error-handler.util';
 
 export interface BatchProgress {
   totalFiles: number;
@@ -77,11 +78,14 @@ export class FileService {
         include: { uploadedBy: true },
       });
     } catch (error) {
+      // Use centralized error handler
+      logError(error, 'FileService.uploadFile', this.logger);
+
       await this.prisma.file.update({
         where: { id: fileRecord.id },
         data: {
           status: FileStatus.FAILED,
-          errorMessage: error.message,
+          errorMessage: error instanceof Error ? error.message : 'Upload failed',
         },
       });
       throw error;
@@ -122,8 +126,11 @@ export class FileService {
             await this.uploadFile(file, metadata);
             this.updateBatchProgress(batchId, 'completed');
           } catch (error) {
-            this.logger.error(
-              `Failed to upload file ${file.originalname}: ${error.message}`,
+            // Use centralized error handler
+            logError(
+              error,
+              `FileService.processBatchUpload - ${file.originalname}`,
+              this.logger,
             );
             this.updateBatchProgress(batchId, 'failed');
           }

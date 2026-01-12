@@ -14,6 +14,7 @@ import {
   UploadOptions,
 } from './interfaces/storage.interface';
 import type { StorageConfig } from './interfaces/storage.interface';
+import { logError } from '../common/utils/error-handler.util';
 
 @Injectable()
 export class S3StorageService implements IStorageService {
@@ -53,7 +54,7 @@ export class S3StorageService implements IStorageService {
         etag: result.ETag || '',
       };
     } catch (error) {
-      this.logger.error(`Failed to upload file: ${error.message}`);
+      logError(error, 'S3StorageService.upload', this.logger);
       throw error;
     }
   }
@@ -84,7 +85,7 @@ export class S3StorageService implements IStorageService {
       });
       await this.s3Client.send(command);
     } catch (error) {
-      this.logger.error(`Failed to delete file: ${error.message}`);
+      logError(error, 'S3StorageService.delete', this.logger);
       throw error;
     }
   }
@@ -99,7 +100,7 @@ export class S3StorageService implements IStorageService {
       });
       await this.s3Client.send(command);
     } catch (error) {
-      this.logger.error(`Failed to batch delete files: ${error.message}`);
+      logError(error, 'S3StorageService.batchDelete', this.logger);
       throw error;
     }
   }
@@ -112,7 +113,7 @@ export class S3StorageService implements IStorageService {
       });
       return await getSignedUrl(this.s3Client, command, { expiresIn });
     } catch (error) {
-      this.logger.error(`Failed to generate signed URL: ${error.message}`);
+      logError(error, 'S3StorageService.getSignedUrl', this.logger);
       throw error;
     }
   }
@@ -139,7 +140,7 @@ export class S3StorageService implements IStorageService {
       const result = await this.s3Client.send(command);
       return result.Metadata || {};
     } catch (error) {
-      this.logger.error(`Failed to get file metadata: ${error.message}`);
+      logError(error, 'S3StorageService.getFileMetadata', this.logger);
       throw error;
     }
   }
@@ -162,7 +163,7 @@ export class S3StorageService implements IStorageService {
         contentLength: result.ContentLength,
       };
     } catch (error) {
-      this.logger.error(`Failed to get file stream: ${error.message}`);
+      logError(error, 'S3StorageService.getFileStream', this.logger);
       throw error;
     }
   }
