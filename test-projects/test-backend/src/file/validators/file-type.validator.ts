@@ -25,9 +25,7 @@ export class CustomFileTypeValidator extends FileValidator<FileTypeValidatorOpti
     ['xls', ['application/vnd.ms-excel']],
     [
       'xlsx',
-      [
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      ],
+      ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
     ],
     ['ppt', ['application/vnd.ms-powerpoint']],
     [

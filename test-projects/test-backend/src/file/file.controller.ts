@@ -16,7 +16,7 @@ import {
   Res,
   StreamableFile,
 } from '@nestjs/common';
-import { Response } from 'express';
+import type { Response } from 'express';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { FileService } from './file.service';
 import { FileQueryDto } from './dto/file-query.dto';
@@ -36,7 +36,16 @@ export class FileController {
       new ParseFilePipeBuilder()
         .addValidator(
           new CustomFileTypeValidator({
-            fileTypes: ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'txt'],
+            fileTypes: [
+              'jpg',
+              'jpeg',
+              'png',
+              'gif',
+              'pdf',
+              'doc',
+              'docx',
+              'txt',
+            ],
           }),
         )
         .addMaxSizeValidator({
@@ -59,7 +68,16 @@ export class FileController {
       new ParseFilePipeBuilder()
         .addValidator(
           new CustomFileTypeValidator({
-            fileTypes: ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'txt'],
+            fileTypes: [
+              'jpg',
+              'jpeg',
+              'png',
+              'gif',
+              'pdf',
+              'doc',
+              'docx',
+              'txt',
+            ],
           }),
         )
         .addMaxSizeValidator({
@@ -84,7 +102,7 @@ export class FileController {
   }
 
   @Get('batch/:batchId/progress')
-  async getBatchProgress(@Param('batchId') batchId: string) {
+  getBatchProgress(@Param('batchId') batchId: string) {
     return this.fileService.getBatchProgress(batchId);
   }
 

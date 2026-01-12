@@ -15,6 +15,7 @@ import {
 } from './interfaces/storage.interface';
 import type { StorageConfig } from './interfaces/storage.interface';
 import { logError } from '../common/utils/error-handler.util';
+import { StreamingBlobPayloadOutputTypes } from '@smithy/types';
 
 @Injectable()
 export class S3StorageService implements IStorageService {
@@ -47,10 +48,16 @@ export class S3StorageService implements IStorageService {
 
       const result = await this.s3Client.send(command);
 
+      // Resolve the region to construct the URL
+      const region = await this.s3Client.config.region();
+
+      // Standard S3 URL format
+      const url = `https://${this.bucket}.s3.${region}.amazonaws.com/${options.key}`;
+
       return {
         key: options.key,
         bucket: this.bucket,
-        url: `${this.s3Client.config.endpoint}/${this.bucket}/${options.key}`,
+        url: url,
         etag: result.ETag || '',
       };
     } catch (error) {
@@ -146,7 +153,7 @@ export class S3StorageService implements IStorageService {
   }
 
   async getFileStream(key: string): Promise<{
-    stream: any;
+    stream?: StreamingBlobPayloadOutputTypes;
     contentType?: string;
     contentLength?: number;
   }> {

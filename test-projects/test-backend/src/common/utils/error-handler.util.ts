@@ -157,12 +157,13 @@ export const logError = (
   // Use NestJS Logger.error which includes context automatically
   loggerInstance.error(
     normalized.message,
-    normalized.stack || JSON.stringify({
-      name: normalized.name,
-      code: normalized.code,
-      statusCode: normalized.statusCode,
-      timestamp: normalized.timestamp,
-    }),
+    normalized.stack ||
+      JSON.stringify({
+        name: normalized.name,
+        code: normalized.code,
+        statusCode: normalized.statusCode,
+        timestamp: normalized.timestamp,
+      }),
   );
 
   // Log original error in development for debugging

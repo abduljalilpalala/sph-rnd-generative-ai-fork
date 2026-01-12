@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { S3StorageService } from '../storage/s3-storage.service';
-import { File, FileType, FileStatus } from '@prisma/client';
+import { File, FileType, FileStatus, Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
 import { Readable } from 'stream';
@@ -85,7 +85,8 @@ export class FileService {
         where: { id: fileRecord.id },
         data: {
           status: FileStatus.FAILED,
-          errorMessage: error instanceof Error ? error.message : 'Upload failed',
+          errorMessage:
+            error instanceof Error ? error.message : 'Upload failed',
         },
       });
       throw error;
@@ -105,7 +106,7 @@ export class FileService {
       inProgress: files.length,
     });
 
-    this.processBatchUpload(batchId, files, metadata);
+    await this.processBatchUpload(batchId, files, metadata);
 
     return { batchId, totalFiles: files.length };
   }
@@ -150,7 +151,7 @@ export class FileService {
     }
   }
 
-  async getBatchProgress(batchId: string): Promise<BatchProgress> {
+  getBatchProgress(batchId: string): BatchProgress {
     const progress = this.batchProgressCache.get(batchId);
     if (!progress) {
       throw new NotFoundException('Batch not found');
@@ -160,7 +161,7 @@ export class FileService {
 
   async findAll(query: FileQueryDto): Promise<File[]> {
     // Build where clause
-    const where: any = {
+    const where: Prisma.FileWhereInput = {
       uploadedById: query.userId,
       fileType: query.fileType,
       status: FileStatus.COMPLETED,
@@ -175,7 +176,7 @@ export class FileService {
     }
 
     // Build orderBy clause
-    let orderBy: any = { createdAt: 'desc' };
+    let orderBy: Prisma.FileOrderByWithRelationInput = { createdAt: 'desc' };
     if (query.sortBy) {
       switch (query.sortBy) {
         case 'name':
@@ -214,7 +215,9 @@ export class FileService {
     return file;
   }
 
-  async getDownloadUrl(id: number): Promise<{ url: string; expiresIn: number }> {
+  async getDownloadUrl(
+    id: number,
+  ): Promise<{ url: string; expiresIn: number }> {
     const file = await this.findOne(id);
     const url = await this.storageService.getSignedUrl(file.s3Key, 3600);
 
