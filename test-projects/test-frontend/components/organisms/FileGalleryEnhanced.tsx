@@ -178,7 +178,7 @@ export const FileGalleryEnhanced = ({
               {/* Thumbnail/Preview */}
               <div
                 className="aspect-square bg-gray-50 flex items-center justify-center cursor-pointer relative overflow-hidden"
-                onClick={() => isImage && !brokenImages.has(file.id) ? setPreviewFile(file) : null}
+                onClick={() => setPreviewFile(file)}
               >
                 {isImage && file.url && !brokenImages.has(file.id) ? (
                   <>
@@ -226,6 +226,13 @@ export const FileGalleryEnhanced = ({
                             clipRule="evenodd"
                           />
                         </svg>
+                      </div>
+                    )}
+                    {hoveredFile === file.id && !isBrokenDocument && (
+                      <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                        <span className="text-white text-sm font-medium text-center px-4">
+                          Click to view details
+                        </span>
                       </div>
                     )}
                   </div>
@@ -335,6 +342,35 @@ export const FileGalleryEnhanced = ({
                     className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-md transition-colors"
                   >
                     Download File
+                  </button>
+                </div>
+              ) : brokenDocuments.has(previewFile.id) ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="mb-4 transform scale-150 opacity-50">
+                    <FileIcon mimeType={previewFile.mimeType} size="lg" />
+                  </div>
+                  <div className="mb-2 bg-red-100 text-red-800 rounded-full p-2">
+                    <svg
+                      className="w-8 h-8"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                  <p className="text-gray-800 font-semibold mb-2">Document Unavailable</p>
+                  <p className="text-gray-600 mb-4 text-center max-w-md">
+                    This document could not be loaded. It may be corrupted, deleted, or temporarily unavailable.
+                  </p>
+                  <button
+                    onClick={() => onDownload(previewFile.id)}
+                    className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-md transition-colors"
+                  >
+                    Try Download Anyway
                   </button>
                 </div>
               ) : (
