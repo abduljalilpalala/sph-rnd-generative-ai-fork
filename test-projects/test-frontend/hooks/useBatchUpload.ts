@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { useUploadBatchMutation, useGetBatchProgressQuery } from "@/lib/services/fileApi";
+import { logError, handleError, AppError } from "@/lib/utils/errorHandler";
 
 export const useBatchUpload = () => {
   const [uploadBatch] = useUploadBatchMutation();
@@ -46,10 +47,11 @@ export const useBatchUpload = () => {
           await uploadBatch(chunkFormData).unwrap();
         }
       } catch (error) {
-        console.error("Batch upload failed:", error);
+        logError(error, "BatchUpload");
         setIsUploading(false);
         setBatchId(null);
-        throw error;
+        const userMessage = handleError(error, "BatchUpload", "Failed to upload files");
+        throw new AppError(userMessage, "UPLOAD_ERROR", undefined, "BatchUpload");
       }
     },
     [uploadBatch]

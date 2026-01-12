@@ -1,4 +1,5 @@
 import JSZip from "jszip";
+import { handleError, logError, AppError } from "@/lib/utils/errorHandler";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
@@ -9,7 +10,12 @@ export const downloadFile = async (fileId: number, filename: string): Promise<vo
   try {
     const response = await fetch(`${API_URL}/files/${fileId}/download`);
     if (!response.ok) {
-      throw new Error(`Failed to fetch file: ${response.statusText}`);
+      throw new AppError(
+        `Failed to fetch file: ${response.statusText}`,
+        "DOWNLOAD_FAILED",
+        response.status,
+        "FileDownload"
+      );
     }
 
     const blob = await response.blob();
@@ -25,8 +31,9 @@ export const downloadFile = async (fileId: number, filename: string): Promise<vo
     // Clean up the blob URL
     window.URL.revokeObjectURL(blobUrl);
   } catch (error) {
-    console.error("Error downloading file:", error);
-    throw error;
+    logError(error, "FileDownload");
+    const userMessage = handleError(error, "FileDownload", "Failed to download file");
+    throw new AppError(userMessage, "DOWNLOAD_ERROR", undefined, "FileDownload");
   }
 };
 
@@ -65,13 +72,19 @@ export const downloadFilesAsZip = async (
   try {
     const zip = new JSZip();
     const usedFilenames = new Set<string>();
+    const failedFiles: string[] = [];
 
     // Fetch all files via backend proxy and add them to the zip
     const filePromises = files.map(async (file) => {
       try {
         const response = await fetch(`${API_URL}/files/${file.fileId}/download`);
         if (!response.ok) {
-          throw new Error(`Failed to fetch ${file.filename}`);
+          throw new AppError(
+            `Failed to fetch ${file.filename}`,
+            "DOWNLOAD_FAILED",
+            response.status,
+            "ZipDownload"
+          );
         }
         const blob = await response.blob();
 
@@ -81,12 +94,18 @@ export const downloadFilesAsZip = async (
 
         zip.file(uniqueFilename, blob);
       } catch (error) {
-        console.error(`Error adding ${file.filename} to zip:`, error);
+        logError(error, `ZipDownload - ${file.filename}`);
+        failedFiles.push(file.filename);
         // Continue with other files even if one fails
       }
     });
 
     await Promise.all(filePromises);
+
+    // Warn user if some files failed
+    if (failedFiles.length > 0) {
+      console.warn(`Failed to download ${failedFiles.length} file(s): ${failedFiles.join(", ")}`);
+    }
 
     // Generate the zip file
     const zipBlob = await zip.generateAsync({ type: "blob" });
@@ -102,9 +121,20 @@ export const downloadFilesAsZip = async (
 
     // Clean up the blob URL
     window.URL.revokeObjectURL(blobUrl);
+
+    // Throw error if all files failed
+    if (failedFiles.length === files.length) {
+      throw new AppError(
+        "Failed to download all files",
+        "ZIP_DOWNLOAD_FAILED",
+        undefined,
+        "ZipDownload"
+      );
+    }
   } catch (error) {
-    console.error("Error creating zip file:", error);
-    throw error;
+    logError(error, "ZipDownload");
+    const userMessage = handleError(error, "ZipDownload", "Failed to create zip file");
+    throw new AppError(userMessage, "ZIP_ERROR", undefined, "ZipDownload");
   }
 };
 

@@ -1,4 +1,5 @@
 import { useGetFilesQuery, useDeleteFileMutation, FileQueryParams } from "@/lib/services/fileApi";
+import { logError, handleError, AppError } from "@/lib/utils/errorHandler";
 
 export const useFiles = (params: FileQueryParams) => {
   const { data: files, isLoading, error, refetch } = useGetFilesQuery(params);
@@ -8,8 +9,9 @@ export const useFiles = (params: FileQueryParams) => {
     try {
       await deleteFile({ id, userId }).unwrap();
     } catch (error) {
-      console.error("Failed to delete file:", error);
-      throw error;
+      logError(error, "FileDelete");
+      const userMessage = handleError(error, "FileDelete", "Failed to delete file");
+      throw new AppError(userMessage, "DELETE_ERROR", undefined, "FileDelete");
     }
   };
 

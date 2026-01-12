@@ -3,6 +3,10 @@
 import { useState } from "react";
 import { FileSize, Icon, FileIcon } from "@/components/atoms";
 
+// Placeholder image data URL (1x1 gray pixel)
+const PLACEHOLDER_IMAGE =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='system-ui' font-size='12' fill='%239ca3af'%3EImage%3C/text%3E%3Ctext x='50%25' y='65%25' dominant-baseline='middle' text-anchor='middle' font-family='system-ui' font-size='12' fill='%239ca3af'%3EUnavailable%3C/text%3E%3C/svg%3E";
+
 interface FileData {
   id: number;
   originalName: string;
@@ -34,6 +38,15 @@ export const FileGalleryEnhanced = ({
 }: FileGalleryEnhancedProps) => {
   const [hoveredFile, setHoveredFile] = useState<number | null>(null);
   const [previewFile, setPreviewFile] = useState<FileData | null>(null);
+  const [brokenImages, setBrokenImages] = useState<Set<number>>(new Set());
+
+  /**
+   * Handle image load error by marking it as broken
+   * Prevents repeated reload attempts and layout shifts
+   */
+  const handleImageError = (fileId: number) => {
+    setBrokenImages((prev) => new Set(prev).add(fileId));
+  };
 
   if (isLoading) {
     return (
@@ -114,14 +127,16 @@ export const FileGalleryEnhanced = ({
               {/* Thumbnail/Preview */}
               <div
                 className="aspect-square bg-gray-50 flex items-center justify-center cursor-pointer relative overflow-hidden"
-                onClick={() => isImage ? setPreviewFile(file) : null}
+                onClick={() => isImage && !brokenImages.has(file.id) ? setPreviewFile(file) : null}
               >
-                {isImage && file.url ? (
+                {isImage && file.url && !brokenImages.has(file.id) ? (
                   <>
                     <img
                       src={file.url}
                       alt={file.originalName}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                      onError={() => handleImageError(file.id)}
+                      loading="lazy"
                     />
                     {hoveredFile === file.id && (
                       <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
@@ -131,6 +146,14 @@ export const FileGalleryEnhanced = ({
                       </div>
                     )}
                   </>
+                ) : isImage && file.url && brokenImages.has(file.id) ? (
+                  <div className="flex flex-col items-center justify-center h-full p-4">
+                    <img
+                      src={PLACEHOLDER_IMAGE}
+                      alt="Image unavailable"
+                      className="w-full h-full object-contain opacity-50"
+                    />
+                  </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full p-4">
                     <div className="mb-3">
@@ -224,12 +247,30 @@ export const FileGalleryEnhanced = ({
               </button>
             </div>
             <div className="p-4">
-              {isImageFile(previewFile.mimeType) && previewFile.url ? (
+              {isImageFile(previewFile.mimeType) && previewFile.url && !brokenImages.has(previewFile.id) ? (
                 <img
                   src={previewFile.url}
                   alt={previewFile.originalName}
                   className="w-full h-auto rounded-lg"
+                  onError={() => handleImageError(previewFile.id)}
                 />
+              ) : isImageFile(previewFile.mimeType) && brokenImages.has(previewFile.id) ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <img
+                    src={PLACEHOLDER_IMAGE}
+                    alt="Image unavailable"
+                    className="w-64 h-64 object-contain opacity-50 mb-4"
+                  />
+                  <p className="text-gray-600 mb-4">
+                    This image could not be loaded
+                  </p>
+                  <button
+                    onClick={() => onDownload(previewFile.id)}
+                    className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-md transition-colors"
+                  >
+                    Download File
+                  </button>
+                </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-12">
                   <div className="mb-4 transform scale-150">
