@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import StoreProvider from "@/lib/StoreProvider";
+import { ToastProvider } from "@/lib/ToastProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -18,7 +19,10 @@ const RootLayout = ({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <StoreProvider>{children}</StoreProvider>
+        <StoreProvider>
+          {children}
+          <ToastProvider />
+        </StoreProvider>
       </body>
     </html>
   );

@@ -5,7 +5,7 @@ import { Sidebar, TopNavigation, FileUploader, FileGalleryEnhanced } from "@/com
 import { Card, Button } from "@/components/atoms";
 import { ConfirmDialog } from "@/components/molecules";
 import { useFiles } from "@/hooks/useFiles";
-import { downloadFile, downloadFilesAsZip } from "@/lib/utils/fileDownload";
+import { downloadFile, downloadFilesAsZip, showToast } from "@/lib/utils";
 
 export default function FilesPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -52,8 +52,10 @@ export default function FilesPage() {
         try {
           await handleDelete(id, userId);
           setSelectedFiles((prev) => prev.filter((fId) => fId !== id));
+          showToast.success("File deleted successfully");
         } catch (error) {
           console.error("Failed to delete file:", error);
+          showToast.error("Failed to delete file");
         } finally {
           setDeletingId(undefined);
         }
@@ -69,14 +71,30 @@ export default function FilesPage() {
       title: "Delete Multiple Files",
       message: `Are you sure you want to delete ${selectedFiles.length} file(s)? This action cannot be undone.`,
       onConfirm: async () => {
+        let successCount = 0;
+        let failCount = 0;
+
         for (const fileId of selectedFiles) {
           try {
             await handleDelete(fileId, userId);
+            successCount++;
           } catch (error) {
             console.error(`Failed to delete file ${fileId}:`, error);
+            failCount++;
           }
         }
         setSelectedFiles([]);
+
+        // Show toast notification with results
+        if (successCount > 0 && failCount === 0) {
+          showToast.success(`Successfully deleted ${successCount} file(s)`);
+        } else if (successCount > 0 && failCount > 0) {
+          showToast.warning(
+            `Deleted ${successCount} file(s), but ${failCount} failed`
+          );
+        } else {
+          showToast.error("Failed to delete files");
+        }
       },
     });
   };
@@ -95,7 +113,7 @@ export default function FilesPage() {
         error instanceof Error
           ? error.message
           : "Failed to download file. The file may be corrupted or unavailable.";
-      alert(errorMessage); // Replace with toast notification in production
+      showToast.error(errorMessage);
     }
   };
 
@@ -134,7 +152,7 @@ export default function FilesPage() {
         error instanceof Error
           ? error.message
           : "Failed to download files. Some files may be corrupted or unavailable.";
-      alert(errorMessage); // Replace with toast notification in production
+      showToast.error(errorMessage);
     }
   };
 

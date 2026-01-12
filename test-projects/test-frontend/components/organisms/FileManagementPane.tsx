@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { Card, Button } from "@/components/atoms";
+import { ConfirmDialog } from "@/components/molecules";
 import { FileUploader, FileGalleryEnhanced } from "@/components/organisms";
 import { useFiles } from "@/hooks/useFiles";
+import { showToast } from "@/lib/utils";
 
 export const FileManagementPane = () => {
   const [showUploader, setShowUploader] = useState(false);
@@ -25,17 +27,34 @@ export const FileManagementPane = () => {
 
   const [deletingId, setDeletingId] = useState<number | undefined>();
 
-  const handleDeleteFile = async (id: number) => {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this file? This action cannot be undone."
-    );
-    if (!confirmed) return;
+  // Confirm dialog state
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    fileId: number | null;
+  }>({
+    isOpen: false,
+    fileId: null,
+  });
 
-    setDeletingId(id);
+  const handleDeleteFile = async (id: number) => {
+    setConfirmDialog({
+      isOpen: true,
+      fileId: id,
+    });
+  };
+
+  const confirmDelete = async () => {
+    if (confirmDialog.fileId === null) return;
+
+    setDeletingId(confirmDialog.fileId);
     try {
-      await handleDelete(id, userId);
+      await handleDelete(confirmDialog.fileId, userId);
+      showToast.success("File deleted successfully");
+    } catch (error) {
+      showToast.error("Failed to delete file");
     } finally {
       setDeletingId(undefined);
+      setConfirmDialog({ isOpen: false, fileId: null });
     }
   };
 
@@ -218,6 +237,18 @@ export const FileManagementPane = () => {
           Showing {startIndex + 1} - {Math.min(endIndex, totalItems)} of {totalItems} files
         </div>
       )}
+
+      {/* Confirm Delete Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ isOpen: false, fileId: null })}
+        onConfirm={confirmDelete}
+        title="Delete File"
+        message="Are you sure you want to delete this file? This action cannot be undone."
+        variant="danger"
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
     </div>
   );
 };
