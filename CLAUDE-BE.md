@@ -439,3 +439,265 @@ When creating unit tests for a PR, ensure:
 6. **Mock at the boundary**: Mock external dependencies, not internal logic
 7. **Test edge cases**: Empty inputs, null values, boundary conditions
 8. **Follow AAA pattern**: Arrange, Act, Assert for clarity
+
+## Centralized Error Handling
+
+### Overview
+This project uses a centralized error handling utility located at `src/common/utils/error-handler.util.ts` to ensure consistent error logging and handling throughout the backend application.
+
+### When to Use the Error Handler
+
+**ALWAYS use the centralized error handler in `catch` blocks** for:
+- ✅ Database operations (Prisma queries)
+- ✅ External service calls (S3, APIs)
+- ✅ File operations
+- ✅ Any operation that may throw errors
+
+**Benefits:**
+- Consistent error logging format across the application
+- Automatic error normalization (Error, string, object → structured format)
+- Context-aware logging (includes service/method name)
+- Type-safe error handling
+- Development vs. production logging modes
+- Integration with NestJS Logger
+
+### Basic Usage
+
+#### Import the Utility
+```typescript
+import { logError } from '../../common/utils/error-handler.util';
+```
+
+#### Log Errors in Catch Blocks
+```typescript
+try {
+  // Your operation here
+  await this.prisma.user.create({ data: userData });
+} catch (error) {
+  // Log the error with context, then re-throw
+  logError(error, 'UserService.create', this.logger);
+  throw error;
+}
+```
+
+### Usage Guidelines
+
+#### Rule 1: Always Provide Context
+The context parameter should follow the format: `ClassName.methodName`
+
+```typescript
+// ✅ GOOD: Clear context
+logError(error, 'FileService.uploadFile', this.logger);
+logError(error, 'S3StorageService.delete', this.logger);
+logError(error, 'UserController.findOne', this.logger);
+
+// ❌ BAD: Missing or vague context
+logError(error);
+logError(error, 'error');
+logError(error, 'Something went wrong');
+```
+
+#### Rule 2: Re-throw After Logging
+Always re-throw the error after logging so NestJS exception filters can handle it properly:
+
+```typescript
+// ✅ GOOD: Logs then re-throws
+try {
+  await someOperation();
+} catch (error) {
+  logError(error, 'ServiceName.methodName', this.logger);
+  throw error;
+}
+
+// ❌ BAD: Swallows the error
+try {
+  await someOperation();
+} catch (error) {
+  logError(error, 'ServiceName.methodName', this.logger);
+  // No throw - error is swallowed!
+}
+```
+
+#### Rule 3: Use Logger Instance from Your Service
+Pass your service's Logger instance for proper context tracking:
+
+```typescript
+@Injectable()
+export class FileService {
+  private readonly logger = new Logger(FileService.name);
+
+  constructor(private prisma: PrismaService) {}
+
+  async uploadFile(file: Express.Multer.File) {
+    try {
+      // Upload logic
+    } catch (error) {
+      // Pass this.logger to maintain service context
+      logError(error, 'FileService.uploadFile', this.logger);
+      throw error;
+    }
+  }
+}
+```
+
+### Complete Example
+
+Here's a real-world example from the file service:
+
+```typescript
+import { Injectable, Logger } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { logError } from '../common/utils/error-handler.util';
+
+@Injectable()
+export class FileService {
+  private readonly logger = new Logger(FileService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    private storageService: S3StorageService,
+  ) {}
+
+  async uploadFile(file: Express.Multer.File, userId: number) {
+    try {
+      // Upload file to S3
+      const uploadResult = await this.storageService.upload(
+        file.buffer,
+        file.originalname,
+        file.mimetype,
+      );
+
+      // Save file record to database
+      const fileRecord = await this.prisma.file.create({
+        data: {
+          originalName: file.originalname,
+          storedName: uploadResult.key,
+          s3Key: uploadResult.key,
+          s3Bucket: uploadResult.bucket,
+          mimeType: file.mimetype,
+          size: file.size,
+          uploadedById: userId,
+        },
+      });
+
+      return fileRecord;
+    } catch (error) {
+      // Log with context, then re-throw
+      logError(error, 'FileService.uploadFile', this.logger);
+      throw error;
+    }
+  }
+
+  async deleteFile(id: number) {
+    try {
+      const file = await this.prisma.file.findUnique({ where: { id } });
+      if (!file) {
+        throw new Error('File not found');
+      }
+
+      // Delete from S3
+      await this.storageService.delete(file.s3Key);
+
+      // Delete from database
+      await this.prisma.file.delete({ where: { id } });
+
+      return { success: true };
+    } catch (error) {
+      logError(error, 'FileService.deleteFile', this.logger);
+      throw error;
+    }
+  }
+}
+```
+
+### Error Output Format
+
+When an error is logged, the centralized handler produces structured output:
+
+```
+[Nest] 12345  - 01/12/2026, 10:30:45 AM   ERROR [FileService] Failed to upload file to S3
+{
+  "name": "Error",
+  "code": "NoSuchBucket",
+  "statusCode": undefined,
+  "timestamp": "2026-01-12T10:30:45.123Z"
+}
+```
+
+In development mode, the original error object is also logged for debugging purposes.
+
+### Advanced Features
+
+#### Type Guards
+The utility provides type guards for identifying specific error types:
+
+```typescript
+import { isPrismaError, isStorageError } from '../../common/utils/error-handler.util';
+
+try {
+  await operation();
+} catch (error) {
+  if (isPrismaError(error)) {
+    // Handle database errors specifically
+  } else if (isStorageError(error)) {
+    // Handle S3/storage errors specifically
+  }
+  logError(error, 'ServiceName.methodName', this.logger);
+  throw error;
+}
+```
+
+#### Error Normalization
+The utility automatically normalizes different error types:
+- **Error instances**: Extracts message, name, stack, code
+- **HTTP errors**: Extracts status code and response data
+- **String errors**: Wraps strings in structured format
+- **Object errors**: Extracts message property
+- **Unknown types**: Provides fallback structure
+
+### Best Practices
+
+1. **Always include context**: Use `ClassName.methodName` format
+2. **Always re-throw**: Let NestJS handle HTTP responses
+3. **Use service logger**: Pass `this.logger` for context consistency
+4. **Log at operation boundaries**: Catch at service method level
+5. **Don't log twice**: Only log once per error chain
+
+### Checklist
+
+When adding error handling to your service/controller:
+- [ ] Import `logError` from `error-handler.util`
+- [ ] Add try-catch blocks around operations that may fail
+- [ ] Call `logError(error, 'ClassName.methodName', this.logger)` in catch block
+- [ ] Re-throw the error after logging
+- [ ] Test that errors are logged with proper context
+
+### Migration Guide
+
+If you have existing catch blocks with custom error logging:
+
+**Before:**
+```typescript
+try {
+  await operation();
+} catch (error) {
+  this.logger.error(`Failed to do something: ${error.message}`);
+  throw error;
+}
+```
+
+**After:**
+```typescript
+try {
+  await operation();
+} catch (error) {
+  logError(error, 'ServiceName.methodName', this.logger);
+  throw error;
+}
+```
+
+### Related Tools
+
+- **NestJS Logger**: Used internally by the error handler
+- **Exception Filters**: Handle errors after they're logged and thrown
+- **Prisma Error Codes**: Detected automatically via `isPrismaError()`
