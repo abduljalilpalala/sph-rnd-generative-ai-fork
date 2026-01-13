@@ -11,7 +11,10 @@ const Home = () => {
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
       {/* Sidebar */}
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -22,9 +25,17 @@ const Home = () => {
         />
 
         <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 lg:p-6">
-          <div className="max-w-6xl mx-auto">
-            {/* Welcome Section */}
-            <div className="mb-8">
+          <DashboardContent />
+        </main>
+      </div>
+    </div>
+  );
+};
+
+const DashboardContent = () => (
+  <div className="max-w-6xl mx-auto">
+    {/* Welcome Section */}
+    <div className="mb-8">
               <h2 className="text-3xl font-bold text-gray-800 mb-2">
                 Welcome to <span className="text-orange-500">Sun*</span> Management System
               </h2>
@@ -135,10 +146,6 @@ const Home = () => {
               </div>
             </div>
           </div>
-        </main>
-      </div>
-    </div>
-  );
-};
+);
 
 export default Home;

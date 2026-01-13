@@ -23,6 +23,7 @@ model User {
   projectMemberships ProjectMember[]
   createdTasks     Task[]
   taskAssignments  TaskAssignment[]
+  uploadedFiles    File[]
 }
 
 model Project {
@@ -85,4 +86,39 @@ model TaskAssignment {
   updatedAt DateTime @updatedAt
 
   @@unique([taskId, userId])
+}
+
+enum FileType {
+  IMAGE
+  DOCUMENT
+}
+
+enum FileStatus {
+  PENDING
+  UPLOADING
+  COMPLETED
+  FAILED
+}
+
+model File {
+  id            Int         @id @default(autoincrement())
+  originalName  String
+  storedName    String      @unique
+  s3Key         String      @unique
+  s3Bucket      String
+  url           String?     // Direct access URL for the file
+  mimeType      String
+  fileType      FileType
+  size          Int
+  status        FileStatus  @default(PENDING)
+  uploadedById  Int
+  uploadedBy    User        @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+  metadata      Json?
+  errorMessage  String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([uploadedById])
+  @@index([fileType])
+  @@index([status])
 }

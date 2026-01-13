@@ -23,7 +23,7 @@ import {
   Sidebar,
   TopNavigation,
 } from "@/components/organisms";
-import { ConfirmModal } from "@/components/molecules";
+import { ConfirmDialog } from "@/components/molecules";
 import { Card } from "@/components/atoms";
 
 const MOCK_USER_ID = 1;
@@ -268,17 +268,17 @@ export default function ProjectDetailPage() {
         isLoading={isUpdatingTask}
       />
 
-      <ConfirmModal
+      <ConfirmDialog
         isOpen={showDeleteTaskModal}
         title="Delete Task"
         message="Are you sure you want to delete this task? This action cannot be undone."
-        confirmLabel="Delete"
+        confirmText="Delete"
         onConfirm={handleDeleteTask}
-        onCancel={() => {
+        onClose={() => {
           setShowDeleteTaskModal(false);
           setTaskToDelete(null);
         }}
-        isLoading={isDeletingTask}
+        variant="danger"
       />
 
       <AssignTaskModal

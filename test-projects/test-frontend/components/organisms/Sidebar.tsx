@@ -9,20 +9,24 @@ interface SidebarProps {
   onClose: () => void;
 }
 
-export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
+export const Sidebar = ({
+  isOpen,
+  onClose
+}: SidebarProps) => {
   const pathname = usePathname();
 
   const menuItems = [
-    { icon: "home" as const, label: "Dashboard", href: "/", section: "dashboard" },
-    { icon: "user" as const, label: "User Management", href: "/users", section: "users" },
-    { icon: "folder" as const, label: "Project Management", href: "/projects", section: "projects" },
-    { icon: "document" as const, label: "Post Management", href: "/posts", section: "posts" },
-    { icon: "shield" as const, label: "Role Management", href: "/roles", section: "roles" },
+    { icon: "home" as const, label: "Dashboard", href: "/" },
+    { icon: "user" as const, label: "User Management", href: "/users" },
+    { icon: "folder" as const, label: "Project Management", href: "/projects" },
+    { icon: "document" as const, label: "Post Management", href: "/posts" },
+    { icon: "shield" as const, label: "Role Management", href: "/roles" },
+    { icon: "cloud" as const, label: "File Management", href: "/files" },
   ];
 
-  const isActive = (href: string) => {
-    if (href === "/") return pathname === "/";
-    return pathname.startsWith(href);
+  const isActive = (item: typeof menuItems[0]) => {
+    if (item.href === "/") return pathname === "/";
+    return pathname.startsWith(item.href);
   };
 
   return (
@@ -59,7 +63,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                     href={item.href}
                     onClick={onClose}
                     className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                      isActive(item.href)
+                      isActive(item)
                         ? "bg-blue-50 text-blue-600"
                         : "text-gray-700 hover:bg-gray-50"
                     }`}
