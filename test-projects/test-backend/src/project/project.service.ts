@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   NotFoundException,
   ForbiddenException,
   ConflictException,
@@ -9,9 +10,12 @@ import { Project, ProjectMember, ProjectRole } from '@prisma/client';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { AddMemberDto } from './dto/add-member.dto';
+import { logError } from '../common/utils/error-handler.util';
 
 @Injectable()
 export class ProjectService {
+  private readonly logger = new Logger(ProjectService.name);
+
   constructor(private prisma: PrismaService) {}
 
   async create(userId: number, data: CreateProjectDto): Promise<Project> {
