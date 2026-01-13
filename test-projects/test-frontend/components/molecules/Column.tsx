@@ -64,13 +64,13 @@ export const Column = ({ columnId, title, tasks, onEdit, onDelete, onAssign }: C
         </div>
 
         {/* Droppable Area */}
-        <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
-          <div
-            ref={setNodeRef}
-            className={`flex-1 p-3 min-h-[200px] transition-colors ${
-              isOver ? "bg-blue-50" : "bg-transparent"
-            }`}
-          >
+        <div
+          ref={setNodeRef}
+          className={`flex-1 p-3 min-h-[200px] transition-colors ${
+            isOver ? "bg-blue-50" : "bg-transparent"
+          }`}
+        >
+          <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
             {tasks.length === 0 ? (
               <div className="flex items-center justify-center h-32 text-gray-400 text-sm">
                 Drop tasks here
@@ -87,8 +87,8 @@ export const Column = ({ columnId, title, tasks, onEdit, onDelete, onAssign }: C
                 />
               ))
             )}
-          </div>
-        </SortableContext>
+          </SortableContext>
+        </div>
       </Card>
     </div>
   );
