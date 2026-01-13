@@ -138,10 +138,11 @@ export const TaskBoard = ({
     let destinationColumnId: string;
     let destinationIndex: number;
 
-    // Check if dropped over a column container
+    // Check if dropped over a column container (or column placeholder for empty columns)
     if (Object.keys(boardData.columns).includes(overId)) {
       destinationColumnId = overId;
-      destinationIndex = boardData.columns[overId].taskIds.length;
+      // For empty columns, we want to insert at index 0
+      destinationIndex = boardData.columns[overId].taskIds.length > 0 ? boardData.columns[overId].taskIds.length : 0;
     } else {
       // Dropped over a task, find its column
       let foundColumn: string | null = null;

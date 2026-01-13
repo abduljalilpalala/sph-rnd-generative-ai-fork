@@ -48,7 +48,8 @@ export const Column = ({ columnId, title, tasks, onEdit, onDelete, onAssign }: C
     id: columnId,
   });
 
-  const taskIds = tasks.map((task) => task.id.toString());
+  // Use column ID as placeholder when empty to ensure droppable area is registered
+  const taskIds = tasks.length > 0 ? tasks.map((task) => task.id.toString()) : [columnId];
 
   return (
     <div className="flex-1 min-w-[280px] max-w-[350px]">
