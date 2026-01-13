@@ -32,7 +32,10 @@ export class ProjectController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number, @Query('userId', ParseIntPipe) userId: number) {
+  findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('userId', ParseIntPipe) userId: number,
+  ) {
     return this.projectService.findOne(userId, id);
   }
 
@@ -47,7 +50,10 @@ export class ProjectController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseIntPipe) id: number, @Query('userId', ParseIntPipe) userId: number) {
+  remove(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('userId', ParseIntPipe) userId: number,
+  ) {
     return this.projectService.remove(userId, id);
   }
 
@@ -61,7 +67,10 @@ export class ProjectController {
   }
 
   @Get(':id/members')
-  getMembers(@Param('id', ParseIntPipe) id: number, @Query('userId', ParseIntPipe) userId: number) {
+  getMembers(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('userId', ParseIntPipe) userId: number,
+  ) {
     return this.projectService.getMembers(userId, id);
   }
 }

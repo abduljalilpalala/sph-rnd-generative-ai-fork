@@ -71,7 +71,11 @@ export class TaskService {
     });
   }
 
-  async update(userId: number, taskId: number, data: UpdateTaskDto): Promise<Task> {
+  async update(
+    userId: number,
+    taskId: number,
+    data: UpdateTaskDto,
+  ): Promise<Task> {
     const task = await this.prisma.task.findUnique({
       where: { id: taskId },
     });

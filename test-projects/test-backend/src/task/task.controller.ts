@@ -49,7 +49,10 @@ export class TaskController {
 
   @Delete('tasks/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseIntPipe) id: number, @Query('userId', ParseIntPipe) userId: number) {
+  remove(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('userId', ParseIntPipe) userId: number,
+  ) {
     return this.taskService.remove(userId, id);
   }
 

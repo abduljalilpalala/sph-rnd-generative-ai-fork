@@ -10,7 +10,6 @@ import { Project, ProjectMember, ProjectRole } from '@prisma/client';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { AddMemberDto } from './dto/add-member.dto';
-import { logError } from '../common/utils/error-handler.util';
 
 @Injectable()
 export class ProjectService {
@@ -166,7 +165,10 @@ export class ProjectService {
     });
   }
 
-  async getMembers(userId: number, projectId: number): Promise<ProjectMember[]> {
+  async getMembers(
+    userId: number,
+    projectId: number,
+  ): Promise<ProjectMember[]> {
     await this.verifyMembership(userId, projectId);
 
     return this.prisma.projectMember.findMany({
@@ -192,7 +194,9 @@ export class ProjectService {
     }
 
     if (project.ownerId !== userId) {
-      throw new ForbiddenException('Only the project owner can perform this action');
+      throw new ForbiddenException(
+        'Only the project owner can perform this action',
+      );
     }
   }
 
