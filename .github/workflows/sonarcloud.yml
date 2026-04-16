@@ -1,4 +1,4 @@
-name: SonarCloud
+name: Sonar Cloud
 
 on:
   push:
@@ -25,18 +25,38 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
+        run: npm ci
+
+        sonar-frontend:
+    name: SonarCloud Scan - Frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install frontend dependencies
+        working-directory: test-projects/test-frontend
         run: npm install
 
-      - name: Run SonarCloud scan
-        uses: SonarSource/sonarqube-scan-action@master
+      - name: Run SonarCloud scan for frontend
+        uses: SonarSource/sonarqube-scan-action@v7
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
+          projectBaseDir: test-projects/test-frontend
           args: >
-            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
+            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY_FRONTEND }}
             -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
-            -Dsonar.sources=src
-            -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/coverage/**,**/.next/**
+            -Dsonar.sources=app,components,hooks,lib
+            -Dsonar.exclusions=**/node_modules/**,**/.next/**,**/coverage/**
             -Dsonar.sourceEncoding=UTF-8
             -Dsonar.qualitygate.wait=true
             -Dsonar.qualitygate.timeout=300
