@@ -1,4 +1,4 @@
-name: Sonar Cloud
+name: SonarCloud
 
 on:
   push:
@@ -9,8 +9,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  scan:
-    name: SonarCloud Scan
+  sonar-backend:
+    name: SonarCloud Scan - Backend
     runs-on: ubuntu-latest
 
     steps:
@@ -24,10 +24,26 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Install backend dependencies
+        working-directory: test-projects/test-backend
+        run: yarn install --frozen-lockfile
 
-        sonar-frontend:
+      - name: Run SonarCloud scan - Backend
+        uses: SonarSource/sonarqube-scan-action@v7
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          projectBaseDir: test-projects/test-backend
+          args: >
+            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY_BACKEND }}
+            -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
+            -Dsonar.sources=src
+            -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/coverage/**
+            -Dsonar.sourceEncoding=UTF-8
+            -Dsonar.qualitygate.wait=true
+            -Dsonar.qualitygate.timeout=300
+
+  sonar-frontend:
     name: SonarCloud Scan - Frontend
     runs-on: ubuntu-latest
 
@@ -46,7 +62,7 @@ jobs:
         working-directory: test-projects/test-frontend
         run: npm install
 
-      - name: Run SonarCloud scan for frontend
+      - name: Run SonarCloud scan - Frontend
         uses: SonarSource/sonarqube-scan-action@v7
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
