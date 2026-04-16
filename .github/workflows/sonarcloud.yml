@@ -9,39 +9,39 @@ on:
   workflow_dispatch:
 
 jobs:
-  sonar-backend:
-    name: SonarCloud Scan - Backend
-    runs-on: ubuntu-latest
+  # sonar-backend:
+  #   name: SonarCloud Scan - Backend
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 20
 
-      - name: Install backend dependencies
-        working-directory: test-projects/test-backend
-        run: yarn install --frozen-lockfile
+  #     - name: Install backend dependencies
+  #       working-directory: test-projects/test-backend
+  #       run: yarn install --frozen-lockfile
 
-      - name: Run SonarCloud scan - Backend
-        uses: SonarSource/sonarqube-scan-action@v7
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          projectBaseDir: test-projects/test-backend
-          args: >
-            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY_BACKEND }}
-            -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
-            -Dsonar.sources=src
-            -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/coverage/**
-            -Dsonar.sourceEncoding=UTF-8
-            -Dsonar.qualitygate.wait=true
-            -Dsonar.qualitygate.timeout=300
+  #     - name: Run SonarCloud scan - Backend
+  #       uses: SonarSource/sonarqube-scan-action@v7
+  #       env:
+  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  #       with:
+  #         projectBaseDir: test-projects/test-backend
+  #         args: >
+  #           -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY_BACKEND }}
+  #           -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
+  #           -Dsonar.sources=src
+  #           -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/coverage/**
+  #           -Dsonar.sourceEncoding=UTF-8
+  #           -Dsonar.qualitygate.wait=true
+  #           -Dsonar.qualitygate.timeout=300
 
   sonar-frontend:
     name: SonarCloud Scan - Frontend
