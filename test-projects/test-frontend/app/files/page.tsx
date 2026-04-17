@@ -32,7 +32,7 @@ export default function FilesPage() {
     onConfirm: () => {},
   });
 
-  const { files, isLoading, handleDelete, isDeleting, refetch } = useFiles({
+  const { files, isLoading, handleDelete, refetch } = useFiles({
     userId,
     search,
     fileType,
@@ -89,9 +89,7 @@ export default function FilesPage() {
         if (successCount > 0 && failCount === 0) {
           showToast.success(`Successfully deleted ${successCount} file(s)`);
         } else if (successCount > 0 && failCount > 0) {
-          showToast.warning(
-            `Deleted ${successCount} file(s), but ${failCount} failed`
-          );
+          showToast.warning(`Deleted ${successCount} file(s), but ${failCount} failed`);
         } else {
           showToast.error("Failed to delete files");
         }
@@ -129,9 +127,9 @@ export default function FilesPage() {
           return { fileId, filename: file.originalName };
         })
         .filter((f) => f !== null) as Array<{
-          fileId: number;
-          filename: string;
-        }>;
+        fileId: number;
+        filename: string;
+      }>;
 
       if (filesToDownload.length === 0) {
         console.error("No valid files to download");
@@ -157,8 +155,8 @@ export default function FilesPage() {
   };
 
   const toggleFileSelection = (id: number) => {
-    setSelectedFiles(prev =>
-      prev.includes(id) ? prev.filter(fId => fId !== id) : [...prev, id]
+    setSelectedFiles((prev) =>
+      prev.includes(id) ? prev.filter((fId) => fId !== id) : [...prev, id]
     );
   };
 
@@ -168,7 +166,7 @@ export default function FilesPage() {
     if (selectedFiles.length === paginatedFiles.length) {
       setSelectedFiles([]);
     } else {
-      setSelectedFiles(paginatedFiles.map(f => f.id));
+      setSelectedFiles(paginatedFiles.map((f) => f.id));
     }
   };
 
@@ -182,10 +180,7 @@ export default function FilesPage() {
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
       {/* Sidebar */}
-      <Sidebar
-        isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
-      />
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -202,9 +197,7 @@ export default function FilesPage() {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                   <h1 className="text-2xl font-bold text-gray-800">File Management</h1>
-                  <p className="text-gray-600 text-sm mt-1">
-                    Upload and manage your files
-                  </p>
+                  <p className="text-gray-600 text-sm mt-1">Upload and manage your files</p>
                 </div>
                 <Button onClick={() => setShowUploader(!showUploader)}>
                   {showUploader ? "Hide Uploader" : "Upload Files"}
@@ -241,18 +234,10 @@ export default function FilesPage() {
                     </button>
                   </div>
                   <div className="flex gap-2">
-                    <Button
-                      onClick={handleBulkDownload}
-                      variant="secondary"
-                      className="text-sm"
-                    >
+                    <Button onClick={handleBulkDownload} variant="secondary" className="text-sm">
                       Download Selected
                     </Button>
-                    <Button
-                      onClick={handleBulkDelete}
-                      variant="danger"
-                      className="text-sm"
-                    >
+                    <Button onClick={handleBulkDelete} variant="danger" className="text-sm">
                       Delete Selected
                     </Button>
                   </div>
@@ -265,9 +250,7 @@ export default function FilesPage() {
               <div className="flex flex-wrap items-end gap-3">
                 {/* Search */}
                 <div className="flex-1 min-w-[200px]">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Search
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
                   <input
                     type="text"
                     placeholder="Search files..."
@@ -279,9 +262,7 @@ export default function FilesPage() {
 
                 {/* File Type Filter */}
                 <div className="w-full sm:w-auto sm:min-w-[160px]">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    File Type
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">File Type</label>
                   <select
                     value={fileType || ""}
                     onChange={(e) =>
@@ -299,9 +280,7 @@ export default function FilesPage() {
 
                 {/* Sort By */}
                 <div className="w-full sm:w-auto sm:min-w-[140px]">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Sort By
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as "name" | "date" | "size")}
@@ -315,9 +294,7 @@ export default function FilesPage() {
 
                 {/* Sort Order */}
                 <div className="w-full sm:w-auto sm:min-w-[140px]">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Sort Order
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Sort Order</label>
                   <select
                     value={sortOrder}
                     onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
