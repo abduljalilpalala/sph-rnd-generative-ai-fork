@@ -15,6 +15,7 @@ import { TaskService } from './task.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { AssignTaskDto } from './dto/assign-task.dto';
+import { ReorderTasksDto } from './dto/reorder-tasks.dto';
 
 @Controller()
 export class TaskController {
@@ -48,7 +49,10 @@ export class TaskController {
 
   @Delete('tasks/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseIntPipe) id: number, @Query('userId', ParseIntPipe) userId: number) {
+  remove(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('userId', ParseIntPipe) userId: number,
+  ) {
     return this.taskService.remove(userId, id);
   }
 
@@ -59,5 +63,15 @@ export class TaskController {
   ) {
     const { userId, ...data } = body;
     return this.taskService.assignTask(userId, id, data);
+  }
+
+  @Post('projects/:projectId/tasks/reorder')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  reorderTasks(
+    @Param('projectId', ParseIntPipe) projectId: number,
+    @Body() body: { userId: number } & ReorderTasksDto,
+  ) {
+    const { userId, ...data } = body;
+    return this.taskService.reorderTasks(userId, projectId, data.tasks);
   }
 }

@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   NotFoundException,
   ForbiddenException,
   ConflictException,
@@ -9,9 +10,12 @@ import { Task, TaskAssignment } from '@prisma/client';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { AssignTaskDto } from './dto/assign-task.dto';
+import { logError } from '../common/utils/error-handler.util';
 
 @Injectable()
 export class TaskService {
+  private readonly logger = new Logger(TaskService.name);
+
   constructor(private prisma: PrismaService) {}
 
   async create(
@@ -56,13 +60,22 @@ export class TaskService {
           },
         },
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy: [
+        {
+          order: 'asc',
+        },
+        {
+          createdAt: 'desc',
+        },
+      ],
     });
   }
 
-  async update(userId: number, taskId: number, data: UpdateTaskDto): Promise<Task> {
+  async update(
+    userId: number,
+    taskId: number,
+    data: UpdateTaskDto,
+  ): Promise<Task> {
     const task = await this.prisma.task.findUnique({
       where: { id: taskId },
     });
@@ -141,6 +154,29 @@ export class TaskService {
         task: true,
       },
     });
+  }
+
+  async reorderTasks(
+    userId: number,
+    projectId: number,
+    taskOrders: { taskId: number; order: number }[],
+  ): Promise<void> {
+    await this.verifyProjectMembership(userId, projectId);
+
+    try {
+      // Update all tasks in a transaction
+      await this.prisma.$transaction(
+        taskOrders.map((taskOrder) =>
+          this.prisma.task.update({
+            where: { id: taskOrder.taskId },
+            data: { order: taskOrder.order },
+          }),
+        ),
+      );
+    } catch (error) {
+      logError(error, 'TaskService.reorderTasks', this.logger);
+      throw error;
+    }
   }
 
   private async verifyProjectMembership(

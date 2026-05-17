@@ -13,10 +13,11 @@ import {
   useUpdateTaskMutation,
   useDeleteTaskMutation,
   useAssignTaskMutation,
+  useReorderTasksMutation,
   Task,
 } from "@/lib/services/taskApi";
 import {
-  TaskList,
+  TaskBoard,
   TaskFormModal,
   AddMemberModal,
   AssignTaskModal,
@@ -48,6 +49,7 @@ export default function ProjectDetailPage() {
   const [updateTask, { isLoading: isUpdatingTask }] = useUpdateTaskMutation();
   const [deleteTask, { isLoading: isDeletingTask }] = useDeleteTaskMutation();
   const [assignTask, { isLoading: isAssigningTask }] = useAssignTaskMutation();
+  const [reorderTasks] = useReorderTasksMutation();
 
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
@@ -121,6 +123,26 @@ export default function ProjectDetailPage() {
     }).unwrap();
     setShowAssignTaskModal(false);
     setTaskToAssign(null);
+  };
+
+  const handleStatusChange = async (taskId: number, newStatus: any) => {
+    await updateTask({
+      taskId,
+      data: {
+        userId: MOCK_USER_ID,
+        status: newStatus,
+      },
+    }).unwrap();
+  };
+
+  const handleReorder = async (taskOrders: { taskId: number; order: number }[]) => {
+    await reorderTasks({
+      projectId,
+      data: {
+        userId: MOCK_USER_ID,
+        tasks: taskOrders,
+      },
+    }).unwrap();
   };
 
   return (
@@ -209,7 +231,8 @@ export default function ProjectDetailPage() {
 
                 {/* Tasks Section */}
                 <div className="mb-4">
-                  <h3 className="text-lg font-semibold">Tasks</h3>
+                  <h3 className="text-lg font-semibold">Tasks Board</h3>
+                  <p className="text-sm text-gray-600">Drag and drop tasks between columns to update their status</p>
                 </div>
                 {tasksLoading ? (
                   <div className="flex items-center justify-center py-12">
@@ -219,8 +242,9 @@ export default function ProjectDetailPage() {
                     </div>
                   </div>
                 ) : (
-                  <TaskList
+                  <TaskBoard
                     tasks={tasks}
+                    projectId={projectId}
                     onEdit={(task) => {
                       setSelectedTask(task);
                       setShowEditTaskModal(true);
@@ -233,7 +257,8 @@ export default function ProjectDetailPage() {
                       setTaskToAssign(id);
                       setShowAssignTaskModal(true);
                     }}
-                    currentUserId={MOCK_USER_ID}
+                    onStatusChange={handleStatusChange}
+                    onReorder={handleReorder}
                   />
                 )}
               </>

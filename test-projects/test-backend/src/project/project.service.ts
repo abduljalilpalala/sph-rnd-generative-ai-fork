@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   NotFoundException,
   ForbiddenException,
   ConflictException,
@@ -12,6 +13,8 @@ import { AddMemberDto } from './dto/add-member.dto';
 
 @Injectable()
 export class ProjectService {
+  private readonly logger = new Logger(ProjectService.name);
+
   constructor(private prisma: PrismaService) {}
 
   async create(userId: number, data: CreateProjectDto): Promise<Project> {
@@ -162,7 +165,10 @@ export class ProjectService {
     });
   }
 
-  async getMembers(userId: number, projectId: number): Promise<ProjectMember[]> {
+  async getMembers(
+    userId: number,
+    projectId: number,
+  ): Promise<ProjectMember[]> {
     await this.verifyMembership(userId, projectId);
 
     return this.prisma.projectMember.findMany({
@@ -188,7 +194,9 @@ export class ProjectService {
     }
 
     if (project.ownerId !== userId) {
-      throw new ForbiddenException('Only the project owner can perform this action');
+      throw new ForbiddenException(
+        'Only the project owner can perform this action',
+      );
     }
   }
 

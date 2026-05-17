@@ -1,9 +1,10 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 export enum TaskStatus {
-  TODO = "TODO",
+  OPEN = "OPEN",
   IN_PROGRESS = "IN_PROGRESS",
-  DONE = "DONE",
+  FOR_REVIEW = "FOR_REVIEW",
+  CLOSED = "CLOSED",
 }
 
 export interface TaskAssignment {
@@ -24,6 +25,7 @@ export interface Task {
   title: string;
   description: string | null;
   status: TaskStatus;
+  order: number;
   projectId: number;
   createdById: number;
   createdBy: {
@@ -48,10 +50,16 @@ export interface UpdateTaskDto {
   title?: string;
   description?: string;
   status?: TaskStatus;
+  order?: number;
 }
 
 export interface AssignTaskDto {
   assigneeUserId: number;
+}
+
+export interface ReorderTasksDto {
+  userId: number;
+  tasks: { taskId: number; order: number }[];
 }
 
 export const taskApi = createApi({
@@ -107,6 +115,17 @@ export const taskApi = createApi({
       }),
       invalidatesTags: ["Task"],
     }),
+    reorderTasks: builder.mutation<
+      void,
+      { projectId: number; data: ReorderTasksDto }
+    >({
+      query: ({ projectId, data }) => ({
+        url: `/projects/${projectId}/tasks/reorder`,
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["Task"],
+    }),
   }),
 });
 
@@ -116,4 +135,5 @@ export const {
   useUpdateTaskMutation,
   useDeleteTaskMutation,
   useAssignTaskMutation,
+  useReorderTasksMutation,
 } = taskApi;

@@ -6,3 +6,5 @@ export { FileUploadInput } from "@/components/molecules/FileUploadInput";
 export { FormField } from "@/components/molecules/FormField";
 export { TableHeader } from "@/components/molecules/TableHeader";
 export { TableRow } from "@/components/molecules/TableRow";
+export { TaskCard } from "@/components/molecules/TaskCard";
+export { Column } from "@/components/molecules/Column";

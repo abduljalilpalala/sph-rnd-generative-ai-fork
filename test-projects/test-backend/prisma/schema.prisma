@@ -57,16 +57,18 @@ model ProjectMember {
 }
 
 enum TaskStatus {
-  TODO
+  OPEN
   IN_PROGRESS
-  DONE
+  FOR_REVIEW
+  CLOSED
 }
 
 model Task {
   id          Int              @id @default(autoincrement())
   title       String
   description String?
-  status      TaskStatus       @default(TODO)
+  status      TaskStatus       @default(OPEN)
+  order       Int              @default(0)
   projectId   Int
   createdById Int
   project     Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)

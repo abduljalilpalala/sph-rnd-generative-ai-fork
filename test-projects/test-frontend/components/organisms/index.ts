@@ -9,6 +9,7 @@ export { UserList } from "@/components/organisms/UserList";
 export { ProjectList } from "@/components/organisms/ProjectList";
 export { ProjectFormModal } from "@/components/organisms/ProjectFormModal";
 export { TaskList } from "@/components/organisms/TaskList";
+export { TaskBoard } from "@/components/organisms/TaskBoard";
 export { TaskFormModal } from "@/components/organisms/TaskFormModal";
 export { AddMemberModal } from "@/components/organisms/AddMemberModal";
 export { AssignTaskModal } from "@/components/organisms/AssignTaskModal";
